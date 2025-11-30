@@ -1,0 +1,20 @@
+[Unit]
+Description=GPS Receiver Service for GPS Store
+After=docker.service network.target
+Requires=docker.service
+BindsTo=docker.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/root/GpsStore
+ExecStartPre=/bin/sleep 10
+ExecStart=/usr/bin/docker compose exec -T web python manage.py gps_receiver
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %} | صفحه اصلی{% endblock %}
+
+{% block hero %}
+<!-- بخش هیرو -->
+<section class="hero" style="background-image: url('{% static 'images/header.jpeg' %}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+    <div class="container">
+        <h1>ردیاب‌های هوشمند برای زندگی مدرن</h1>
+        <p>با جدیدترین تکنولوژی‌های ردیابی، امنیت خودرو، عزیزان و حیوانات خانگی خود را تضمین کنید</p>
+        <a href="#" class="btn pulse">مشاهده محصولات</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block categories %}
+<!-- بخش دسته‌بندی‌ها -->
+<section class="categories">
+    <div class="container">
+        <div class="section-title">
+            <h2>دسته‌بندی محصولات</h2>
+        </div>
+
+        <div class="categories-grid">
+            {% for category in categories %}
+            <div class="category-card fade-in">
+                {% if category.image %}
+                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image">
+                {% else %}
+                <div class="category-icon">
+                    {% if category.name == "ردیاب خودرو" %}🚗
+                    {% elif category.name == "ردیاب شخصی" %}👤
+                    {% elif category.name == "ردیاب حیوانات" %}🐕
+                    {% elif category.name == "ردیاب اشیاء" %}📦
+                    {% else %}📍{% endif %}
+                </div>
+                {% endif %}
+                <h3>{{ category.name }}</h3>
+                <p>{{ category.description|default:"ردیاب‌های پیشرفته برای نظارت و امنیت" }}</p>
+                <a href="{% url 'products:category_detail' category.slug %}" class="btn-outline">مشاهده محصولات</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block featured_products %}
+<!-- بخش محصولات ویژه -->
+<section class="featured-products">
+    <div class="container">
+        <div class="section-title">
+            <h2>محصولات ویژه</h2>
+        </div>
+
+        <div class="products-grid">
+            {% for product in featured_products %}
+            <div class="product-card fade-in">
+                <div class="product-image">
+                    {% if product.images.first %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <img src="https://via.placeholder.com/200x150?text=No+Image" alt="{{ product.name }}">
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3>{{ product.name }}</h3>
+                    <div class="product-price">
+                        {% if product.discount_price %}
+                        <span class="text-decoration-line-through text-muted">{{ product.price|floatformat:0 }}</span>
+                        {{ product.discount_price|floatformat:0 }} تومان
+                        {% else %}
+                        {{ product.price|floatformat:0 }} تومان
+                        {% endif %}
+                    </div>
+                    <div class="product-rating">
+                        {% with rating=product.get_average_rating %}
+                        {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <div class="product-actions">
+                        <a href="{% url 'products:product_detail' product.slug %}" class="btn-outline">مشاهده جزئیات</a>
+                        {% if product.is_in_stock %}
+                        <form method="post" action="{% url 'cart:add_to_cart' %}" class="d-inline ms-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn add-to-cart-btn">افزودن به سبد</button>
+                        </form>
+                        {% else %}
+                        <button class="btn" disabled>ناموجود</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    هیچ محصول ویژه‌ای یافت نشد.
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block features %}
+<!-- بخش ویژگی‌ها -->
+<section class="features">
+    <div class="container">
+        <div class="section-title">
+            <h2>چرا ما را انتخاب کنید؟</h2>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-item fade-in">
+                <div class="feature-icon">🚀</div>
+                <h3>تکنولوژی پیشرفته</h3>
+                <p>استفاده از جدیدترین تکنولوژی‌های ردیابی GPS و ارتباطی</p>
+            </div>
+
+            <div class="feature-item fade-in">
+                <div class="feature-icon">🛡️</div>
+                <h3>ضمانت کیفیت</h3>
+                <p>کلیه محصولات با گارانتی معتبر و خدمات پس از فروش ارائه می‌شوند</p>
+            </div>
+
+            <div class="feature-item fade-in">
+                <div class="feature-icon">📱</div>
+                <h3>اپلیکیشن اختصاصی</h3>
+                <p>کنترل و مدیریت آسان از طریق اپلیکیشن موبایل</p>
+            </div>
+
+            <div class="feature-item fade-in">
+                <div class="feature-icon">🔋</div>
+                <h3>باتری با عمر طولانی</h3>
+                <p>باتری‌های با ظرفیت بالا و عمر طولانی برای استفاده مداوم</p>
+            </div>
+
+            <div class="feature-item fade-in">
+                <div class="feature-icon">🌐</div>
+                <h3>پوشش جهانی</h3>
+                <p>قابلیت ردیابی در سراسر جهان با پوشش شبکه گسترده</p>
+            </div>
+
+            <div class="feature-item fade-in">
+                <div class="feature-icon">💎</div>
+                <h3>طراحی زیبا و جمع‌وجور</h3>
+                <p>طراحی زیبا و اندازه کوچک برای استفاده راحت و مخفی</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle add to cart buttons with AJAX
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const form = this.closest('form');
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart counter
+                    const cartCounter = document.getElementById('cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.total_items;
+                    }
+                    // Show success message
+                    showMessage(data.message || 'محصول به سبد خرید اضافه شد.', 'success');
+                } else {
+                    showMessage(data.message || 'خطا در افزودن محصول به سبد خرید.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('خطا در ارتباط با سرور.', 'error');
+            });
+        });
+    });
+});
+
+function showMessage(message, type) {
+    // Create message element
+    const messageEl = document.createElement('div');
+    messageEl.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    messageEl.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageEl.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(messageEl);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        messageEl.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

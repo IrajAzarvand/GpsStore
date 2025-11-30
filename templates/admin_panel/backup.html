@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Database Backup</h1>
+<form method="post">
+    {% csrf_token %}
+    {% for app_label, models in models_by_app.items %}
+    <h2>{{ app_label }}</h2>
+    {% for model in models %}
+    <input type="checkbox" name="models" value="{{ app_label }}.{{ model.__name__ }}" id="{{ app_label }}_{{ model.__name__ }}">
+    <label for="{{ app_label }}_{{ model.__name__ }}">{{ model.__name__ }}</label><br>
+    {% endfor %}
+    {% endfor %}
+    <button type="submit">Download Backup</button>
+</form>
+{% endblock %}

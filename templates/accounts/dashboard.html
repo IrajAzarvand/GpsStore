@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Dashboard" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Welcome Section -->
+        <div class="col-12 mb-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h4 class="card-title">
+                        {% trans "Welcome back" %}, {{ user.get_full_name|default:user.username }}!
+                    </h4>
+                    <p class="card-text">
+                        {% trans "Manage your account, track orders, and monitor your GPS devices." %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="col-12 mb-4">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">{{ total_orders }}</h5>
+                            <p class="card-text">{% trans "Total Orders" %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">{{ active_devices }}</h5>
+                            <p class="card-text">{% trans "Active Devices" %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">{{ pending_orders }}</h5>
+                            <p class="card-text">{% trans "Pending Orders" %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">{{ total_devices }}</h5>
+                            <p class="card-text">{% trans "Total Devices" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Orders -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{% trans "Recent Orders" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Order #" %}</th>
+                                        <th>{% trans "Date" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                        <th>{% trans "Total" %}</th>
+                                        <th>{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_orders %}
+                                        <tr>
+                                            <td>{{ order.order_number }}</td>
+                                            <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ order.status|order_status_badge }}">
+                                                    {{ order.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ order.total_amount|floatformat:0 }} {% trans "Toman" %}</td>
+                                            <td>
+                                                <a href="#" class="btn btn-sm btn-outline-primary">
+                                                    {% trans "View" %}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-primary">{% trans "View All Orders" %}</a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">{% trans "No orders yet." %}</p>
+                        <a href="#" class="btn btn-primary mt-3">{% trans "Start Shopping" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Active Subscriptions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">{% trans "Active Subscriptions" %}</h6>
+                </div>
+                <div class="card-body">
+                    {% if active_subscriptions %}
+                        {% for subscription in active_subscriptions %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ subscription.plan.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {% trans "Expires" %}: {{ subscription.end_date|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-success">{% trans "Active" %}</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted small mb-0">{% trans "No active subscriptions." %}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- GPS Devices -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">{% trans "GPS Devices" %}</h6>
+                </div>
+                <div class="card-body">
+                    {% if gps_devices %}
+                        {% for device in gps_devices %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ device.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ device.device_type.name }}</small>
+                                </div>
+                                <span class="badge bg-{{ device.status|device_status_badge }}">
+                                    {{ device.get_status_display }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                        <div class="text-center mt-3">
+                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                {% trans "Manage Devices" %}
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-0">{% trans "No GPS devices registered." %}</p>
+                        <a href="#" class="btn btn-sm btn-primary mt-2">{% trans "Add Device" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">{% trans "Quick Actions" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary btn-sm">
+                            {% trans "Edit Profile" %}
+                        </a>
+                        <a href="{% url 'accounts:addresses' %}" class="btn btn-outline-primary btn-sm">
+                            {% trans "Manage Addresses" %}
+                        </a>
+                        <a href="#" class="btn btn-outline-success btn-sm">
+                            {% trans "GPS Tracking Panel" %}
+                        </a>
+                        <a href="#" class="btn btn-outline-info btn-sm">
+                            {% trans "Support" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

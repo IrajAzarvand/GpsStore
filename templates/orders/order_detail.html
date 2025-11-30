@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}جزئیات سفارش {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">سفارش {{ order.order_number }}</h4>
+                        <span class="badge badge-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Order Items -->
+                    <div class="mb-4">
+                        <h5>اقلام سفارش</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>محصول</th>
+                                        <th>قیمت واحد</th>
+                                        <th>تعداد</th>
+                                        <th>مجموع</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.items.all %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if item.product.images.exists %}
+                                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" class="me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ item.product.name }}</strong><br>
+                                                    <small class="text-muted">{{ item.product.sku }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ item.price|floatformat:0|intcomma }} تومان</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td><strong>{{ item.get_total_price|floatformat:0|intcomma }} تومان</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>خلاصه سفارش</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <span>مجموع قیمت:</span>
+                                        <span>{{ order.total_amount|floatformat:0|intcomma }} تومان</span>
+                                    </div>
+                                    {% if order.discount_amount %}
+                                    <div class="d-flex justify-content-between text-success">
+                                        <span>تخفیف:</span>
+                                        <span>-{{ order.discount_amount|floatformat:0|intcomma }} تومان</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if order.shipping_cost %}
+                                    <div class="d-flex justify-content-between">
+                                        <span>هزینه ارسال:</span>
+                                        <span>{{ order.shipping_cost|floatformat:0|intcomma }} تومان</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if order.tax_amount %}
+                                    <div class="d-flex justify-content-between">
+                                        <span>مالیات:</span>
+                                        <span>{{ order.tax_amount|floatformat:0|intcomma }} تومان</span>
+                                    </div>
+                                    {% endif %}
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>مجموع نهایی:</strong>
+                                        <strong>{{ order.get_final_total|floatformat:0|intcomma }} تومان</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>اطلاعات ارسال</h6>
+                                    {% if order.shipping_address %}
+                                        <p><strong>آدرس:</strong> {{ order.shipping_address.get_full_address }}</p>
+                                        <p><strong>گیرنده:</strong> {{ order.shipping_address.recipient_name }}</p>
+                                        <p><strong>تلفن:</strong> {{ order.shipping_address.phone }}</p>
+                                    {% endif %}
+                                    <p><strong>زمان ثبت:</strong> {{ order.created_at|date:"Y/m/d H:i" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Section -->
+                    {% if order.status == 'pending' %}
+                    <div class="mt-4">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>توجه:</strong> این سفارش هنوز پرداخت نشده است.
+                        </div>
+                        <div class="text-center">
+                            <a href="{% url 'payments:initiate_payment' order.id %}" class="btn btn-success btn-lg me-2">
+                                <i class="fas fa-credit-card"></i> پرداخت آنلاین (زرین‌پال)
+                            </a>
+                            <a href="{% url 'payments:card_to_card_payment' order.id %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-money-bill-wave"></i> پرداخت کارت به کارت
+                            </a>
+                        </div>
+                    </div>
+                    {% elif order.payment %}
+                    <div class="mt-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">اطلاعات پرداخت</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>روش پرداخت:</strong> {{ order.payment.get_payment_method_display }}</p>
+                                        <p><strong>وضعیت:</strong>
+                                            <span class="badge badge-{{ order.payment.status|lower }}">
+                                                {{ order.payment.get_status_display }}
+                                            </span>
+                                        </p>
+                                        {% if order.payment.transaction_id %}
+                                        <p><strong>کد پیگیری:</strong> {{ order.payment.transaction_id }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {% if order.payment.payment_date %}
+                                        <p><strong>تاریخ پرداخت:</strong> {{ order.payment.payment_date|date:"Y/m/d H:i" }}</p>
+                                        {% endif %}
+                                        <p><strong>مبلغ:</strong> {{ order.payment.amount|floatformat:0|intcomma }} تومان</p>
+                                        {% if order.payment.can_retry %}
+                                        <a href="{% url 'payments:retry_payment' order.payment.id %}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-redo"></i> تلاش مجدد
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-arrow-left"></i> بازگشت به داشبورد
+                        </a>
+                        {% if order.can_cancel %}
+                        <button class="btn btn-danger" onclick="cancelOrder({{ order.id }})">
+                            <i class="fas fa-times"></i> لغو سفارش
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function cancelOrder(orderId) {
+    if (confirm('آیا از لغو این سفارش اطمینان دارید؟')) {
+        fetch(`/orders/${orderId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'خطا در لغو سفارش');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور');
+        });
+    }
+}
+</script>
+{% endblock %}

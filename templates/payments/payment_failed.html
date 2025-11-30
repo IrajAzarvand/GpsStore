@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}پرداخت ناموفق{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-times-circle"></i> پرداخت ناموفق
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-times-circle fa-4x text-danger"></i>
+                    </div>
+                    <h5 class="text-danger">پرداخت شما انجام نشد!</h5>
+                    <p class="text-muted">متأسفانه در فرآیند پرداخت مشکلی پیش آمده است.</p>
+
+                    {% if error %}
+                    <div class="alert alert-danger">
+                        <strong>علت خطا:</strong> {{ error }}
+                    </div>
+                    {% endif %}
+
+                    {% if payment %}
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h6>جزئیات پرداخت</h6>
+                                <p><strong>شماره سفارش:</strong> {{ payment.order.order_number }}</p>
+                                <p><strong>مبلغ:</strong> {{ payment.amount|floatformat:0|intcomma }} تومان</p>
+                                <p><strong>روش پرداخت:</strong> {{ payment.get_payment_method_display }}</p>
+                                <p><strong>وضعیت:</strong>
+                                    <span class="badge badge-danger">{{ payment.get_status_display }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h6>اقدامات بعدی</h6>
+                                <p>می‌توانید پرداخت را دوباره امتحان کنید یا از روش دیگری استفاده کنید.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        {% if payment and payment.can_retry %}
+                        <a href="{% url 'payments:retry_payment' payment.id %}" class="btn btn-warning mr-2">
+                            <i class="fas fa-redo"></i> تلاش مجدد
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'orders:order_detail' payment.order.id %}" class="btn btn-primary mr-2">
+                            <i class="fas fa-eye"></i> مشاهده سفارش
+                        </a>
+                        <a href="{% url 'cart:cart_detail' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-shopping-cart"></i> سبد خرید
+                        </a>
+                    </div>
+
+                    <div class="alert alert-warning mt-4">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>نکته:</strong> اگر مبلغ از حساب شما کسر شده، طی ۲۴ ساعت آینده بازگردانده خواهد شد.
+                        در صورت عدم بازگشت وجه، با پشتیبانی تماس بگیرید.
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>راه‌های ارتباطی:</h6>
+                        <p>
+                            <i class="fas fa-phone"></i> تلفن: ۰۲۱-۱۲۳۴۵۶۷۸<br>
+                            <i class="fas fa-envelope"></i> ایمیل: support@gpsstore.ir
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

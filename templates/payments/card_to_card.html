@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}پرداخت کارت به کارت{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">پرداخت کارت به کارت</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>نکته:</strong> اطلاعات کارت بانکی مقصد را از ادمین دریافت کنید و پس از انتقال وجه، فرم زیر را تکمیل کنید.
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h6>جزئیات سفارش</h6>
+                                <p><strong>شماره سفارش:</strong> {{ order.order_number }}</p>
+                                <p><strong>مبلغ قابل پرداخت:</strong> {{ order.get_final_total|floatformat:0|intcomma }} تومان</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3">
+                                <h6>اطلاعات کارت مقصد</h6>
+                                <p><strong>شماره کارت:</strong> ۱۲۳۴-۵۶۷۸-۹۰۱۲-۳۴۵۶</p>
+                                <p><strong>به نام:</strong> فروشگاه GPS</p>
+                                <p><strong>بانک:</strong> ملت</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="payer_name">نام و نام خانوادگی پرداخت کننده *</label>
+                                    <input type="text" class="form-control" id="payer_name" name="payer_name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="card_number">شماره کارت مبدأ (فرمت: XXXX-XXXX-XXXX-XXXX) *</label>
+                                    <input type="text" class="form-control" id="card_number" name="card_number"
+                                           pattern="\d{4}-\d{4}-\d{4}-\d{4}" placeholder="1234-5678-9012-3456" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="transfer_amount">مبلغ انتقال (تومان) *</label>
+                                    <input type="number" class="form-control" id="transfer_amount" name="transfer_amount"
+                                           value="{{ order.get_final_total|floatformat:0 }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="transfer_date">تاریخ انتقال *</label>
+                                    <input type="date" class="form-control" id="transfer_date" name="transfer_date" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">توضیحات (اختیاری)</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                      placeholder="شماره پیگیری بانک، ساعت انتقال و..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="receipt_image">تصویر رسید (اختیاری)</label>
+                            <input type="file" class="form-control-file" id="receipt_image" name="receipt_image"
+                                   accept="image/*">
+                            <small class="form-text text-muted">تصویر رسید بانکی را آپلود کنید (jpg, png, حداکثر ۲MB)</small>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>توجه:</strong> اطلاعات وارد شده باید دقیق باشد. پس از تأیید ادمین، سفارش شما پردازش خواهد شد.
+                            زمان بررسی معمولاً ۲۴ ساعت است.
+                        </div>
+
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-paper-plane"></i> ثبت اطلاعات کارت به کارت
+                            </button>
+                            <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-secondary btn-lg ml-2">
+                                <i class="fas fa-arrow-left"></i> بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto format card number
+document.getElementById('card_number').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 4) {
+        value = value.substring(0, 4) + '-' + value.substring(4);
+    }
+    if (value.length >= 9) {
+        value = value.substring(0, 9) + '-' + value.substring(9);
+    }
+    if (value.length >= 14) {
+        value = value.substring(0, 14) + '-' + value.substring(14, 16);
+    }
+    e.target.value = value.substring(0, 19);
+});
+</script>
+{% endblock %}

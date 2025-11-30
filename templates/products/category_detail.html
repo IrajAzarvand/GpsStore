@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ category.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'products:home' %}">خانه</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'products:category_list' %}">دسته‌بندی‌ها</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex align-items-center mb-3">
+                {% if category.image %}
+                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="me-3 rounded" style="width: 80px; height: 80px; object-fit: cover;">
+                {% endif %}
+                <div>
+                    <h1 class="mb-1">{{ category.name }}</h1>
+                    {% if category.description %}
+                    <p class="text-muted mb-0">{{ category.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subcategories -->
+    {% if subcategories %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">زیرمجموعه‌ها</h3>
+            <div class="row">
+                {% for subcategory in subcategories %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">{{ subcategory.name }}</h6>
+                            <a href="{% url 'products:category_detail' subcategory.slug %}" class="btn btn-sm btn-outline-primary">مشاهده</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Products -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-3">محصولات {{ category.name }}</h3>
+
+            {% if products %}
+            <div class="row">
+                {% for product in products %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100 product-card">
+                        {% if product.images.first %}
+                        <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                            <span class="text-muted">بدون تصویر</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">{{ product.name }}</h6>
+                            <p class="card-text text-muted small">{{ product.short_description|truncatechars:60 }}</p>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    {% if product.discount_price %}
+                                    <div>
+                                        <span class="text-decoration-line-through text-muted">{{ product.price|floatformat:0 }} تومان</span>
+                                        <span class="text-danger fw-bold">{{ product.discount_price|floatformat:0 }} تومان</span>
+                                    </div>
+                                    {% else %}
+                                    <span class="fw-bold">{{ product.price|floatformat:0 }} تومان</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'products:product_detail' product.slug %}" class="btn btn-outline-primary btn-sm flex-fill">جزئیات</a>
+                                    {% if product.is_in_stock %}
+                                    <form method="post" action="{% url 'cart:add_to_cart' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-primary btn-sm add-to-cart-btn">افزودن به سبد</button>
+                                    </form>
+                                    {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled>ناموجود</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                هیچ محصولی در این دسته‌بندی یافت نشد.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.product-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+    border-bottom: 1px solid #dee2e6;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle add to cart buttons with AJAX
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const form = this.closest('form');
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart counter
+                    const cartCounter = document.getElementById('cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.total_items;
+                    }
+                    // Show success message
+                    showMessage(data.message || 'محصول به سبد خرید اضافه شد.', 'success');
+                } else {
+                    showMessage(data.message || 'خطا در افزودن محصول به سبد خرید.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('خطا در ارتباط با سرور.', 'error');
+            });
+        });
+    });
+});
+
+function showMessage(message, type) {
+    // Create message element
+    const messageEl = document.createElement('div');
+    messageEl.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    messageEl.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageEl.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(messageEl);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        messageEl.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

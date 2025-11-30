@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+
+{% block title %}ثبت نام{% endblock %}
+
+{% block content %}
+<style>
+    /* استایل‌های مخصوص صفحه ثبت نام */
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 40px 0;
+    }
+
+    .auth-box {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 500px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .auth-box:hover {
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        transform: translateY(-5px);
+    }
+
+    .auth-header {
+        background: linear-gradient(135deg, #27ae60, #2c3e50);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+        background-size: cover;
+    }
+
+    .auth-header h2 {
+        font-size: 26px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .auth-header p {
+        opacity: 0.9;
+        position: relative;
+    }
+
+    .auth-body {
+        padding: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background-color: #f9f9f9;
+    }
+
+    .form-control:focus {
+        border-color: #27ae60;
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+        outline: none;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 42px;
+        color: #7f8c8d;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 15px;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        margin-left: 10px;
+        margin-top: 2px;
+        transform: scale(1.2);
+    }
+
+    .checkbox-group label {
+        font-size: 14px;
+        line-height: 1.4;
+        color: #555;
+    }
+
+    .checkbox-group a {
+        color: #27ae60;
+        text-decoration: none;
+    }
+
+    .checkbox-group a:hover {
+        text-decoration: underline;
+    }
+
+    .btn-auth {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .btn-auth:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+    }
+
+    .auth-footer {
+        text-align: center;
+        color: #7f8c8d;
+    }
+
+    .auth-footer a {
+        color: #27ae60;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .auth-footer a:hover {
+        color: #2ecc71;
+        text-decoration: underline;
+    }
+
+    /* انیمیشن‌ها */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.6s ease forwards;
+    }
+
+    /* ریسپانسیو */
+    @media (max-width: 768px) {
+        .auth-box {
+            max-width: 100%;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+    }
+
+    /* پیام‌های خطا */
+    .error-message {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        border: 1px solid #f5c6cb;
+    }
+
+    .success-message {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        border: 1px solid #c3e6cb;
+    }
+</style>
+
+<div class="auth-container">
+    <div class="auth-box fade-in">
+        <div class="auth-header">
+            <h2>ثبت نام در فروشگاه GPS</h2>
+            <p>برای دسترسی به تمام امکانات، حساب کاربری خود را ایجاد کنید</p>
+        </div>
+
+        <div class="auth-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error-message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="error-message">
+                                {{ form.first_name.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="error-message">
+                                {{ form.last_name.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    <div class="input-icon">
+                        <i class="fas fa-at"></i>
+                    </div>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="error-message">
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    <div class="input-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="error-message">
+                            {{ form.email.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.phone_number.id_for_label }}">شماره موبایل</label>
+                    <div class="input-icon">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}
+                        <div class="error-message">
+                            {{ form.phone_number.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="error-message">
+                            {{ form.password1.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="error-message">
+                            {{ form.password2.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="agree_terms" name="agree_terms" required>
+                    <label for="agree_terms">
+                        با <a href="#" target="_blank">قوانین و مقررات</a> و <a href="#" target="_blank">سیاست حفظ حریم خصوصی</a> موافقم
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-auth">ثبت نام</button>
+
+                <div class="auth-footer">
+                    حساب کاربری دارید؟ <a href="{% url 'accounts:login' %}">وارد شوید</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // مدیریت فرم ثبت‌نام
+    document.addEventListener('DOMContentLoaded', function() {
+        // اضافه کردن کلاس‌های استایل به فیلدهای فرم
+        const formControls = document.querySelectorAll('.form-control');
+        formControls.forEach(function(control) {
+            control.classList.add('form-control');
+        });
+
+        // اعتبارسنجی شماره موبایل
+        const phoneField = document.querySelector('input[name="phone_number"]');
+        if (phoneField) {
+            phoneField.addEventListener('input', function() {
+                // فقط اعداد مجاز
+                this.value = this.value.replace(/[^0-9]/g, '');
+                // حداکثر 11 رقم
+                if (this.value.length > 11) {
+                    this.value = this.value.slice(0, 11);
+                }
+            });
+        }
+
+        // نمایش/مخفی کردن رمز عبور (اختیاری)
+        const passwordFields = document.querySelectorAll('input[type="password"]');
+        passwordFields.forEach(function(field, index) {
+            const passwordGroup = field.closest('.form-group');
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+            toggleBtn.style.position = 'absolute';
+            toggleBtn.style.left = '10px';
+            toggleBtn.style.top = '42px';
+            toggleBtn.style.background = 'none';
+            toggleBtn.style.border = 'none';
+            toggleBtn.style.color = '#7f8c8d';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.style.zIndex = '10';
+
+            passwordGroup.style.position = 'relative';
+            passwordGroup.appendChild(toggleBtn);
+
+            toggleBtn.addEventListener('click', function() {
+                if (field.type === 'password') {
+                    field.type = 'text';
+                    toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                } else {
+                    field.type = 'password';
+                    toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}محصولات{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">محصولات</h1>
+
+            <!-- Filters -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">دسته‌بندی</label>
+                            <select name="category" id="category" class="form-select">
+                                <option value="">همه دسته‌بندی‌ها</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="min_price" class="form-label">حداقل قیمت</label>
+                            <input type="number" name="min_price" id="min_price" class="form-control" value="{{ min_price }}" placeholder="تومان">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="max_price" class="form-label">حداکثر قیمت</label>
+                            <input type="number" name="max_price" id="max_price" class="form-control" value="{{ max_price }}" placeholder="تومان">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="sort" class="form-label">مرتب‌سازی</label>
+                            <select name="sort" id="sort" class="form-select">
+                                <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>جدیدترین</option>
+                                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>نام (الف-ی)</option>
+                                <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>نام (ی-الف)</option>
+                                <option value="price" {% if sort_by == 'price' %}selected{% endif %}>قیمت (کم به زیاد)</option>
+                                <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>قیمت (زیاد به کم)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">فیلتر</button>
+                            <a href="{% url 'products:product_list' %}" class="btn btn-outline-secondary">پاک کردن</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Products Grid -->
+        <div class="col-lg-9">
+            {% include 'products/_product_list.html' %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <!-- Categories -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">دسته‌بندی‌ها</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <a href="{% url 'products:product_list' %}" class="text-decoration-none {% if not current_category %}fw-bold{% endif %}">همه محصولات</a>
+                        </li>
+                        {% for category in categories %}
+                        <li class="list-group-item">
+                            <a href="?category={{ category.slug }}{% for key,value in request.GET.items %}{% if key != 'category' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="text-decoration-none {% if current_category == category.slug %}fw-bold{% endif %}">{{ category.name }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Price Range -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">محدوده قیمت</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="price-range" class="form-label">قیمت (تومان)</label>
+                        <input type="range" class="form-range" id="price-range" min="0" max="10000000" step="100000">
+                        <div class="d-flex justify-content-between">
+                            <span id="price-min">0</span>
+                            <span id="price-max">10,000,000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle add to cart buttons with AJAX
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const form = this.closest('form');
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart counter
+                    const cartCounter = document.getElementById('cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.total_items;
+                    }
+                    // Show success message
+                    showMessage(data.message || 'محصول به سبد خرید اضافه شد.', 'success');
+                } else {
+                    showMessage(data.message || 'خطا در افزودن محصول به سبد خرید.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('خطا در ارتباط با سرور.', 'error');
+            });
+        });
+    });
+
+    // Price range slider
+    const priceRange = document.getElementById('price-range');
+    const priceMin = document.getElementById('price-min');
+    const priceMax = document.getElementById('price-max');
+
+    if (priceRange) {
+        priceRange.addEventListener('input', function() {
+            const value = parseInt(this.value);
+            priceMax.textContent = value.toLocaleString('fa-IR');
+        });
+    }
+});
+
+function showMessage(message, type) {
+    // Create message element
+    const messageEl = document.createElement('div');
+    messageEl.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    messageEl.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageEl.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(messageEl);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        messageEl.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

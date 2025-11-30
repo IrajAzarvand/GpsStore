@@ -1,0 +1,10 @@
+[Unit]
+Description=Gunicorn socket for GPS Store
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+SocketUser=www-data
+SocketGroup=www-data
+
+[Install]
+WantedBy=sockets.target

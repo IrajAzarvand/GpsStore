@@ -1,0 +1,22 @@
+[Unit]
+Description=Gunicorn daemon for GPS Store
+After=network.target
+Requires=gunicorn.socket
+Wants=gunicorn.socket
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/ubuntu/gpsstore
+Environment="PATH=/home/ubuntu/gpsstore/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=gps_store.settings"
+ExecStart=/home/ubuntu/gpsstore/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          gps_store.wsgi:application
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

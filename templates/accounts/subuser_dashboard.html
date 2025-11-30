@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Sub-user Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">پنل کاربر زیرمجموعه</h1>
+
+            {% if error %}
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+            {% else %}
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">دستگاه‌های تخصیص یافته</h5>
+                                <h3>{{ total_devices }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">دستگاه‌های فعال</h5>
+                                <h3>{{ assigned_devices|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Devices Section -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">دستگاه‌های GPS تخصیص یافته</h5>
+                                <a href="{% url 'gps_devices:device_map' %}" class="btn btn-primary btn-sm">نمایش روی نقشه</a>
+                            </div>
+                            <div class="card-body">
+                                {% if assigned_devices %}
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>نام دستگاه</th>
+                                                    <th>IMEI</th>
+                                                    <th>وضعیت</th>
+                                                    <th>آخرین بروزرسانی</th>
+                                                    <th>باتری</th>
+                                                    <th>عملیات</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for device in assigned_devices %}
+                                                <tr data-device-id="{{ device.id }}">
+                                                    <td>{{ device.name }}</td>
+                                                    <td>{{ device.imei|default:device.device_id|default:"N/A" }}</td>
+                                                    <td>
+                                                        <span class="badge badge-{% if device.status == 'active' %}success{% elif device.status == 'inactive' %}secondary{% else %}warning{% endif %}">
+                                                            {{ device.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {% if device.last_location_time %}
+                                                            {{ device.last_location_time|date:"Y-m-d H:i" }}
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if device.battery_level %}
+                                                            {{ device.battery_level }}%
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-info" onclick="showDeviceDetails({{ device.id }})">جزئیات</button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p class="text-center text-muted">هیچ دستگاهی به شما تخصیص نیافته است.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Device Details Modal -->
+<div class="modal fade" id="deviceModal" tabindex="-1" role="dialog" aria-labelledby="deviceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deviceModalLabel">جزئیات دستگاه</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="deviceModalBody">
+                <!-- Device details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showDeviceDetails(deviceId) {
+    // Find device data from the table
+    const row = document.querySelector(`tr[data-device-id="${deviceId}"]`);
+    if (row) {
+        const cells = row.querySelectorAll('td');
+        const name = cells[0].textContent;
+        const imei = cells[1].textContent;
+        // For now, show basic info - can be enhanced later
+        const modalBody = document.getElementById('deviceModalBody');
+        modalBody.innerHTML = `
+            <div class="row">
+                <div class="col-md-12">
+                    <h6>اطلاعات دستگاه: ${name}</h6>
+                    <p><strong>IMEI:</strong> ${imei}</p>
+                    <p class="text-muted">برای اطلاعات بیشتر کامل، لطفا به صفحه نقشه مراجعه کنید.</p>
+                </div>
+            </div>
+        `;
+        $('#deviceModal').modal('show');
+    }
+}
+</script>
+{% endblock %}

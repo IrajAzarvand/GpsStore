@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Devices to Sub-users{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">تخصیص دستگاه‌ها به کاربران زیرمجموعه</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label for="{{ form.subuser.id_for_label }}">کاربر زیرمجموعه</label>
+                            {{ form.subuser }}
+                            {% if form.subuser.errors %}
+                                <div class="text-danger">
+                                    {{ form.subuser.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.devices.id_for_label }}">دستگاه‌ها</label>
+                            {{ form.devices }}
+                            {% if form.devices.errors %}
+                                <div class="text-danger">
+                                    {{ form.devices.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">دستگاه‌هایی که می‌خواهید به این کاربر تخصیص دهید را انتخاب کنید.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">تخصیص دستگاه‌ها</button>
+                            <a href="{% url 'accounts:customer_dashboard' %}" class="btn btn-secondary">انصراف</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Current Assignments Info -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">تخصیص‌های فعلی</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">برای مشاهده تخصیص‌های فعلی، به پنل مشتری مراجعه کنید.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}سبد خرید{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">سبد خرید</h1>
+
+            {% if cart_items %}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>محصول</th>
+                                        <th>قیمت واحد</th>
+                                        <th>تعداد</th>
+                                        <th>مجموع</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in cart_items %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if item.product.images.exists %}
+                                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" class="me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ item.product.name }}</h6>
+                                                    <small class="text-muted">{{ item.product.sku }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ item.product.get_discounted_price|floatformat:0|intcomma }} تومان</td>
+                                        <td>
+                                            <form method="post" action="{% url 'cart:cart_update' item.product.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <div class="input-group input-group-sm" style="width: 120px;">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm quantity-btn" data-action="decrease">-</button>
+                                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.product.stock_quantity }}" class="form-control text-center quantity-input">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm quantity-btn" data-action="increase">+</button>
+                                                </div>
+                                            </form>
+                                        </td>
+                                        <td><strong>{{ item.get_total_price|floatformat:0|intcomma }} تومان</strong></td>
+                                        <td>
+                                            <form method="post" action="{% url 'cart:cart_remove' item.product.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('آیا از حذف این محصول اطمینان دارید؟')">
+                                                    <i class="fas fa-trash"></i> حذف
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>خلاصه سفارش</h5>
+                                        <div class="d-flex justify-content-between">
+                                            <span>تعداد کل آیتم‌ها:</span>
+                                            <span>{{ total_items }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-2">
+                                            <strong>مجموع قیمت:</strong>
+                                            <strong class="total-price">{{ total_price|floatformat:0|intcomma }} تومان</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <a href="{% url 'products:product_list' %}" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-arrow-left"></i> ادامه خرید
+                                </a>
+                                <a href="{% url 'orders:create_order' %}" class="btn btn-success">
+                                    <i class="fas fa-credit-card"></i> تسویه حساب
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-shopping-cart fa-4x text-muted"></i>
+                    </div>
+                    <h3 class="text-muted">سبد خرید شما خالی است</h3>
+                    <p class="text-muted mb-4">محصول مورد نظر خود را پیدا کرده و به سبد خرید اضافه کنید.</p>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-primary">
+                        <i class="fas fa-shopping-bag"></i> شروع خرید
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle quantity buttons with AJAX
+    document.querySelectorAll('.quantity-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const input = this.parentElement.querySelector('.quantity-input');
+            let value = parseInt(input.value);
+
+            if (this.dataset.action === 'increase') {
+                value++;
+            } else if (this.dataset.action === 'decrease' && value > 1) {
+                value--;
+            }
+
+            input.value = value;
+
+            // Submit with AJAX
+            const form = this.closest('form');
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart counter
+                    const cartCounter = document.getElementById('cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.total_items;
+                    }
+                    // Update total price
+                    document.querySelector('.total-price').textContent = data.total_price.toLocaleString('fa-IR') + ' تومان';
+                    // Show success message
+                    showMessage('سبد خرید بروزرسانی شد.', 'success');
+                } else {
+                    showMessage(data.message || 'خطا در بروزرسانی سبد خرید.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('خطا در ارتباط با سرور.', 'error');
+            });
+        });
+    });
+
+    // Handle quantity input change with AJAX
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const form = this.closest('form');
+            const formData = new FormData(form);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart counter
+                    const cartCounter = document.getElementById('cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.total_items;
+                    }
+                    // Update total price
+                    document.querySelector('.total-price').textContent = data.total_price.toLocaleString('fa-IR') + ' تومان';
+                    // Show success message
+                    showMessage('سبد خرید بروزرسانی شد.', 'success');
+                } else {
+                    showMessage(data.message || 'خطا در بروزرسانی سبد خرید.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('خطا در ارتباط با سرور.', 'error');
+            });
+        });
+    });
+
+    // Handle remove item with AJAX
+    document.querySelectorAll('form[action*="cart_remove"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!confirm('آیا از حذف این محصول اطمینان دارید؟')) {
+                return;
+            }
+
+            const formData = new FormData(this);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart counter
+                    const cartCounter = document.getElementById('cart-counter');
+                    if (cartCounter) {
+                        cartCounter.textContent = data.total_items;
+                    }
+                    // Remove the row
+                    this.closest('tr').remove();
+                    // Update total price
+                    document.querySelector('.total-price').textContent = data.total_price.toLocaleString('fa-IR') + ' تومان';
+                    // Show success message
+                    showMessage(data.message || 'محصول از سبد خرید حذف شد.', 'success');
+
+                    // If no items left, reload page to show empty cart
+                    if (data.total_items === 0) {
+                        location.reload();
+                    }
+                } else {
+                    showMessage(data.message || 'خطا در حذف محصول از سبد خرید.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('خطا در ارتباط با سرور.', 'error');
+            });
+        });
+    });
+});
+
+function showMessage(message, type) {
+    // Create message element
+    const messageEl = document.createElement('div');
+    messageEl.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    messageEl.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageEl.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(messageEl);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        messageEl.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

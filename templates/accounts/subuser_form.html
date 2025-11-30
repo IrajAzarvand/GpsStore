@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Sub-user{% else %}Add Sub-user{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        {% if form.instance.pk %}ویرایش کاربر زیرمجموعه{% else %}افزودن کاربر زیرمجموعه جدید{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}">نام کاربری</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="text-danger">
+                                    {{ form.username.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">ایمیل (اختیاری)</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger">
+                                    {{ form.email.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if not form.instance.pk %}
+                        <div class="form-group">
+                            <label for="{{ form.password.id_for_label }}">رمز عبور</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                                <div class="text-danger">
+                                    {{ form.password.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            <label for="{{ form.assigned_devices.id_for_label }}">دستگاه‌های تخصیص یافته</label>
+                            {{ form.assigned_devices }}
+                            {% if form.assigned_devices.errors %}
+                                <div class="text-danger">
+                                    {{ form.assigned_devices.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">دستگاه‌هایی که این کاربر می‌تواند مشاهده کند را انتخاب کنید.</small>
+                        </div>
+
+                        <div class="form-group form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                فعال
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="text-danger">
+                                    {{ form.is_active.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                {% if form.instance.pk %}بروزرسانی{% else %}ایجاد{% endif %}
+                            </button>
+                            <a href="{% url 'accounts:customer_dashboard' %}" class="btn btn-secondary">انصراف</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

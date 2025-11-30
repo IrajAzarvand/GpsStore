@@ -1,0 +1,493 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}ردیابی دستگاه {{ device.name }}{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Custom CSS for device tracking -->
+<style>
+.device-header {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.device-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.info-item {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.info-label {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.map-container {
+    height: 500px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.controls-panel {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-control {
+    padding: 8px 16px;
+    border: 1px solid #007bff;
+    background: white;
+    color: #007bff;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9em;
+    transition: all 0.2s;
+}
+
+.btn-control:hover {
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-control.active {
+    background: #007bff;
+    color: white;
+}
+
+.location-history {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.location-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.location-item:last-child {
+    border-bottom: none;
+}
+
+.location-coords {
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.location-time {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.location-speed {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.geofence-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.geofence-item {
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.geofence-item input[type="checkbox"] {
+    margin-left: 5px;
+}
+
+.alert-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #dc3545;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+    max-width: 300px;
+    display: none;
+}
+
+.alert-panel.show {
+    display: block;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Device Header -->
+    <div class="device-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">{{ device.name }}</h1>
+                <p class="text-muted mb-0">{{ device.device_type.name }} - ID: {{ device.imei|default:device.device_id }}</p>
+            </div>
+            <div class="text-left">
+                <span class="badge badge-{% if device.status == 'active' %}success{% elif device.status == 'inactive' %}secondary{% else %}warning{% endif %}">
+                    {% if device.status == 'active' %}فعال{% elif device.status == 'inactive' %}غیرفعال{% else %}معلق{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="device-info">
+            <div class="info-item">
+                <div class="info-label">آخرین موقعیت</div>
+                <div class="info-value">
+                    {% if device.last_location_lat and device.last_location_lng %}
+                        {{ device.last_location_lat|floatformat:6 }}, {{ device.last_location_lng|floatformat:6 }}
+                    {% else %}
+                        نامشخص
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">زمان آخرین بروزرسانی</div>
+                <div class="info-value">
+                    {% if device.last_location_time %}
+                        {{ device.last_location_time|date:"H:i Y/m/d" }}
+                    {% else %}
+                        نامشخص
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">سطح باتری</div>
+                <div class="info-value">
+                    {% if device.battery_level %}
+                        {{ device.battery_level }}%
+                    {% else %}
+                        نامشخص
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">تعداد موقعیت‌ها</div>
+                <div class="info-value">{{ location_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+        <h4 class="mb-3">کنترل‌ها</h4>
+        <div class="control-buttons">
+            <a href="#" id="btn-play" class="btn-control">
+                <i class="fas fa-play"></i> شروع ردیابی
+            </a>
+            <a href="#" id="btn-pause" class="btn-control">
+                <i class="fas fa-pause"></i> توقف ردیابی
+            </a>
+            <a href="#" id="btn-center" class="btn-control">
+                <i class="fas fa-crosshairs"></i> مرکز نقشه
+            </a>
+            <a href="#" id="btn-refresh" class="btn-control">
+                <i class="fas fa-sync"></i> بروزرسانی
+            </a>
+            <a href="{% url 'tracking:real_time_tracking' device.id %}" class="btn-control">
+                <i class="fas fa-satellite"></i> ردیابی زنده
+            </a>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="map-container">
+        <div id="map"></div>
+
+        <!-- Geofence Toggle -->
+        {% if geofences %}
+        <div class="geofence-overlay">
+            <h6>نمایش geofenceها</h6>
+            {% for geofence in geofences %}
+            <div class="geofence-item">
+                <input type="checkbox" id="geofence-{{ geofence.id }}" checked>
+                <label for="geofence-{{ geofence.id }}">{{ geofence.name }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Alert Panel -->
+    <div id="alert-panel" class="alert-panel">
+        <h6><i class="fas fa-exclamation-triangle"></i> هشدار</h6>
+        <p id="alert-message"></p>
+        <button id="alert-close" class="btn btn-light btn-sm">بستن</button>
+    </div>
+
+    <!-- Location History -->
+    <div class="location-history">
+        <h4 class="mb-3">تاریخچه موقعیت‌ها (۲۴ ساعت گذشته)</h4>
+        {% if recent_locations %}
+        <div id="location-list">
+            {% for location in recent_locations %}
+            <div class="location-item">
+                <div>
+                    <div class="location-coords">{{ location.latitude|floatformat:6 }}, {{ location.longitude|floatformat:6 }}</div>
+                    <div class="location-time">{{ location.timestamp|date:"H:i Y/m/d" }}</div>
+                </div>
+                <div class="text-left">
+                    {% if location.speed %}
+                    <div class="location-speed">{{ location.speed }} km/h</div>
+                    {% endif %}
+                    {% if location.address %}
+                    <small class="text-muted">{{ location.address }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            هیچ موقعیتی در ۲۴ ساعت گذشته ثبت نشده است.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let map;
+let markers = [];
+let polylines = [];
+let geofenceLayers = [];
+let isTracking = false;
+let trackingInterval;
+
+const deviceId = {{ device.id }};
+const initialLat = {{ device.last_location_lat|default:"35.6892" }};
+const initialLng = {{ device.last_location_lng|default:"51.3890" }};
+
+// Initialize map
+function initMap() {
+    map = L.map('map').setView([initialLat, initialLng], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add initial marker if device has location
+    {% if device.last_location_lat and device.last_location_lng %}
+    addDeviceMarker({{ device.last_location_lat }}, {{ device.last_location_lng }}, '{{ device.last_location_time|date:"H:i Y/m/d" }}');
+    {% endif %}
+
+    // Load location history
+    loadLocationHistory();
+
+    // Load geofences
+    loadGeofences();
+}
+
+// Add device marker
+function addDeviceMarker(lat, lng, time) {
+    const marker = L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup(`<b>{{ device.name }}</b><br>زمان: ${time}<br>موقعیت: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+
+    markers.push(marker);
+    return marker;
+}
+
+// Load location history
+function loadLocationHistory() {
+    fetch(`{% url 'tracking:get_device_locations' device.id %}?hours=24&limit=100`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.locations && data.locations.length > 0) {
+                const latlngs = data.locations.map(loc => [loc.latitude, loc.longitude]);
+
+                // Add polyline
+                const polyline = L.polyline(latlngs, {color: 'blue', weight: 3, opacity: 0.7}).addTo(map);
+                polylines.push(polyline);
+
+                // Fit map to show all points
+                map.fitBounds(polyline.getBounds());
+            }
+        })
+        .catch(error => console.error('Error loading location history:', error));
+}
+
+// Load geofences
+function loadGeofences() {
+    {% for geofence in geofences %}
+    {% if geofence.shape == 'circle' %}
+    const circle = L.circle([{{ geofence.center_lat }}, {{ geofence.center_lng }}], {
+        color: 'red',
+        fillColor: 'red',
+        fillOpacity: 0.2,
+        radius: {{ geofence.radius }}
+    }).addTo(map);
+
+    geofenceLayers.push({
+        id: {{ geofence.id }},
+        layer: circle,
+        visible: true
+    });
+    {% elif geofence.shape == 'polygon' %}
+    const polygon = L.polygon({{ geofence.polygon_points }}, {
+        color: 'red',
+        fillColor: 'red',
+        fillOpacity: 0.2
+    }).addTo(map);
+
+    geofenceLayers.push({
+        id: {{ geofence.id }},
+        layer: polygon,
+        visible: true
+    });
+    {% endif %}
+    {% endfor %}
+
+    // Add geofence toggle listeners
+    {% for geofence in geofences %}
+    document.getElementById('geofence-{{ geofence.id }}').addEventListener('change', function(e) {
+        const layer = geofenceLayers.find(g => g.id === {{ geofence.id }});
+        if (layer) {
+            if (e.target.checked) {
+                map.addLayer(layer.layer);
+                layer.visible = true;
+            } else {
+                map.removeLayer(layer.layer);
+                layer.visible = false;
+            }
+        }
+    });
+    {% endfor %}
+}
+
+// Start tracking
+function startTracking() {
+    if (isTracking) return;
+
+    isTracking = true;
+    document.getElementById('btn-play').classList.add('active');
+    document.getElementById('btn-pause').classList.remove('active');
+
+    trackingInterval = setInterval(() => {
+        fetch(`{% url 'tracking:get_device_locations' device.id %}?hours=1&limit=1`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.locations && data.locations.length > 0) {
+                    const latest = data.locations[0];
+
+                    // Update markers
+                    markers.forEach(marker => map.removeLayer(marker));
+                    markers = [];
+                    addDeviceMarker(latest.latitude, latest.longitude, latest.timestamp);
+
+                    // Update map view
+                    map.setView([latest.latitude, latest.longitude]);
+                }
+            })
+            .catch(error => console.error('Error updating location:', error));
+    }, 30000); // Update every 30 seconds
+}
+
+// Stop tracking
+function stopTracking() {
+    if (!isTracking) return;
+
+    isTracking = false;
+    document.getElementById('btn-pause').classList.add('active');
+    document.getElementById('btn-play').classList.remove('active');
+
+    if (trackingInterval) {
+        clearInterval(trackingInterval);
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+
+    document.getElementById('btn-play').addEventListener('click', function(e) {
+        e.preventDefault();
+        startTracking();
+    });
+
+    document.getElementById('btn-pause').addEventListener('click', function(e) {
+        e.preventDefault();
+        stopTracking();
+    });
+
+    document.getElementById('btn-center').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (markers.length > 0) {
+            map.setView(markers[0].getLatLng());
+        }
+    });
+
+    document.getElementById('btn-refresh').addEventListener('click', function(e) {
+        e.preventDefault();
+        loadLocationHistory();
+    });
+
+    // Alert panel
+    document.getElementById('alert-close').addEventListener('click', function() {
+        document.getElementById('alert-panel').classList.remove('show');
+    });
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    stopTracking();
+});
+</script>
+{% endblock %}

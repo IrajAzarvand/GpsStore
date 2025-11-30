@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Sub-user{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">تأیید حذف کاربر زیرمجموعه</h5>
+                </div>
+                <div class="card-body">
+                    <p>آیا مطمئن هستید که می‌خواهید کاربر زیرمجموعه <strong>{{ subuser.username }}</strong> را حذف کنید؟</p>
+
+                    <div class="alert alert-warning">
+                        <strong>هشدار:</strong> این عملیات غیرقابل برگشت است. تمام تخصیص‌های دستگاه این کاربر نیز حذف خواهد شد.
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">بله، حذف کن</button>
+                        <a href="{% url 'accounts:customer_dashboard' %}" class="btn btn-secondary">انصراف</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
