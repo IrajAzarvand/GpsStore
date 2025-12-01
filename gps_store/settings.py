@@ -376,7 +376,7 @@ if DEBUG:
             }
             
             # Update root and loggers to include file handlers
-            LOGGING['root']['handlers'] = ['console', 'database', 'file', 'json_file']
+            LOGGING['root']['handlers'] = ['console', 'file', 'json_file']
             LOGGING['loggers']['django']['handlers'] = ['console']
             LOGGING['loggers']['django.security']['handlers'] = ['security_file', 'json_file']
             LOGGING['loggers']['django.request']['handlers'] = ['file', 'json_file']
