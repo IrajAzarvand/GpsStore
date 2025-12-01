@@ -921,13 +921,13 @@
             <div class="sidebar-actions"><button class="action-btn" title="افزودن کاربر"><i
                         class="fas fa-plus"></i></button></div>
         </div>
-        <div class="user-tree"> {% for item in hierarchy %}
+        <!-- <div class="user-tree"> {% for item in hierarchy %}
 
             <div class="user-node">
                 <div class="user-item {% if item.is_main %}main-user{% endif %}" onclick="toggleChildren(this)">
-                    <div class="user-avatar status-bg-{{ device.status|default:'offline' }}"
-                        style="color: var(--light);">
-                        <i class="fas fa-car"></i>
+                    <div class="user-avatar"
+                        style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: var(--light);">
+                        <i class="fas fa-user"></i>
                     </div>
                     <div class="user-info">
                         <div class="user-name"> {{item.name}} </div>
@@ -953,7 +953,8 @@
                         <div class="user-info">
                             <div class="user-name"> {{device.name}}</div>
                             <div class="user-role"> {{device.imei}}</div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
                                 <div class="device-status-icons">
                                     <div class="status-icon" data-device-id="{{ device.id }}" data-icon-type="gps"
                                         title="وضعیت GPS">
@@ -968,7 +969,8 @@
                                         <i class="fas fa-circle"></i>
                                     </div>
                                 </div>
-                                <div class="device-speed" data-device-id="{{ device.id }}" style="font-size: 0.75rem; color: var(--primary-light); font-weight: 600; display: flex; align-items: center; gap: 3px;">
+                                <div class="device-speed" data-device-id="{{ device.id }}"
+                                    style="font-size: 0.75rem; color: var(--primary-light); font-weight: 600; display: flex; align-items: center; gap: 3px;">
                                     <i class="fas fa-tachometer-alt" style="font-size: 0.7rem;"></i>
                                     <span class="speed-value">{{device.speed|default:0}}</span> km/h
                                 </div>
@@ -983,6 +985,11 @@
             </div>
             {% endfor %}
 
+        </div> -->
+        <div class="user-tree">
+            {% for item in hierarchy %}
+            {% include "gps_devices/includes/user_tree_node.html" with node=item %}
+            {% endfor %}
         </div>
         <div class="connection-status"><span id="wsStatus"><i class="fas fa-circle" style="color: orange;"></i>در
                 حال اتصال...</span><span id="lastUpdate">--:--</span></div>
@@ -1104,8 +1111,8 @@
     <script src="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js"></script>
     <script> // --- Configuration ---
         const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-
-        const WS_URL = `${protocol}${window.location.host}/ws/device-updates/`;
+        const ACCESS_TOKEN = '{{ access_token }}';
+        const WS_URL = `${protocol}${window.location.host}/ws/device-updates/?token=${ACCESS_TOKEN}`;
         const POLL_URL = "/gps_devices/api/markers/";
         const POLL_INTERVAL_SEC = 5;
         const NESHAN_KEY = 'web.67f5a720d42541cfae21115f05a637b5';

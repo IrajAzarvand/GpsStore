@@ -1,0 +1,62 @@
+<!-- User Node -->
+<div class="user-node">
+    <div class="user-item {% if node.is_main %}main-user{% endif %}" onclick="toggleChildren(this)">
+        <div class="user-avatar"
+            style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: var(--light);">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="user-info">
+            <div class="user-name">{{node.name}}</div>
+            <div class="user-role">{{node.role}}</div>
+            <div class="user-stats">
+                <span>{{node.total_devices}} دستگاه، {{node.active_devices}} فعال، {{node.online_devices}} آنلاین</span>
+            </div>
+        </div>
+        {% if node.devices or node.children %}
+        <button class="toggle-btn"><i class="fas fa-chevron-down"></i></button>
+        {% endif %}
+    </div>
+
+    {% if node.devices or node.children %}
+    <div class="user-children">
+        <!-- Devices -->
+        {% for device in node.devices %}
+        <div class="user-item" onclick="focusOnDevice('{{ device.id }}')" id="sidebar-device-{{ device.id }}">
+            <div class="user-avatar" style="background: var(--card-bg); color: var(--light);">
+                <i class="fas fa-car"></i>
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{device.name}}</div>
+                <div class="user-role">{{device.imei}}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                    <div class="device-status-icons">
+                        <div class="status-icon" data-device-id="{{ device.id }}" data-icon-type="gps"
+                            title="وضعیت GPS">
+                            <i class="fas fa-satellite-dish"></i>
+                        </div>
+                        <div class="status-icon" data-device-id="{{ device.id }}" data-icon-type="gsm"
+                            title="وضعیت آنتن">
+                            <i class="fas fa-signal"></i>
+                        </div>
+                        <div class="status-icon" data-device-id="{{ device.id }}" data-icon-type="status"
+                            title="وضعیت دستگاه">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                    </div>
+                    <div class="device-speed" data-device-id="{{ device.id }}"
+                        style="font-size: 0.75rem; color: var(--primary-light); font-weight: 600; display: flex; align-items: center; gap: 3px;">
+                        <i class="fas fa-tachometer-alt" style="font-size: 0.7rem;"></i>
+                        <span class="speed-value">{{device.speed|default:0}}</span> km/h
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Subusers (Recursive) -->
+        {% for child in node.children %}
+        {% include "gps_devices/includes/user_tree_node.html" with node=child %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

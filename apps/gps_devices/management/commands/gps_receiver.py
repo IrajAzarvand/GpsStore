@@ -15,7 +15,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from apps.gps_devices.models import RawGpsData, Device, LocationData
 from django.db import connections, close_old_connections
-
+from django.contrib.auth import get_user_model
+User = get_user_model()
 # Add project root to path for importing Decoders
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
 from HQ_Decoder import HQFullDecoder
@@ -299,7 +300,7 @@ class GPSReceiver:
                     
                     device = Device.objects.create(
                         imei=device_id,
-                        name=f'Device-{device_id}',
+                        name=f'{device_id}',
                         owner=admin_user,
                         model=default_model,
                         status='active'

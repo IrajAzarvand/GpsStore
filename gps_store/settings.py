@@ -323,14 +323,10 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
-        'database': {
-            'level': 'ERROR',
-            'class': 'apps.admin_panel.logging_handlers.DatabaseLogHandler',
-            'formatter': 'verbose',
-        },
+       
     },
     'root': {
-        'handlers': ['console', 'database'],
+        'handlers': ['console'], 
         'level': 'INFO',
     },
     'loggers': {

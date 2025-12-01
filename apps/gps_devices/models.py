@@ -62,7 +62,7 @@ class LocationData(models.Model):
     altitude = models.FloatField(default=0)
     accuracy = models.FloatField(default=0)
     satellites = models.IntegerField(default=0)
-    battery_level = models.IntegerField(default=0)
+    battery_level = models.IntegerField(default=0, null=True, blank=True)
     signal_strength = models.IntegerField(default=0)
     gsm_operator = models.CharField(max_length=50, blank=True, null=True)
     raw_data = models.TextField(blank=True, null=True)
