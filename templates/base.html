@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
-{% load static %}
-{% load i18n %}
+    {% load static %}
+    {% load i18n %}
 
-<title>فروشگاه GPS{% block title %}{% endblock %}</title>
+    <title>فروشگاه GPS{% block title %}{% endblock %}</title>
 
-<!-- Fonts -->
-<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet" type="text/css" />
+    <!-- Fonts -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css" rel="stylesheet"
+        type="text/css" />
 
-<!-- CSS -->
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
-{% block extra_head %}{% endblock %}
+    {% block extra_head %}{% endblock %}
 </head>
+
 <body>
     {% block header %}
     <!-- هدر -->
@@ -29,11 +32,11 @@
                     <ul>
                         <li><a href="{% url 'products:home' %}">خانه</a></li>
                         <li><a href="{% url 'products:product_list' %}">محصولات</a></li>
-                        <li><a href="{% url 'products:category_list' %}">دسته‌بندی‌ها</a></li>
+                        <li><a href="#">دسته‌بندی‌ها</a></li>
                         {% if user.is_authenticated %}
                         <li><a href="{% url 'accounts:dashboard' %}">پنل کاربری</a></li>
                         {% if user.is_staff %}
-                        <li><a href="#">پنل مدیریت</a></li>
+                        <li><a href="/admin/">پنل مدیریت</a></li>
                         {% endif %}
                         {% endif %}
                     </ul>
@@ -45,9 +48,10 @@
                         <button type="button" id="search-button">🔍</button>
                     </div>
                     <div class="cart-icon">
-                        <a href="{% url 'cart:cart_detail' %}" style="color: inherit; text-decoration: none;">
+                        <a href="#" style="color: inherit; text-decoration: none;">
                             🛒
-                            <span class="cart-count" id="cart-counter">{% if user.is_authenticated %}{{ user.cart.get_total_items|default:0 }}{% else %}0{% endif %}</span>
+                            <!-- <span class="cart-count" id="cart-counter">{% if user.is_authenticated %}{{
+                                user.cart.get_total_items|default:0 }}{% else %}0{% endif %}</span> -->
                         </a>
                     </div>
                     {% if user.is_authenticated %}
@@ -82,7 +86,8 @@
             <div class="footer-content">
                 <div class="footer-column">
                     <h3>درباره ما</h3>
-                    <p>فروشگاه GPS با بیش از 10 سال سابقه در زمینه ارائه ردیاب‌های هوشمند، امنیت و آرامش خاطر را برای شما به ارمغان می‌آورد.</p>
+                    <p>فروشگاه GPS با بیش از 10 سال سابقه در زمینه ارائه ردیاب‌های هوشمند، امنیت و آرامش خاطر را برای
+                        شما به ارمغان می‌آورد.</p>
                     <div class="social-links">
                         <a href="#">📱</a>
                         <a href="#">📘</a>
@@ -138,4 +143,5 @@
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
