@@ -471,6 +471,7 @@ class GPSReceiver:
             raw_data = RawGpsData.objects.create(
                 raw_data=raw_data_str,
                 ip_address=ip_address,
+                device=device,
                 status=status,
                 error_message=error_message,
             )

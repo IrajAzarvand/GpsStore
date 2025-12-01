@@ -107,6 +107,7 @@ class RawGpsData(models.Model):
     
     raw_data = models.TextField()
     ip_address = models.GenericIPAddressField()
+    device = models.ForeignKey(Device, on_delete=models.SET_NULL, null=True, blank=True, related_name='raw_data')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     error_message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
