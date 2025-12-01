@@ -13,8 +13,7 @@ from django.conf import settings
 from django.utils import timezone as django_timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from apps.gps_devices.models import RawGPSData, Device, Protocol, BlockedGPSData
-from apps.tracking.models import LocationData, Alert
+from apps.gps_devices.models import RawGpsData, Device, LocationData
 from django.db import connections, close_old_connections
 
 # Add project root to path for importing Decoders
@@ -276,17 +275,40 @@ class GPSReceiver:
                 return
 
             try:
-                device = Device.objects.get(device_id=device_id)
+                device = Device.objects.get(imei=device_id)
             except Device.DoesNotExist:
-                # Device not registered - automatically create it
-                device = Device.objects.create(
-                    device_id=device_id,
-                    name=device_id,
-                    config_settings={'site': os.getenv('SITE', 'bruna.ir'), 'port': self.port},
-                    model=decoder_type if decoder_type else 'Unknown',
-                    status='active'
-                )
-                logger.info(f'Automatically created device {device.device_id}')
+                # Device not registered - automatically create it and assign to admin
+                try:
+                    # Get first superuser as default owner
+                    admin_user = User.objects.filter(is_superuser=True).first()
+                    if not admin_user:
+                        logger.error(f'No superuser found to assign device {device_id}')
+                        self.save_raw_data(data, ip_address, protocol_type, error_message='No admin user available')
+                        return
+                    
+                    # Get or create a default Model for unknown devices
+                    from apps.gps_devices.models import Model
+                    default_model, _ = Model.objects.get_or_create(
+                        model_name='Unknown',
+                        defaults={
+                            'manufacturer': 'Unknown',
+                            'protocol_type': 'TCP',
+                            'description': 'Auto-created for unregistered devices'
+                        }
+                    )
+                    
+                    device = Device.objects.create(
+                        imei=device_id,
+                        name=f'Device-{device_id}',
+                        owner=admin_user,
+                        model=default_model,
+                        status='active'
+                    )
+                    logger.info(f'Automatically created device {device.imei} and assigned to admin')
+                except Exception as e:
+                    logger.error(f'Failed to auto-create device {device_id}: {e}')
+                    self.save_raw_data(data, ip_address, protocol_type, error_message=f'Auto-create failed: {str(e)}')
+                    return
 
             # Check if device is active
             if device.status != 'active':
@@ -295,7 +317,7 @@ class GPSReceiver:
 
             packet_type = parsed_data.get('packet_type') or parsed_data.get('type')
 
-            if packet_type == 'V1' or packet_type == 'GT06': # Treat GT06/JT808 location as V1
+            if packet_type == 'V1' or packet_type == 'GT06': 
                 # GPS location packet
                 if parsed_data.get('gps_valid'):
                     location_data = LocationData.objects.create(
@@ -304,8 +326,8 @@ class GPSReceiver:
                         longitude=parsed_data['longitude'],
                         speed=parsed_data.get('speed', 0),
                         heading=parsed_data.get('course'),
-                        timestamp=parsed_data['timestamp'],
-                        battery_level=None,
+                        battery_level=parsed_data.get('battery_level'),
+                        satellites=parsed_data.get('satellites', 0),
                         raw_data={
                             'protocol': decoder_type,
                             'ip_address': ip_address,
@@ -313,37 +335,22 @@ class GPSReceiver:
                         }
                     )
 
-                    # Update device last location
-                    device.update_location(
-                        parsed_data['latitude'],
-                        parsed_data['longitude'],
-                        parsed_data['timestamp']
-                    )
-
-                    # Broadcast device update
-                    # self.broadcast_device_update(
-                    #     device, 
-                    #     speed=parsed_data.get('speed', 0),
-                    #     heading=parsed_data.get('heading', 0)
-                    # )
-                    logger.info(f'Saved location data for device {device.device_id}')
+                     # Successfully processed - delete raw data to avoid redundancy
+                    RawGpsData.objects.filter(
+                        ip_address=ip_address,
+                        raw_data=data.hex()
+                    ).delete()
+                    
+                    logger.info(f'Saved location data for device {device.imei}')
                 else:
-                     logger.info(f'GPS invalid for device {device.device_id}')
+                    logger.info(f'GPS invalid for device {device.imei}')
 
             elif packet_type == 'HB':
-                # Heartbeat
-                if 'battery_level' in parsed_data:
-                    device.battery_level = parsed_data['battery_level']
-                device.last_location_time = parsed_data.get('timestamp') or django_timezone.now()
-                device.save()
-                logger.info(f'Heartbeat processed for {device.device_id}')
+                # Heartbeat - just log it
+                logger.info(f'Heartbeat received for device {device.imei}')
                 
-            elif packet_type == 'LOGIN':
-                 # Login packet (GT06/JT808)
-                 logger.info(f'Login packet processed for {device.device_id}')
-
             # Delete raw data for registered device to save space
-            RawGPSData.objects.filter(device=device).delete()
+            RawGpsData.objects.filter(device=device).delete()
 
         except Exception as e:
             logger.error(f'Error processing GPS data: {e}')
@@ -457,23 +464,14 @@ class GPSReceiver:
             else:
                 raw_data_str = str(data)
 
-            # Get or create a default protocol
-            protocol_name = f'GPS {protocol_type.upper()} Protocol'
-            protocol, _ = Protocol.objects.get_or_create(
-                name=protocol_name,
-                defaults={'protocol_type': protocol_type}
-            )
+           
 
-            # Save raw data
-            raw_data = RawGPSData.objects.create(
-                device=device,
-                protocol=protocol,
+            # Save raw data (without protocol reference)
+            raw_data = RawGpsData.objects.create(
                 raw_data=raw_data_str,
                 ip_address=ip_address,
                 status=status,
-                processed=processed,
                 error_message=error_message,
-                unknown_sections=unknown_sections,
             )
             return raw_data
         except Exception as e:

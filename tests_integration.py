@@ -1,6 +1,6 @@
 import pytest
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
+from apps.accounts.models import User
 from django.urls import reverse
 from decimal import Decimal
 from apps.products.models import Category, Product

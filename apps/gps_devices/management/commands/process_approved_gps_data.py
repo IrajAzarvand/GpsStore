@@ -3,8 +3,7 @@ import sys
 import os
 from datetime import datetime, timezone
 from django.core.management.base import BaseCommand
-from apps.gps_devices.models import RawGPSData, Device
-from apps.tracking.models import LocationData, Alert
+from apps.gps_devices.models import RawGpsData, Device, LocationData
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
@@ -24,7 +23,7 @@ class Command(BaseCommand):
         self.decoder = HQFullDecoder()
 
         # Get all approved but not processed data
-        approved_data = RawGPSData.objects.filter(status__in=['approved', 'registered'], processed=False)
+        approved_data = RawGpsData.objects.filter(status__in=['approved', 'registered'], processed=False)
 
         processed_count = 0
         for raw_data in approved_data:
@@ -50,7 +49,7 @@ class Command(BaseCommand):
 
         # Find device
         try:
-            device = Device.objects.get(device_id=parsed_data['device_id'])
+            device = Device.objects.get(imei=parsed_data['device_id'])
         except Device.DoesNotExist:
             raw_data.mark_error(f'Unregistered device {parsed_data["device_id"]}')
             return
@@ -80,72 +79,26 @@ class Command(BaseCommand):
                     'mnc': parsed_data['mnc'],
                     'lac': parsed_data['lac'],
                     'cid': parsed_data['cid'],
-                    'protocol': raw_data.protocol.protocol_type if raw_data.protocol else 'unknown',
+                    'protocol': 'HQ',
                     'ip_address': raw_data.ip_address
                 }
-            )
-
-            # Update device last location
-            device.update_location(
-                parsed_data['latitude'],
-                parsed_data['longitude'],
-                parsed_data['timestamp']
             )
 
             # Broadcast device update
             self.broadcast_device_update(device)
 
-            logger.info(f'Processed approved location data for device {device.device_id}: {location_data.id}')
-
         elif packet_type == 'V0':
-            # LBS packet - update last seen time
-            device.last_location_time = parsed_data['timestamp']
-            device.save()
-            logger.info(f'Updated last seen time for device {device.device_id} from LBS packet')
+            # LBS packet - just log it
+            logger.info(f'LBS packet received for device {device.imei}')
 
         elif packet_type == 'V2':
-            # Alarm/Status packet - create alert
+            # Alarm/Status packet - just log it (Alert model doesn't exist)
             alarm = parsed_data.get('alarm')
-            status = parsed_data.get('status')
-            if alarm:
-                alert_type = self.map_alarm_to_alert_type(alarm)
-                if alert_type:
-                    Alert.objects.create(
-                        device=device,
-                        alert_type=alert_type,
-                        message=f'Alarm triggered: {alarm}',
-                        severity='high'
-                    )
-                    logger.info(f'Created alert for device {device.device_id}: {alarm}')
-            # Update device status if provided
-            if status:
-                device.status = status
-                device.save()
+            logger.info(f'Alarm packet received for device {device.imei}: {alarm}')
 
         elif packet_type == 'HB':
-            # Heartbeat packet - update battery and signal
-            voltage_mv = parsed_data.get('voltage_mv')
-            signal_strength = parsed_data.get('signal_strength')
-            if voltage_mv:
-                # Convert mV to percentage (assuming 3.7V = 100%)
-                battery_level = min(100, int((voltage_mv / 3700) * 100))
-                device.battery_level = battery_level
-            if signal_strength:
-                # Create location data entry for signal strength
-                LocationData.objects.create(
-                    device=device,
-                    timestamp=parsed_data['timestamp'],
-                    signal_strength=signal_strength,
-                    raw_data={
-                        'packet_type': 'HB',
-                        'voltage_mv': voltage_mv,
-                        'signal_strength': signal_strength,
-                        'protocol': raw_data.protocol.protocol_type if raw_data.protocol else 'unknown',
-                        'ip_address': raw_data.ip_address
-                    }
-                )
-            device.save()
-            logger.info(f'Updated battery/signal for device {device.device_id}: battery={device.battery_level}, signal={signal_strength}')
+            # Heartbeat packet - just log it
+            logger.info(f'Heartbeat received for device {device.imei}')
 
         elif packet_type == 'UPLOAD':
             # Multi-record packet - process each record
@@ -156,8 +109,8 @@ class Command(BaseCommand):
                     raw_record = record.get('raw')
                     if raw_record:
                         # Recursively process the record
-                        self.process_gps_data(raw_record, raw_data.ip_address, raw_data.protocol.protocol_type if raw_data.protocol else 'unknown')
-            logger.info(f'Processed {len(records)} records from UPLOAD packet for device {device.device_id}')
+                        self.process_gps_data(raw_record, raw_data.ip_address, 'HQ')
+            logger.info(f'Processed {len(records)} records from UPLOAD packet for device {device.imei}')
 
         # Mark as processed
         raw_data.mark_processed()
@@ -391,14 +344,14 @@ class Command(BaseCommand):
 
             # Find device by device_id
             try:
-                device = Device.objects.get(device_id=parsed_data['device_id'])
+                device = Device.objects.get(imei=parsed_data['device_id'])
             except Device.DoesNotExist:
                 logger.warning(f'Unregistered device in UPLOAD {parsed_data["device_id"]}')
                 return
 
             # Check if device is active
             if device.status != 'active':
-                logger.warning(f'Device in UPLOAD {device.device_id} is not active (status: {device.status})')
+                logger.warning(f'Device in UPLOAD {device.imei} is not active (status: {device.status})')
                 return
 
             packet_type = parsed_data.get('packet_type')
@@ -428,17 +381,10 @@ class Command(BaseCommand):
                     }
                 )
 
-                # Update device last location
-                device.update_location(
-                    parsed_data['latitude'],
-                    parsed_data['longitude'],
-                    parsed_data['timestamp']
-                )
-
                 # Broadcast device update
                 self.broadcast_device_update(device)
 
-                logger.info(f'Processed UPLOAD location data for device {device.device_id}: {location_data.id}')
+                logger.info(f'Processed UPLOAD location data for device {device.imei}: {location_data.id}')
 
         except Exception as e:
             logger.error(f'Error processing GPS data in UPLOAD: {e}')
@@ -453,15 +399,8 @@ class Command(BaseCommand):
                 'id': device.id,
                 'name': device.name,
                 'imei': device.imei,
-                'device_id': device.device_id,
-                'lat': float(device.last_location_lat) if device.last_location_lat else None,
-                'lng': float(device.last_location_lng) if device.last_location_lng else None,
-                'last_update': device.last_location_time.isoformat() if device.last_location_time else None,
                 'status': device.status,
-                'battery_level': device.battery_level,
-                'vehicle_type': device.vehicle_type,
                 'driver_name': device.driver_name,
-                'device_type': device.device_type.name if device.device_type else None,
             }
 
             async_to_sync(channel_layer.group_send)(
@@ -472,7 +411,7 @@ class Command(BaseCommand):
                 }
             )
 
-            logger.info(f'Broadcasted update for device {device.device_id}')
+            logger.info(f'Broadcasted update for device {device.imei}')
 
         except Exception as e:
             logger.error(f'Error broadcasting device update: {e}')

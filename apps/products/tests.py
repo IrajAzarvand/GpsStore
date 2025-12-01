@@ -1,6 +1,6 @@
 import pytest
 from django.test import TestCase
-from django.contrib.auth.models import User
+from apps.accounts.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from decimal import Decimal
 from apps.products.models import Category, Product, ProductImage, Review
