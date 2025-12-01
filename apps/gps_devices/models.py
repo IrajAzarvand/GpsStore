@@ -1,3 +1,121 @@
 from django.db import models
+from django.conf import settings
 
-# Create your models here.
+class State(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Model(models.Model):
+    PROTOCOL_CHOICES = [
+        ('TCP', 'TCP'),
+        ('UDP', 'UDP'),
+        ('HTTP', 'HTTP'),
+        ('MQTT', 'MQTT'),
+    ]
+    
+    model_name = models.CharField(max_length=100)
+    manufacturer = models.CharField(max_length=100)
+    protocol_type = models.CharField(max_length=20, choices=PROTOCOL_CHOICES)
+    default_config = models.JSONField(default=dict, blank=True)
+    image_url = models.URLField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.manufacturer} {self.model_name}"
+
+
+class Device(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'فعال'),
+        ('inactive', 'غیرفعال'),
+        ('maintenance', 'در تعمیر'),
+    ]
+    
+    imei = models.CharField(max_length=20, unique=True)
+    sim_no = models.CharField(max_length=20, blank=True, null=True)
+    model = models.ForeignKey(Model, on_delete=models.PROTECT, related_name='devices')
+    driver_name = models.CharField(max_length=100, blank=True, null=True)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_devices')
+    name = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.imei})"
+
+
+class LocationData(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='locations')
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    speed = models.FloatField(default=0)
+    heading = models.FloatField(default=0)
+    altitude = models.FloatField(default=0)
+    accuracy = models.FloatField(default=0)
+    satellites = models.IntegerField(default=0)
+    battery_level = models.IntegerField(default=0)
+    signal_strength = models.IntegerField(default=0)
+    gsm_operator = models.CharField(max_length=50, blank=True, null=True)
+    raw_data = models.TextField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    is_valid = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'موقعیت مکانی'
+        verbose_name_plural = 'موقعیت‌های مکانی'
+
+    def __str__(self):
+        return f"{self.device.name} - {self.created_at}"
+
+
+class DeviceState(models.Model):
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='states')
+    state = models.ForeignKey(State, on_delete=models.PROTECT)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    location_data = models.ForeignKey(LocationData, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'وضعیت دستگاه'
+        verbose_name_plural = 'وضعیت‌های دستگاه'
+
+    def __str__(self):
+        return f"{self.device.name} - {self.state.name} - {self.timestamp}"
+
+
+class RawGpsData(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'در انتظار'),
+        ('processed', 'پردازش شده'),
+        ('rejected', 'رد شده'),
+        ('blocked', 'مسدود شده'),
+    ]
+    
+    raw_data = models.TextField()
+    ip_address = models.GenericIPAddressField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    error_message = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'داده خام GPS'
+        verbose_name_plural = 'داده‌های خام GPS'
+
+    def __str__(self):
+        return f"{self.ip_address} - {self.status} - {self.created_at}"

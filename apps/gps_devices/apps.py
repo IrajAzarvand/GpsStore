@@ -7,4 +7,5 @@ class GpsDevicesConfig(AppConfig):
     verbose_name = 'دستگاه‌های GPS'
 
     def ready(self):
-        import apps.gps_devices.signals
+        # import apps.gps_devices.signals
+        pass
