@@ -1311,7 +1311,7 @@
             ws.onmessage = function (e) {
                 try {
                     const data = JSON.parse(e.data);
-                    console.log('WS device update raw coords:', data.device.id, data.device.lat, data.device.lng, 'heading:', data.device.heading);
+                    console.log('WS device update:', data);
                     if (data.type === 'device_update') {
                         handleDeviceUpdate(data.data);
                     }
@@ -1460,7 +1460,7 @@
             document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
             document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
             document.getElementById('deviceAccuracyDetail').textContent = (device.accuracy ? device.accuracy.toFixed(1) + ' m' : '-');
-            document.getElementById('deviceSignalDetail').textContent = (device.signal_strength || '-') + '%';
+            // document.getElementById('deviceSignalDetail').textContent = (device.signal_strength || '-') + '%';
             document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
             document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
 

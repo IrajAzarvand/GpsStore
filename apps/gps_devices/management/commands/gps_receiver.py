@@ -378,17 +378,21 @@ class GPSReceiver:
                         
                         # Check for Moving -> Stopped transition
                         if last_state_name == 'Moving' and current_speed == 0:
-                            # Count consecutive zero speeds
+                            # Get 2 most recent locations (not including current)
                             recent_locations = LocationData.objects.filter(
                                 device=device
-                            ).order_by('-created_at')[:3]
-                            
-                            zero_speed_count = sum(1 for loc in recent_locations if loc.speed == 0)
-                            
-                            if zero_speed_count >= 2:  # Current + 2 previous = 3 total
+                            ).order_by('-created_at')[:2]
+    
+                            # Count zero speeds in previous 2 records
+                            previous_zero_count = sum(1 for loc in recent_locations if loc.speed == 0)
+    
+                            # Current speed is 0, so total zero count = 1 (current) + previous_zero_count
+                            total_zero_count = 1 + previous_zero_count
+    
+                            if total_zero_count >= 3:  # Current + 2 previous all zero
                                 should_save_state = True
                                 state_name = 'Stopped'
-                                logger.info(f"State change for {device.imei}: Moving -> Stopped (3 zero speeds)")
+                                logger.info(f"State change for {device.imei}: Moving -> Stopped (3 consecutive zero speeds)")
                         
                         # Check for Stopped -> Moving transition
                         elif last_state_name == 'Stopped' and current_speed > 0:
