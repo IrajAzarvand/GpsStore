@@ -556,6 +556,9 @@ class GPSReceiver:
                 'battery_level': getattr(location_data, 'battery_level', 0) if location_data else 0,
                 'speed': float(speed) if speed is not None else 0,
                 'heading': float(heading) if heading is not None else 0,
+                'accuracy': getattr(location_data, 'accuracy', 0) if location_data else 0,
+                'satellites': getattr(location_data, 'satellites', 0) if location_data else 0,
+                'signal_strength': getattr(location_data, 'signal_strength', 0) if location_data else 0,
             }
 
             # Send to admins group (they see all devices)

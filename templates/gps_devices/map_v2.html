@@ -373,10 +373,33 @@
             display: block;
         }
 
-        .pulse-effect {
+        /* مرکز کردن دقیق: وقتی iconAnchor [0,0] ست شده، این کانتینر خودش را روی مختصات قرار میده */
+        .vehicle-divicon {
+            position: relative;
+            width: 0;
+            /* Leaflet places top-left در نقطه‌ی مختصات؛ ما داخل HTML با transform(-50%,-50%) مرکز میکنیم */
+            height: 0;
+        }
+
+        .vehicle-marker-centered {
             position: absolute;
-            top: 50%;
+            left: 0;
+            top: 0;
+            /* transform: translate(-50%, -50%) در HTML هم گذاشته شده، اما تکرار مشکلی ایجاد نمیکند */
+            pointer-events: auto;
+            z-index: 500;
+        }
+
+        .vehicle-marker-centered .vehicle-icon-img {
+            display: block;
+            transform-origin: center center;
+            will-change: transform, left, top;
+        }
+
+        .vehicle-marker-centered .pulse-effect {
+            position: absolute;
             left: 50%;
+            top: 50%;
             transform: translate(-50%, -50%);
             width: 16px;
             height: 16px;
@@ -385,6 +408,7 @@
             animation: pulse 2s infinite;
             z-index: -1;
         }
+
 
         @keyframes pulse {
             0% {
@@ -1120,15 +1144,21 @@
         function updateDeviceMarker(device) {
             if (!device.lat || !device.lng) return;
 
-            const coords = [device.lat,
-            device.lng];
+            // ensure numeric
+            const lat = parseFloat(device.lat);
+            const lng = parseFloat(device.lng);
+            if (isNaN(lat) || isNaN(lng)) {
+                console.warn('Invalid coordinates for device', device.id, device.lat, device.lng);
+                return;
+            }
+            const coords = [lat, lng];
             const markerHtml = createVehicleMarker(device);
 
             const icon = L.divIcon({
-                className: '',  // حذف کلاس
+                className: 'vehicle-divicon',
                 html: markerHtml,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15],
+                iconSize: null,
+                iconAnchor: [0, 0],
                 popupAnchor: [0, -20]
             });
 
@@ -1155,6 +1185,9 @@
                     icon: icon
                 }).addTo(map);
                 marker.bindPopup(createPopupContent(device));
+                marker.on('click', function () {
+                    focusOnDevice(device.id);
+                });
                 markers[device.id] = marker;
             }
             // اگر این دستگاه الان توی پنل پایین نمایش داده شده، محتواش رو آپدیت کن
@@ -1171,9 +1204,6 @@
             const status = device.status ? device.status.toLowerCase() : '';
             const type = device.vehicle_type ? device.vehicle_type.toLowerCase() : '';
 
-            // Debug log for icon selection
-            // console.log(`Device: ${device.name}, Status: ${status}, Type: ${type}`);
-
             if (status.includes('alarm') || status.includes('sos')) iconName = 'alarm - sos.png';
             else if (status.includes('battery') || status.includes('power')) iconName = 'Battery-Power Fault.png';
             else if (status.includes('geofence')) iconName = 'Geofence In-Out.png';
@@ -1181,30 +1211,21 @@
             else if (status.includes('offline')) iconName = 'offline.png';
             else if (status.includes('towing')) iconName = 'Towing - Movement while Engine Off.png';
             else if (status.includes('stop')) iconName = 'stop.png';
-
             else if (type) {
-                const validTypes = ['405',
-                    '206',
-                    'mazda3',
-                    'trailer',
-                    'pridewanet',
-                    'samand',
-                    'kamunet',
-                    'landcruise'];
+                const validTypes = ['405', '206', 'mazda3', 'trailer', 'pridewanet', 'samand', 'kamunet', 'landcruise'];
                 const matchedType = validTypes.find(t => type.includes(t));
                 if (matchedType) iconName = matchedType + '.png';
             }
 
-            // Add version to bust cache
             const iconUrl = MARKER_BASE_URL + iconName + '?v=1';
 
-            return `<div class="vehicle-marker">
-                ${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
-                <div class="vehicle-icon" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px;">
-                    <img src="${iconUrl}" alt="vehicle" style="width: 100%; height: 100%; transform: rotate(${rotation}deg);" onerror="this.src='{% static 'img/markers/arrow.png' %}'" />
-                </div>
-            </div>`;
+            // Outer container will be centered by CSS transform(-50%,-50%)
+            return `<div class="vehicle-marker-centered" style="width:30px;height:30px;transform: translate(-50%,-50%);">
+                        ${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
+                        <img class="vehicle-icon-img" src="${iconUrl}" alt="vehicle" style="width:30px;height:30px;display:block;transform-origin:center center;transform: rotate(${rotation}deg);" onerror="this.src='${MARKER_BASE_URL}arrow.png'" />
+                    </div>`;
         }
+
 
         function createPopupContent(device) {
             return `<div style="font-family: 'Vazirmatn'; text-align: right; min-width: 250px;">
@@ -1287,7 +1308,7 @@
             ws.onmessage = function (e) {
                 try {
                     const data = JSON.parse(e.data);
-
+                    console.log('WS device update raw coords:', data.device.id, data.device.lat, data.device.lng, 'heading:', data.device.heading);
                     if (data.type === 'device_update') {
                         handleDeviceUpdate(data.device);
                     }
@@ -1330,10 +1351,11 @@
 
             // If we're following this device, smoothly pan to its new location
             if (followingDeviceId === id && devices[id].lat && devices[id].lng) {
-                map.panTo([devices[id].lat, devices[id].lng], {
+                // تغییر به setView برای جلوگیری از انحراف
+                map.setView([devices[id].lat, devices[id].lng], map.getZoom(), {
                     animate: true,
-                    duration: 0.5, // Very smooth 0.5 second animation
-                    easeLinearity: 0.1 // Extra smooth easing
+                    duration: 0.5,
+                    easeLinearity: 0.25
                 });
             }
 
@@ -1435,7 +1457,7 @@
             document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
             document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
             document.getElementById('deviceAccuracyDetail').textContent = (device.accuracy ? device.accuracy.toFixed(1) + ' m' : '-');
-
+            document.getElementById('deviceSignalDetail').textContent = (device.signal_strength || '-') + '%';
             document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
             document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
 
