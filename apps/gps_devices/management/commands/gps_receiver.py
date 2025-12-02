@@ -409,8 +409,9 @@ class GPSReceiver:
                             device=device,
                             latitude=parsed_data['latitude'],
                             longitude=parsed_data['longitude'],
-                            speed=current_speed,  # Already converted to km/h
+                            speed=current_speed,
                             heading=parsed_data.get('course'),
+                            accuracy=parsed_data.get('accuracy', 0),
                             battery_level=parsed_data.get('battery_level'),
                             satellites=parsed_data.get('satellites', 0),
                             raw_data={

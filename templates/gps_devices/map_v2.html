@@ -1038,8 +1038,8 @@
                         <span class="value" id="deviceBatteryDetail">-</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">سیگنال:</span>
-                        <span class="value" id="deviceSignalDetail">-</span>
+                        <span class="label">دقت GPS</span>
+                        <span class="value" id="deviceAccuracyDetail">-</span>
                     </div>
                     <div class="detail-item">
                         <span class="label">ولتاژ:</span>
@@ -1125,7 +1125,7 @@
             const markerHtml = createVehicleMarker(device);
 
             const icon = L.divIcon({
-                className: 'vehicle-marker',
+                className: '',  // حذف کلاس
                 html: markerHtml,
                 iconSize: [30, 30],
                 iconAnchor: [15, 15],
@@ -1199,11 +1199,11 @@
             const iconUrl = MARKER_BASE_URL + iconName + '?v=1';
 
             return `<div class="vehicle-marker">
-                        ${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
-                        <div class="vehicle-icon" style="transform: translate(-50%, -50%) rotate(${rotation}deg);">
-                            <img src="${iconUrl}" alt="vehicle" onerror="this.src='{% static 'img/markers/arrow.png' %}'" />
-                        </div>
-                    </div>`;
+                ${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
+                <div class="vehicle-icon" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px;">
+                    <img src="${iconUrl}" alt="vehicle" style="width: 100%; height: 100%; transform: rotate(${rotation}deg);" onerror="this.src='{% static 'img/markers/arrow.png' %}'" />
+                </div>
+            </div>`;
         }
 
         function createPopupContent(device) {
@@ -1219,8 +1219,8 @@
                             <div style="font-weight: bold;">${device.battery_level || '--'}%</div>
                             <div style="color: #666;"><i class="fas fa-signal" style="color: #22c55e; width: 20px;"></i>سیگنال:</div>
                             <div style="font-weight: bold;">${device.signal_strength || '--'}%</div>
-                            <div style="color: #666;"><i class="fas fa-satellite" style="color: #3b82f6; width: 20px;"></i>ماهواره:</div>
-                            <div style="font-weight: bold;">${device.satellites || '--'}</div>
+                            <div style="color: #666;"><i class="fas fa-crosshairs" style="color: #8b5cf6; width: 20px;"></i>دقت GPS:</div>
+                            <div style="font-weight: bold;">${device.accuracy ? device.accuracy.toFixed(1) + 'm' : 'N/A'}</div>
                             <div style="color: #666;"><i class="fas fa-compass" style="color: #8b5cf6; width: 20px;"></i>جهت:</div>
                             <div style="font-weight: bold;">${device.heading || 0}°</div>
                             <div style="color: #666;"><i class="fas fa-car" style="color: #10b981; width: 20px;"></i>نوع:</div>
@@ -1434,7 +1434,8 @@
             document.getElementById('deviceSpeedDetail').textContent = (device.speed || 0) + ' km/h';
             document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
             document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
-            document.getElementById('deviceSignalDetail').textContent = device.signal_strength || '-';
+            document.getElementById('deviceAccuracyDetail').textContent = (device.accuracy ? device.accuracy.toFixed(1) + ' m' : '-');
+
             document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
             document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
 
