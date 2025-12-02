@@ -105,18 +105,10 @@ class DeviceUpdateConsumer(AsyncWebsocketConsumer):
             return None
 
     async def device_update(self, event):
-        """
-        Event shape expected:
-        {
-            "type": "device_update",
-            "device_id": "9176515388",
-            "data": { ... }  # JSON-serializable payload
-        }
-        """
         payload = event.get("data") or {}
         # forward to client
         await self.send(text_data=json.dumps({
             "type": "device_update",
-            "device": payload,
+            "data": payload,
             "timestamp": event.get("timestamp")
         }))
