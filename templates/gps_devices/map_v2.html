@@ -929,71 +929,7 @@
             <div class="sidebar-actions"><button class="action-btn" title="افزودن کاربر"><i
                         class="fas fa-plus"></i></button></div>
         </div>
-        <!-- <div class="user-tree"> {% for item in hierarchy %}
 
-            <div class="user-node">
-                <div class="user-item {% if item.is_main %}main-user{% endif %}" onclick="toggleChildren(this)">
-                    <div class="user-avatar"
-                        style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: var(--light);">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name"> {{item.name}} </div>
-                        <div class="user-role"> {{item.role}}</div>
-                        <div class="user-stats">
-                            <span>{{item.total_devices}} دستگاه، {{item.active_devices}} فعال، {{item.online_devices}}
-                                آنلاین</span>
-                        </div>
-                    </div>
-                    {% if item.devices %}
-                    <button class="toggle-btn"><i class="fas fa-chevron-down"></i></button>
-                    {% endif %}
-
-                </div>
-                {% if item.devices %}
-
-                <div class="user-children"> {% for device in item.devices %}
-
-                    <div class="user-item" onclick="focusOnDevice('{{ device.id }}')"
-                        id="sidebar-device-{{ device.id }}">
-                        <div class="user-avatar" style="background: var(--card-bg); color: var(--light);"><i
-                                class="fas fa-car"></i></div>
-                        <div class="user-info">
-                            <div class="user-name"> {{device.name}}</div>
-                            <div class="user-role"> {{device.imei}}</div>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                                <div class="device-status-icons">
-                                    <div class="status-icon" data-device-id="{{ device.id }}" data-icon-type="gps"
-                                        title="وضعیت GPS">
-                                        <i class="fas fa-satellite-dish"></i>
-                                    </div>
-                                    <div class="status-icon" data-device-id="{{ device.id }}" data-icon-type="gsm"
-                                        title="وضعیت آنتن">
-                                        <i class="fas fa-signal"></i>
-                                    </div>
-                                    <div class="status-icon" data-device-id="{{ device.id }}" data-icon-type="status"
-                                        title="وضعیت دستگاه">
-                                        <i class="fas fa-circle"></i>
-                                    </div>
-                                </div>
-                                <div class="device-speed" data-device-id="{{ device.id }}"
-                                    style="font-size: 0.75rem; color: var(--primary-light); font-weight: 600; display: flex; align-items: center; gap: 3px;">
-                                    <i class="fas fa-tachometer-alt" style="font-size: 0.7rem;"></i>
-                                    <span class="speed-value">{{device.speed|default:0}}</span> km/h
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-
-                </div>
-                {% endif %}
-
-            </div>
-            {% endfor %}
-
-        </div> -->
         <div class="user-tree">
             {% for item in hierarchy %}
             {% include "gps_devices/includes/user_tree_node.html" with node=item %}
@@ -1135,6 +1071,7 @@
         let pollInterval;
         let userLocation;
         let selectedDeviceId = null;
+        let followingDeviceId = null;
 
         // Initialize from server data
         const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
@@ -1387,6 +1324,15 @@
             // Update status icons
             updateDeviceStatusIcons(devices[id]);
 
+            // If we're following this device, smoothly pan to its new location
+            if (followingDeviceId === id && devices[id].lat && devices[id].lng) {
+                map.panTo([devices[id].lat, devices[id].lng], {
+                    animate: true,
+                    duration: 0.5, // Very smooth 0.5 second animation
+                    easeLinearity: 0.1 // Extra smooth easing
+                });
+            }
+
             // Update Timestamp
             const now = new Date();
 
@@ -1440,7 +1386,16 @@
         function focusOnDevice(deviceId) {
             const device = devices[deviceId];
             if (device && markers[deviceId]) {
-                map.setView([device.lat, device.lng], 15);
+                // Enable follow mode for this device
+                followingDeviceId = deviceId;
+
+                // Smooth pan to device with animation
+                map.flyTo([device.lat, device.lng], 17, {
+                    animate: true,
+                    duration: 1.5, // 1.5 seconds smooth animation
+                    easeLinearity: 0.25
+                });
+
                 markers[deviceId].openPopup();
                 // Show device info in bottom panel
                 showDeviceInfo(deviceId);
@@ -1483,18 +1438,6 @@
             const statusBadge = document.getElementById('deviceStatusDetail');
             statusBadge.textContent = getStatusText(device.status);
             statusBadge.style.backgroundColor = getStatusColor(device.status);
-        }
-
-        function closeBottomDevicePanel() {
-            const panel = document.getElementById('bottomDevicePanel');
-            panel.classList.remove('active');
-
-            // حذف کلاس از main-content برای بزرگ کردن نقشه
-            const mainContent = document.querySelector('.main-content');
-            mainContent.classList.remove('with-bottom-panel');
-
-            // پاک کردن deviceId انتخاب شده
-            selectedDeviceId = null;
         }
 
         function toggleChildren(element) {
@@ -1557,71 +1500,6 @@
             }
         }
 
-        function updateConnectionStatus(status) {
-            const el = document.getElementById('wsStatus');
-
-            if (status === 'connected') {
-                el.innerHTML = '<i class="fas fa-circle" style="color: #19be6b;"></i> متصل';
-            }
-
-            else if (status === 'connecting') {
-                el.innerHTML = '<i class="fas fa-circle" style="color: orange;"></i> در حال اتصال...';
-            }
-
-            else {
-                el.innerHTML = '<i class="fas fa-circle" style="color: #ed4014;"></i> قطع';
-            }
-        }
-
-        // --- Interaction ---
-        function focusOnDevice(deviceId) {
-            const device = devices[deviceId];
-            if (device && markers[deviceId]) {
-                map.setView([device.lat, device.lng], 15);
-                markers[deviceId].openPopup();
-                // Show device info in bottom panel
-                showDeviceInfo(deviceId);
-            }
-        }
-
-        function showDeviceInfo(deviceId) {
-            const device = devices[deviceId];
-            if (!device) return;
-
-            // ذخیره deviceId انتخاب شده
-            selectedDeviceId = deviceId;
-
-            // به‌روزرسانی محتوای پنل
-            updateBottomDevicePanelContent(device);
-
-            // نمایش پنل پایین
-            const panel = document.getElementById('bottomDevicePanel');
-            panel.classList.add('active');
-
-            // اضافه کردن کلاس به main-content برای کوچک کردن نقشه
-            const mainContent = document.querySelector('.main-content');
-            mainContent.classList.add('with-bottom-panel');
-        }
-
-        function updateBottomDevicePanelContent(device) {
-            // Update bottom panel content
-            document.getElementById('deviceNameDetail').textContent = device.name || '-';
-            document.getElementById('deviceImeiDetail').textContent = device.imei || '-';
-            document.getElementById('deviceLatDetail').textContent = device.lat ? device.lat.toFixed(6) : '-';
-            document.getElementById('deviceLngDetail').textContent = device.lng ? device.lng.toFixed(6) : '-';
-            document.getElementById('deviceSpeedDetail').textContent = (device.speed || 0) + ' km/h';
-            document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
-            document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
-            document.getElementById('deviceSignalDetail').textContent = device.signal_strength || '-';
-            document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
-            document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
-
-            // Update status badge
-            const statusBadge = document.getElementById('deviceStatusDetail');
-            statusBadge.textContent = getStatusText(device.status);
-            statusBadge.style.backgroundColor = getStatusColor(device.status);
-        }
-
         function closeBottomDevicePanel() {
             const panel = document.getElementById('bottomDevicePanel');
             panel.classList.remove('active');
@@ -1632,6 +1510,7 @@
 
             // پاک کردن deviceId انتخاب شده
             selectedDeviceId = null;
+            followingDeviceId = null; // Stop following when panel closes
         }
 
         function toggleChildren(element) {
