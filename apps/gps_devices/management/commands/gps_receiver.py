@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 import os
+import math
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from django.core.management.base import BaseCommand
@@ -45,6 +46,22 @@ class Command(BaseCommand):
             logger.error(f'Failed to start GPS receiver: {e}')
             self.stdout.write('Failed to start GPS receiver')
 
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great circle distance between two points 
+    on the earth (specified in decimal degrees)
+    """
+    # Convert decimal degrees to radians 
+    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+
+    # Haversine formula 
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1 
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a)) 
+    r = 6371000 # Radius of earth in meters
+    return c * r
+    
 class GPSReceiver:
     def __init__(self, host='0.0.0.0', port=5000, mqtt_broker='localhost', mqtt_port=1883):
         self.host = host
@@ -321,28 +338,93 @@ class GPSReceiver:
             if packet_type == 'V1' or packet_type == 'GT06': 
                 # GPS location packet
                 if parsed_data.get('gps_valid'):
-                    location_data = LocationData.objects.create(
-                        device=device,
-                        latitude=parsed_data['latitude'],
-                        longitude=parsed_data['longitude'],
-                        speed=parsed_data.get('speed', 0),
-                        heading=parsed_data.get('course'),
-                        battery_level=parsed_data.get('battery_level'),
-                        satellites=parsed_data.get('satellites', 0),
-                        raw_data={
-                            'protocol': decoder_type,
-                            'ip_address': ip_address,
-                            'raw_hex': data.hex()
-                        }
-                    )
+                    
+                    # --- NEW LOGIC START ---
+                    from apps.gps_devices.models import DeviceState, State
+                    
+                    # Get speed - HQ decoder returns speed_kph, but fallback to 'speed' field
+                    current_speed = float(parsed_data.get('speed_kph') or parsed_data.get('speed', 0))
+                    current_lat = float(parsed_data['latitude'])
+                    current_lon = float(parsed_data['longitude'])
+                    
+                    # Determine current state
+                    # Assuming 'Moving' if speed > 0, else 'Stopped'
+                    state_name = 'Moving' if current_speed > 0 else 'Stopped'
+                    
+                    # Get or create State object
+                    state_obj, _ = State.objects.get_or_create(name=state_name)
+                    
+                    # Get last DeviceState
+                    last_device_state = DeviceState.objects.filter(device=device).order_by('-timestamp').first()
+                    
+                    should_update = False
+                    
+                    if not last_device_state:
+                        # First time seeing this device state
+                        should_update = True
+                        logger.info(f"First state for device {device.imei}")
+                    else:
+                        last_speed = last_device_state.location_data.speed if last_device_state.location_data else 0
+                        last_state_name = last_device_state.state.name
+                        
+                        # Check for state change or speed change
+                        # Note: You might want a threshold for speed change to avoid jitter
+                        if last_state_name != state_name:
+                            should_update = True
+                            logger.info(f"State changed for {device.imei}: {last_state_name} -> {state_name}")
+                        elif abs(current_speed - last_speed) > 1.0: # 1 km/h threshold for speed change
+                             should_update = True
+                             logger.info(f"Speed changed for {device.imei}: {last_speed} -> {current_speed}")
+                        else:
+                            # Check distance
+                            if last_device_state.location_data:
+                                last_lat = float(last_device_state.location_data.latitude)
+                                last_lon = float(last_device_state.location_data.longitude)
+                                distance = haversine_distance(current_lat, current_lon, last_lat, last_lon)
+                                
+                                if distance > 5.0: # 5 meters threshold
+                                    should_update = True
+                                    logger.info(f"Distance changed for {device.imei}: {distance:.2f}m")
+                    
+                    if should_update:
+                        location_data = LocationData.objects.create(
+                            device=device,
+                            latitude=parsed_data['latitude'],
+                            longitude=parsed_data['longitude'],
+                            speed=current_speed,  # Already converted to km/h
+                            heading=parsed_data.get('course'),
+                            battery_level=parsed_data.get('battery_level'),
+                            satellites=parsed_data.get('satellites', 0),
+                            raw_data={
+                                'protocol': decoder_type,
+                                'ip_address': ip_address,
+                                'raw_hex': data.hex()
+                            }
+                        )
+                        
+                        # Create DeviceState
+                        DeviceState.objects.create(
+                            device=device,
+                            state=state_obj,
+                            location_data=location_data
+                        )
 
-                     # Successfully processed - delete raw data to avoid redundancy
+                        # Broadcast update
+                        self.broadcast_device_update(device, speed=current_speed, heading=parsed_data.get('course'), location_data=location_data)
+
+                        logger.info(f'Saved location data and state for device {device.imei}')
+                    else:
+                        logger.info(f'Skipping update for device {device.imei} - no significant change')
+
+                    # Successfully processed - delete raw data to avoid redundancy
+                    # We delete it even if we skipped saving LocationData, because it was "processed"
                     RawGpsData.objects.filter(
                         ip_address=ip_address,
                         raw_data=data.hex()
                     ).delete()
                     
-                    logger.info(f'Saved location data for device {device.imei}')
+                    # --- NEW LOGIC END ---
+                    
                 else:
                     logger.info(f'GPS invalid for device {device.imei}')
 
@@ -410,7 +492,7 @@ class GPSReceiver:
         # Unknown format
         return 'suspicious'
 
-    def broadcast_device_update(self, device, speed=0, heading=0):
+    def broadcast_device_update(self, device, speed=0, heading=0, location_data=None):
         """
         Broadcast device location update to WebSocket clients
         """
@@ -418,24 +500,40 @@ class GPSReceiver:
             channel_layer = get_channel_layer()
             
             last_update = None
-            if device.last_location_time:
-                if isinstance(device.last_location_time, str):
-                    last_update = device.last_location_time
-                elif hasattr(device.last_location_time, 'isoformat'):
-                    last_update = device.last_location_time.isoformat()
-                else:
-                    last_update = str(device.last_location_time)
+            lat = None
+            lng = None
+            
+            # 1. Try to get data from the provided location_data
+            if location_data:
+                lat = float(location_data.latitude)
+                lng = float(location_data.longitude)
+                if location_data.created_at:
+                     last_update = location_data.created_at.isoformat()
+            
+            # 2. Fallback: Query the latest LocationData from DB if not provided
+            if lat is None or lng is None:
+                latest_loc = LocationData.objects.filter(device=device).order_by('-created_at').first()
+                if latest_loc:
+                    lat = float(latest_loc.latitude)
+                    lng = float(latest_loc.longitude)
+                    if latest_loc.created_at:
+                        last_update = latest_loc.created_at.isoformat()
+
+            # 3. Default time if still missing
+            if not last_update:
+                from datetime import datetime, timezone
+                last_update = datetime.now(timezone.utc).isoformat()
 
             device_data = {
                 'id': device.id,
                 'name': device.name,
                 'imei': device.imei,
-                'device_id': device.device_id,
-                'lat': float(device.last_location_lat) if device.last_location_lat else None,
-                'lng': float(device.last_location_lng) if device.last_location_lng else None,
+                'device_id': device.imei,
+                'lat': lat,
+                'lng': lng,
                 'last_update': last_update,
                 'status': device.status,
-                'battery_level': device.battery_level,
+                'battery_level': getattr(location_data, 'battery_level', 0) if location_data else 0,
                 'speed': float(speed) if speed is not None else 0,
                 'heading': float(heading) if heading is not None else 0,
             }

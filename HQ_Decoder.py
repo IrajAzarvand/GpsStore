@@ -301,8 +301,9 @@ class HQFullDecoder:
         res["status_raw"] = status
         res["speed_raw"] = speed_raw
         res["angle_raw"] = angle_raw
-        # numeric conversions (safe)
-        res["speed_kph"] = self._safe_float(speed_raw) if speed_raw is not None else None
+        # Convert speed from knots to km/h (1 knot = 1.852 km/h)
+        speed_knots = self._safe_float(speed_raw) if speed_raw is not None else None
+        res["speed_kph"] = round(speed_knots * 1.852, 2) if speed_knots is not None else None
         # put a fallback alias for frontend that may expect 'speed'
         res["speed"] = res["speed_kph"]
         res["course"] = self._safe_int(angle_raw) if angle_raw is not None else None
