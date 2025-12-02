@@ -39,14 +39,22 @@ def dm_to_dd(value: Optional[str], direction: Optional[str]) -> Optional[float]:
         v = float(value)
     except Exception:
         return None
-    # degrees are the integer part of v // 100
-    degrees = int(v // 100)
-    minutes = v - degrees * 100
+    
+    # Auto-detect format: if value >= 10000, it's DDDMM.MMMM, else DDMM.MMMM
+    if v >= 10000:
+        # DDDMM.MMMM format (longitude with 3-digit degrees)
+        degrees = int(v // 100)
+        minutes = v - degrees * 100
+    else:
+        # DDMM.MMMM format (latitude with 2-digit degrees)
+        degrees = int(v // 100)
+        minutes = v - degrees * 100
+    
     decimal = degrees + (minutes / 60.0)
     if direction and isinstance(direction, str) and direction.upper() in ("S", "W"):
         decimal = -decimal
-    # round to 6 decimals for storage/transit
-    return round(decimal, 6)
+    # round to 7 decimals for better precision (~1cm accuracy)
+    return round(decimal, 7)
 
 
 def format_time_date(hhmmss: Optional[str], ddmmyy: Optional[str]) -> Optional[str]:
@@ -301,8 +309,9 @@ class HQFullDecoder:
         res["status_raw"] = status
         res["speed_raw"] = speed_raw
         res["angle_raw"] = angle_raw
-        # numeric conversions (safe)
-        res["speed_kph"] = self._safe_float(speed_raw) if speed_raw is not None else None
+        # Convert speed from knots to km/h (1 knot = 1.852 km/h)
+        speed_knots = self._safe_float(speed_raw) if speed_raw is not None else None
+        res["speed_kph"] = round(speed_knots * 1.852, 2) if speed_knots is not None else None
         # put a fallback alias for frontend that may expect 'speed'
         res["speed"] = res["speed_kph"]
         res["course"] = self._safe_int(angle_raw) if angle_raw is not None else None

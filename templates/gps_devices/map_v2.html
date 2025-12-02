@@ -351,6 +351,8 @@
         /* Marker Styles */
         .vehicle-marker {
             position: relative;
+            width: 30px;
+            height: 30px;
             transition: all 0.5s ease;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
             display: flex;
@@ -359,6 +361,9 @@
         }
 
         .vehicle-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
             width: 30px;
             height: 30px;
             transition: all 0.3s ease;
@@ -382,15 +387,32 @@
 
         .pulse-effect {
             position: absolute;
-            top: 50%;
+            left: 0;
+            top: 0;
+            /* transform: translate(-50%, -50%) در HTML هم گذاشته شده، اما تکرار مشکلی ایجاد نمیکند */
+            pointer-events: auto;
+            z-index: 500;
+        }
+
+        .vehicle-marker-centered .vehicle-icon-img {
+            display: block;
+            transform-origin: center center;
+            will-change: transform, left, top;
+        }
+
+        .vehicle-marker-centered .pulse-effect {
+            position: absolute;
             left: 50%;
+            top: 50%;
             transform: translate(-50%, -50%);
             width: 16px;
             height: 16px;
             border-radius: 50%;
             opacity: 0.6;
             animation: pulse 2s infinite;
+            z-index: -1;
         }
+
 
         @keyframes pulse {
             0% {
@@ -935,6 +957,7 @@
                         class="fas fa-plus"></i></button></div>
         </div>
 
+
         <div class="user-tree">
             {% for item in hierarchy %}
             {% include "gps_devices/includes/user_tree_node.html" with node=item %}
@@ -1044,8 +1067,8 @@
                         <span class="value" id="deviceBatteryDetail">-</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">سیگنال:</span>
-                        <span class="value" id="deviceSignalDetail">-</span>
+                        <span class="label">دقت GPS</span>
+                        <span class="value" id="deviceAccuracyDetail">-</span>
                     </div>
                     <div class="detail-item">
                         <span class="label">ولتاژ:</span>
@@ -1065,6 +1088,7 @@
         const POLL_URL = "/gps_devices/api/markers/";
         const POLL_INTERVAL_SEC = 5;
         const NESHAN_KEY = 'web.67f5a720d42541cfae21115f05a637b5';
+        const MARKER_BASE_URL = '{% static "img/markers/" %}';
         // --- State ---
         let map;
 
@@ -1075,6 +1099,7 @@
         let pollInterval;
         let userLocation;
         let selectedDeviceId = null;
+        let followingDeviceId = null;
 
         // Initialize from server data
         const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
@@ -1124,12 +1149,18 @@
         function updateDeviceMarker(device) {
             if (!device.lat || !device.lng) return;
 
-            const coords = [device.lat,
-            device.lng];
+            // ensure numeric
+            const lat = parseFloat(device.lat);
+            const lng = parseFloat(device.lng);
+            if (isNaN(lat) || isNaN(lng)) {
+                console.warn('Invalid coordinates for device', device.id, device.lat, device.lng);
+                return;
+            }
+            const coords = [lat, lng];
             const markerHtml = createVehicleMarker(device);
 
             const icon = L.divIcon({
-                className: 'vehicle-marker',
+                className: 'vehicle-divicon',
                 html: markerHtml,
                 iconSize: [30, 30],
                 iconAnchor: [15, 25],
@@ -1159,6 +1190,9 @@
                     icon: icon
                 }).addTo(map);
                 marker.bindPopup(createPopupContent(device));
+                marker.on('click', function () {
+                    focusOnDevice(device.id);
+                });
                 markers[device.id] = marker;
             }
             // اگر این دستگاه الان توی پنل پایین نمایش داده شده، محتواش رو آپدیت کن
@@ -1175,9 +1209,6 @@
             const status = device.status ? device.status.toLowerCase() : '';
             const type = device.vehicle_type ? device.vehicle_type.toLowerCase() : '';
 
-            // Debug log for icon selection
-            // console.log(`Device: ${device.name}, Status: ${status}, Type: ${type}`);
-
             if (status.includes('alarm') || status.includes('sos')) iconName = 'alarm - sos.png';
             else if (status.includes('battery') || status.includes('power')) iconName = 'Battery-Power Fault.png';
             else if (status.includes('geofence')) iconName = 'Geofence In-Out.png';
@@ -1185,16 +1216,8 @@
             else if (status.includes('offline')) iconName = 'offline.png';
             else if (status.includes('towing')) iconName = 'Towing - Movement while Engine Off.png';
             else if (status.includes('stop')) iconName = 'stop.png';
-
             else if (type) {
-                const validTypes = ['405',
-                    '206',
-                    'mazda3',
-                    'trailer',
-                    'pridewanet',
-                    'samand',
-                    'kamunet',
-                    'landcruise'];
+                const validTypes = ['405', '206', 'mazda3', 'trailer', 'pridewanet', 'samand', 'kamunet', 'landcruise'];
                 const matchedType = validTypes.find(t => type.includes(t));
                 if (matchedType) iconName = matchedType + '.png';
             }
@@ -1205,6 +1228,7 @@
             return `<div class="vehicle-marker">${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
             <div class="vehicle-icon" style="transform: rotate(${rotation}deg);"><img src="${iconUrl}" alt="vehicle" onerror="this.src='{% static 'img/markers/arrow.png' %}'" /></div></div>`;
         }
+
 
         function createPopupContent(device) {
             return `<div style="font-family: 'Vazirmatn'; text-align: right; min-width: 250px;">
@@ -1219,8 +1243,8 @@
                             <div style="font-weight: bold;">${device.battery_level || '--'}%</div>
                             <div style="color: #666;"><i class="fas fa-signal" style="color: #22c55e; width: 20px;"></i>سیگنال:</div>
                             <div style="font-weight: bold;">${device.signal_strength || '--'}%</div>
-                            <div style="color: #666;"><i class="fas fa-satellite" style="color: #3b82f6; width: 20px;"></i>ماهواره:</div>
-                            <div style="font-weight: bold;">${device.satellites || '--'}</div>
+                            <div style="color: #666;"><i class="fas fa-crosshairs" style="color: #8b5cf6; width: 20px;"></i>دقت GPS:</div>
+                            <div style="font-weight: bold;">${device.accuracy ? device.accuracy.toFixed(1) + 'm' : 'N/A'}</div>
                             <div style="color: #666;"><i class="fas fa-compass" style="color: #8b5cf6; width: 20px;"></i>جهت:</div>
                             <div style="font-weight: bold;">${device.heading || 0}°</div>
                             <div style="color: #666;"><i class="fas fa-car" style="color: #10b981; width: 20px;"></i>نوع:</div>
@@ -1287,7 +1311,7 @@
             ws.onmessage = function (e) {
                 try {
                     const data = JSON.parse(e.data);
-
+                    console.log('WS device update raw coords:', data.device.id, data.device.lat, data.device.lng, 'heading:', data.device.heading);
                     if (data.type === 'device_update') {
                         handleDeviceUpdate(data.data);
                     }
@@ -1327,6 +1351,16 @@
             updateDeviceUI(devices[id]);
             // Update status icons
             updateDeviceStatusIcons(devices[id]);
+
+            // If we're following this device, smoothly pan to its new location
+            if (followingDeviceId === id && devices[id].lat && devices[id].lng) {
+                // تغییر به setView برای جلوگیری از انحراف
+                map.setView([devices[id].lat, devices[id].lng], map.getZoom(), {
+                    animate: true,
+                    duration: 0.5,
+                    easeLinearity: 0.25
+                });
+            }
 
             // Update Timestamp
             const now = new Date();
@@ -1381,7 +1415,16 @@
         function focusOnDevice(deviceId) {
             const device = devices[deviceId];
             if (device && markers[deviceId]) {
-                map.setView([device.lat, device.lng], 15);
+                // Enable follow mode for this device
+                followingDeviceId = deviceId;
+
+                // Smooth pan to device with animation
+                map.flyTo([device.lat, device.lng], 17, {
+                    animate: true,
+                    duration: 1.5, // 1.5 seconds smooth animation
+                    easeLinearity: 0.25
+                });
+
                 markers[deviceId].openPopup();
                 // Show device info in bottom panel
                 showDeviceInfo(deviceId);
@@ -1416,7 +1459,8 @@
             document.getElementById('deviceSpeedDetail').textContent = (device.speed || 0) + ' km/h';
             document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
             document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
-            document.getElementById('deviceSignalDetail').textContent = device.signal_strength || '-';
+            document.getElementById('deviceAccuracyDetail').textContent = (device.accuracy ? device.accuracy.toFixed(1) + ' m' : '-');
+            document.getElementById('deviceSignalDetail').textContent = (device.signal_strength || '-') + '%';
             document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
             document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
 
@@ -1424,18 +1468,6 @@
             const statusBadge = document.getElementById('deviceStatusDetail');
             statusBadge.textContent = getStatusText(device.status);
             statusBadge.style.backgroundColor = getStatusColor(device.status);
-        }
-
-        function closeBottomDevicePanel() {
-            const panel = document.getElementById('bottomDevicePanel');
-            panel.classList.remove('active');
-
-            // حذف کلاس از main-content برای بزرگ کردن نقشه
-            const mainContent = document.querySelector('.main-content');
-            mainContent.classList.remove('with-bottom-panel');
-
-            // پاک کردن deviceId انتخاب شده
-            selectedDeviceId = null;
         }
 
         function toggleChildren(element) {
@@ -1498,71 +1530,6 @@
             }
         }
 
-        function updateConnectionStatus(status) {
-            const el = document.getElementById('wsStatus');
-
-            if (status === 'connected') {
-                el.innerHTML = '<i class="fas fa-circle" style="color: #19be6b;"></i> متصل';
-            }
-
-            else if (status === 'connecting') {
-                el.innerHTML = '<i class="fas fa-circle" style="color: orange;"></i> در حال اتصال...';
-            }
-
-            else {
-                el.innerHTML = '<i class="fas fa-circle" style="color: #ed4014;"></i> قطع';
-            }
-        }
-
-        // --- Interaction ---
-        function focusOnDevice(deviceId) {
-            const device = devices[deviceId];
-            if (device && markers[deviceId]) {
-                map.setView([device.lat, device.lng], 15);
-                markers[deviceId].openPopup();
-                // Show device info in bottom panel
-                showDeviceInfo(deviceId);
-            }
-        }
-
-        function showDeviceInfo(deviceId) {
-            const device = devices[deviceId];
-            if (!device) return;
-
-            // ذخیره deviceId انتخاب شده
-            selectedDeviceId = deviceId;
-
-            // به‌روزرسانی محتوای پنل
-            updateBottomDevicePanelContent(device);
-
-            // نمایش پنل پایین
-            const panel = document.getElementById('bottomDevicePanel');
-            panel.classList.add('active');
-
-            // اضافه کردن کلاس به main-content برای کوچک کردن نقشه
-            const mainContent = document.querySelector('.main-content');
-            mainContent.classList.add('with-bottom-panel');
-        }
-
-        function updateBottomDevicePanelContent(device) {
-            // Update bottom panel content
-            document.getElementById('deviceNameDetail').textContent = device.name || '-';
-            document.getElementById('deviceImeiDetail').textContent = device.imei || '-';
-            document.getElementById('deviceLatDetail').textContent = device.lat ? device.lat.toFixed(6) : '-';
-            document.getElementById('deviceLngDetail').textContent = device.lng ? device.lng.toFixed(6) : '-';
-            document.getElementById('deviceSpeedDetail').textContent = (device.speed || 0) + ' km/h';
-            document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
-            document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
-            document.getElementById('deviceSignalDetail').textContent = device.signal_strength || '-';
-            document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
-            document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
-
-            // Update status badge
-            const statusBadge = document.getElementById('deviceStatusDetail');
-            statusBadge.textContent = getStatusText(device.status);
-            statusBadge.style.backgroundColor = getStatusColor(device.status);
-        }
-
         function closeBottomDevicePanel() {
             const panel = document.getElementById('bottomDevicePanel');
             panel.classList.remove('active');
@@ -1573,66 +1540,7 @@
 
             // پاک کردن deviceId انتخاب شده
             selectedDeviceId = null;
-        }
-
-        function toggleChildren(element) {
-            const parent = element.parentElement;
-            const children = parent.querySelector('.user-children');
-
-            if (children) {
-                const btn = element.querySelector('.toggle-btn i');
-
-                if (children.style.display === 'none') {
-                    children.style.display = 'block';
-
-                    if (btn) {
-                        btn.classList.remove('fa-chevron-left');
-                        btn.classList.add('fa-chevron-down');
-                    }
-                }
-
-                else {
-                    children.style.display = 'none';
-
-                    if (btn) {
-                        btn.classList.remove('fa-chevron-down');
-                        btn.classList.add('fa-chevron-left');
-                    }
-                }
-            }
-        }
-
-        function locateUser() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const userCoords = [position.coords.latitude, position.coords.longitude];
-                    if (userLocation) map.removeLayer(userLocation);
-                    userLocation = L.marker(userCoords).addTo(map);
-                    userLocation.bindPopup('موقعیت شما').openPopup();
-                    map.setView(userCoords, 13);
-                }, () => alert('دسترسی به موقعیت مکانی امکان‌پذیر نیست'));
-            }
-
-            else {
-                alert('مرورگر شما پشتیبانی نمی‌کند');
-            }
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-theme');
-            const isLight = document.body.classList.contains('light-theme');
-            const themeText = document.querySelector('.theme-switcher span');
-            const themeIcon = document.querySelector('.theme-icon');
-
-            if (isLight) {
-                themeText.textContent = 'تم روشن';
-                themeIcon.className = 'fas fa-sun theme-icon';
-            }
-
-            else {
-                themeText.textContent = 'تم تیره';
-                themeIcon.className = 'fas fa-moon theme-icon';
-            }
+            followingDeviceId = null; // Stop following when panel closes
         }
 
         function toggleLayers() {
