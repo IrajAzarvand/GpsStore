@@ -39,14 +39,22 @@ def dm_to_dd(value: Optional[str], direction: Optional[str]) -> Optional[float]:
         v = float(value)
     except Exception:
         return None
-    # degrees are the integer part of v // 100
-    degrees = int(v // 100)
-    minutes = v - degrees * 100
+    
+    # Auto-detect format: if value >= 10000, it's DDDMM.MMMM, else DDMM.MMMM
+    if v >= 10000:
+        # DDDMM.MMMM format (longitude with 3-digit degrees)
+        degrees = int(v // 100)
+        minutes = v - degrees * 100
+    else:
+        # DDMM.MMMM format (latitude with 2-digit degrees)
+        degrees = int(v // 100)
+        minutes = v - degrees * 100
+    
     decimal = degrees + (minutes / 60.0)
     if direction and isinstance(direction, str) and direction.upper() in ("S", "W"):
         decimal = -decimal
-    # round to 6 decimals for storage/transit
-    return round(decimal, 6)
+    # round to 7 decimals for better precision (~1cm accuracy)
+    return round(decimal, 7)
 
 
 def format_time_date(hhmmss: Optional[str], ddmmyy: Optional[str]) -> Optional[str]:

@@ -351,11 +351,17 @@
         /* Marker Styles */
         .vehicle-marker {
             position: relative;
+            width: 30px;
+            height: 30px;
             transition: all 0.5s ease;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
 
         .vehicle-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 30px;
             height: 30px;
             transition: all 0.3s ease;
@@ -365,6 +371,7 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+            display: block;
         }
 
         .pulse-effect {
@@ -377,6 +384,7 @@
             border-radius: 50%;
             opacity: 0.6;
             animation: pulse 2s infinite;
+            z-index: -1;
         }
 
         @keyframes pulse {
@@ -1116,6 +1124,7 @@
         const POLL_URL = "/gps_devices/api/markers/";
         const POLL_INTERVAL_SEC = 5;
         const NESHAN_KEY = 'web.67f5a720d42541cfae21115f05a637b5';
+        const MARKER_BASE_URL = '{% static "img/markers/" %}';
         // --- State ---
         let map;
 
@@ -1182,8 +1191,8 @@
             const icon = L.divIcon({
                 className: 'vehicle-marker',
                 html: markerHtml,
-                iconSize: [30, 30],      /* از [20, 20] به [30, 30] */
-                iconAnchor: [15, 15]     /* از [10, 10] به [15, 15] */
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
             });
 
             if (markers[device.id]) {
@@ -1250,10 +1259,9 @@
             }
 
             // Add version to bust cache
-            const iconUrl = `{% static 'img/markers/' %}${iconName}?v=1`;
+            const iconUrl = MARKER_BASE_URL + iconName + '?v=1';
 
-            return `<div class="vehicle-marker" style="transform: rotate(${rotation}deg);">${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
-
+            return `<div class="vehicle-marker" style="transform: rotate(${rotation}deg); transform-origin: center center;">${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
             <div class="vehicle-icon"><img src="${iconUrl}" alt="vehicle" onerror="this.src='{% static 'img/markers/arrow.png' %}'" /></div></div>`;
         }
 
