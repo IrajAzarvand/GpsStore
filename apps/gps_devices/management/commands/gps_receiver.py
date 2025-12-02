@@ -538,13 +538,24 @@ class GPSReceiver:
                 'heading': float(heading) if heading is not None else 0,
             }
 
+            # Send to admins group (they see all devices)
             async_to_sync(channel_layer.group_send)(
-                f'device_{device.id}',
+                'admins_group',
                 {
                     'type': 'device_update',
-                    'device': device_data
+                    'data': device_data
                 }
             )
+            
+            # Send to device owner's personal group
+            if device.owner:
+                async_to_sync(channel_layer.group_send)(
+                    f'user_group_{device.owner.id}',
+                    {
+                        'type': 'device_update',
+                        'data': device_data
+                    }
+                )
 
         except Exception as e:
             logger.error(f'Error broadcasting device update: {e}')
