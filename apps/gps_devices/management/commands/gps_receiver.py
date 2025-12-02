@@ -347,46 +347,64 @@ class GPSReceiver:
                     current_lat = float(parsed_data['latitude'])
                     current_lon = float(parsed_data['longitude'])
                     
-                    # Determine current state
-                    # Assuming 'Moving' if speed > 0, else 'Stopped'
-                    state_name = 'Moving' if current_speed > 0 else 'Stopped'
-                    
-                    # Get or create State object
-                    state_obj, _ = State.objects.get_or_create(name=state_name)
-                    
-                    # Get last DeviceState
+                    # Get last DeviceState and LocationData
                     last_device_state = DeviceState.objects.filter(device=device).order_by('-timestamp').first()
+                    last_location = LocationData.objects.filter(device=device).order_by('-created_at').first()
                     
-                    should_update = False
+                    # Determine if we should save LocationData
+                    should_save_location = True
+                    
+                    # If device is stopped and hasn't moved significantly, skip LocationData
+                    if current_speed == 0 and last_location:
+                        last_lat = float(last_location.latitude)
+                        last_lon = float(last_location.longitude)
+                        distance = haversine_distance(current_lat, current_lon, last_lat, last_lon)
+                        
+                        if distance < 5.0:  # Less than 5 meters
+                            should_save_location = False
+                            logger.info(f"Skipping LocationData for {device.imei} - stopped and distance < 5m")
+                    
+                    # Determine if we should save DeviceState (state change)
+                    should_save_state = False
+                    state_name = None
                     
                     if not last_device_state:
-                        # First time seeing this device state
-                        should_update = True
-                        logger.info(f"First state for device {device.imei}")
+                        # First time - save state
+                        should_save_state = True
+                        state_name = 'Moving' if current_speed > 0 else 'Stopped'
+                        logger.info(f"First state for device {device.imei}: {state_name}")
                     else:
-                        last_speed = last_device_state.location_data.speed if last_device_state.location_data else 0
                         last_state_name = last_device_state.state.name
                         
-                        # Check for state change or speed change
-                        # Note: You might want a threshold for speed change to avoid jitter
-                        if last_state_name != state_name:
-                            should_update = True
-                            logger.info(f"State changed for {device.imei}: {last_state_name} -> {state_name}")
-                        elif abs(current_speed - last_speed) > 1.0: # 1 km/h threshold for speed change
-                             should_update = True
-                             logger.info(f"Speed changed for {device.imei}: {last_speed} -> {current_speed}")
-                        else:
-                            # Check distance
-                            if last_device_state.location_data:
-                                last_lat = float(last_device_state.location_data.latitude)
-                                last_lon = float(last_device_state.location_data.longitude)
+                        # Check for Moving -> Stopped transition
+                        if last_state_name == 'Moving' and current_speed == 0:
+                            # Count consecutive zero speeds
+                            recent_locations = LocationData.objects.filter(
+                                device=device
+                            ).order_by('-created_at')[:3]
+                            
+                            zero_speed_count = sum(1 for loc in recent_locations if loc.speed == 0)
+                            
+                            if zero_speed_count >= 2:  # Current + 2 previous = 3 total
+                                should_save_state = True
+                                state_name = 'Stopped'
+                                logger.info(f"State change for {device.imei}: Moving -> Stopped (3 zero speeds)")
+                        
+                        # Check for Stopped -> Moving transition
+                        elif last_state_name == 'Stopped' and current_speed > 0:
+                            if last_location:
+                                last_lat = float(last_location.latitude)
+                                last_lon = float(last_location.longitude)
                                 distance = haversine_distance(current_lat, current_lon, last_lat, last_lon)
                                 
-                                if distance > 5.0: # 5 meters threshold
-                                    should_update = True
-                                    logger.info(f"Distance changed for {device.imei}: {distance:.2f}m")
+                                if distance > 5.0:  # Moved more than 5 meters
+                                    should_save_state = True
+                                    state_name = 'Moving'
+                                    logger.info(f"State change for {device.imei}: Stopped -> Moving (speed > 0, distance: {distance:.2f}m)")
                     
-                    if should_update:
+                    # Save LocationData if needed
+                    location_data = None
+                    if should_save_location:
                         location_data = LocationData.objects.create(
                             device=device,
                             latitude=parsed_data['latitude'],
@@ -401,20 +419,21 @@ class GPSReceiver:
                                 'raw_hex': data.hex()
                             }
                         )
-                        
-                        # Create DeviceState
+                        logger.info(f'Saved LocationData for device {device.imei}')
+                    
+                    # Save DeviceState if state changed
+                    if should_save_state and state_name:
+                        state_obj, _ = State.objects.get_or_create(name=state_name)
                         DeviceState.objects.create(
                             device=device,
                             state=state_obj,
-                            location_data=location_data
+                            location_data=location_data or last_location  # Use new or last location
                         )
-
-                        # Broadcast update
+                        logger.info(f'Saved DeviceState for device {device.imei}: {state_name}')
+                    
+                    # Broadcast update if we saved location data
+                    if should_save_location:
                         self.broadcast_device_update(device, speed=current_speed, heading=parsed_data.get('course'), location_data=location_data)
-
-                        logger.info(f'Saved location data and state for device {device.imei}')
-                    else:
-                        logger.info(f'Skipping update for device {device.imei} - no significant change')
 
                     # Successfully processed - delete raw data to avoid redundancy
                     # We delete it even if we skipped saving LocationData, because it was "processed"
