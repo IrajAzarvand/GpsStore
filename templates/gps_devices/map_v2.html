@@ -302,7 +302,8 @@
         }
 
         .main-content.with-bottom-panel {
-            height: calc(100vh - var(--header-height) - 300px);
+            height: 80vh;
+            /* 80% برای نقشه */
         }
 
         .map-container {
@@ -348,41 +349,28 @@
             transform: scale(1.05);
         }
 
-        /* Marker Styles */
-        .vehicle-marker {
-            position: relative;
-            width: 30px;
-            height: 30px;
-            transition: all 0.5s ease;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Leaflet Marker Override - حذف کامل margin */
+        .leaflet-marker-icon {
+            margin: 0 !important;
         }
 
-        .vehicle-icon {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 30px;
-            height: 30px;
-            transition: all 0.3s ease;
-            transform-origin: center center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Vehicle Marker Container */
+        .vehicle-divicon {
+            width: 30px !important;
+            height: 30px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: none !important;
         }
 
-        .vehicle-icon img {
-            width: 100%;
-            height: 100%;
+        /* Vehicle Image */
+        .vehicle-img {
+            width: 30px;
+            height: 30px;
+            display: block;
             object-fit: contain;
-        }
-
-        /* Override Leaflet default marker positioning */
-        .leaflet-marker-icon.vehicle-marker {
-            margin-left: 0 !important;
-            margin-top: 0 !important;
+            transform-origin: center center;
         }
 
         .pulse-effect {
@@ -539,67 +527,6 @@
         }
 
 
-
-        .detail-section {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .detail-section h4 {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--primary-light);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-
-        .detail-item .label {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.85rem;
-        }
-
-        .detail-item .value {
-            color: #fff;
-            font-weight: 500;
-            font-size: 0.9rem;
-            text-align: left;
-            direction: ltr;
-        }
-
-        .detail-item .value.highlight {
-            color: var(--primary-light);
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        .detail-item .value.status-badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .detail-item .value.battery-level {
-            color: var(--success);
-        }
 
         /* Bottom Bar - Device Info Display */
         .bottom-bar {
@@ -803,7 +730,8 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
             z-index: 1000;
-            height: 300px;
+            height: 20vh;
+            /* 20% ارتفاع صفحه */
             overflow-y: auto;
             transition: transform 0.3s ease;
             transform: translateY(100%);
@@ -814,7 +742,7 @@
         }
 
         .panel-header {
-            padding: 15px 20px;
+            padding: 8px 15px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
@@ -823,26 +751,29 @@
         }
 
         .panel-header h3 {
-            font-size: 1rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--light);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .close-btn {
             background: rgba(255, 255, 255, 0.1);
             border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
             color: var(--light);
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 0.9rem;
+            z-index: 10000;
+            position: relative;
         }
 
         .close-btn:hover {
@@ -857,53 +788,57 @@
         }
 
         .device-details-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-direction: row;
+            gap: 0;
+            flex-wrap: nowrap;
+            overflow-x: auto;
         }
 
         .detail-section {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: transparent;
+            border-radius: 0;
+            padding: 8px 15px;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .detail-section:first-child {
+            border-left: none;
         }
 
         .detail-section h4 {
-            font-size: 0.95rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: var(--primary-light);
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 4px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .detail-item {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 3px 0;
+            gap: 2px;
         }
 
-        .detail-item:last-child {
-            border-bottom: none;
-        }
+
 
         .detail-item .label {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.7rem;
         }
 
         .detail-item .value {
             color: #fff;
-            font-weight: 500;
-            font-size: 0.9rem;
-            text-align: left;
-            direction: ltr;
+            font-weight: 600;
+            font-size: 0.75rem;
         }
 
         .detail-item .value.highlight {
@@ -1103,7 +1038,6 @@
 
         // Initialize from server data
         const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
-        console.log('Initial Devices:', initialDevices); // Debug log
         initialDevices.forEach(d => devices[d.id] = d);
 
         // --- Initialization ---
@@ -1149,13 +1083,13 @@
         function updateDeviceMarker(device) {
             if (!device.lat || !device.lng) return;
 
-            // ensure numeric
             const lat = parseFloat(device.lat);
             const lng = parseFloat(device.lng);
             if (isNaN(lat) || isNaN(lng)) {
                 console.warn('Invalid coordinates for device', device.id, device.lat, device.lng);
                 return;
             }
+
             const coords = [lat, lng];
             const markerHtml = createVehicleMarker(device);
 
@@ -1167,44 +1101,65 @@
                 popupAnchor: [0, -15]
             });
 
-            if (markers[device.id]) {
+            let marker = markers[device.id];
+
+
+            if (marker) {
                 // Update existing marker
-                const marker = markers[device.id];
                 marker.setLatLng(coords);
                 marker.setIcon(icon);
 
-                // Update popup content if open
                 if (marker.isPopupOpen()) {
                     marker.setPopupContent(createPopupContent(device));
-                }
-
-                else {
+                } else {
                     marker.bindPopup(createPopupContent(device));
                 }
-            }
-
-            else {
-
+            } else {
                 // Create new marker
-                const marker = L.marker(coords, {
-                    icon: icon
-                }).addTo(map);
+                marker = L.marker(coords, { icon }).addTo(map);
                 marker.bindPopup(createPopupContent(device));
-                marker.on('click', function () {
-                    focusOnDevice(device.id);
-                });
-                markers[device.id] = marker;
+                marker.on('click', () => focusOnDevice(device.id));
+
+                markers[device.id] = marker;  // ذخیره
             }
-            // اگر این دستگاه الان توی پنل پایین نمایش داده شده، محتواش رو آپدیت کن
+
+            // آپدیت پنل پایین
             if (selectedDeviceId == device.id) {
                 updateBottomDevicePanelContent(device);
             }
         }
 
-        function createVehicleMarker(device) {
-            const color = getStatusColor(device.status);
-            const rotation = device.heading || 0;
 
+        // function createVehicleMarker(device) {
+        //     const color = getStatusColor(device.status);
+        //     const rotation = device.heading || 0;
+
+        //     let iconName = 'arrow.png';
+        //     const status = device.status ? device.status.toLowerCase() : '';
+        //     const type = device.vehicle_type ? device.vehicle_type.toLowerCase() : '';
+
+        //     if (status.includes('alarm') || status.includes('sos')) iconName = 'alarm - sos.png';
+        //     else if (status.includes('battery') || status.includes('power')) iconName = 'Battery-Power Fault.png';
+        //     else if (status.includes('geofence')) iconName = 'Geofence In-Out.png';
+        //     else if (status.includes('park')) iconName = 'park.png';
+        //     else if (status.includes('offline')) iconName = 'offline.png';
+        //     else if (status.includes('towing')) iconName = 'Towing - Movement while Engine Off.png';
+        //     else if (status.includes('stop')) iconName = 'stop.png';
+        //     else if (type) {
+        //         const validTypes = ['405', '206', 'mazda3', 'trailer', 'pridewanet', 'samand', 'kamunet', 'landcruise'];
+        //         const matchedType = validTypes.find(t => type.includes(t));
+        //         if (matchedType) iconName = matchedType + '.png';
+        //     }
+
+        //     // Add version to bust cache
+        //     const iconUrl = `{% static 'img/markers/' %}${iconName}?v=1`;
+
+        //     return `<img src="${iconUrl}" class="vehicle-img" style="transform: rotate(${rotation}deg);" />`;
+        // }
+
+
+        function createVehicleMarker(device) {
+            const rotation = device.heading || 0;
             let iconName = 'arrow.png';
             const status = device.status ? device.status.toLowerCase() : '';
             const type = device.vehicle_type ? device.vehicle_type.toLowerCase() : '';
@@ -1222,13 +1177,9 @@
                 if (matchedType) iconName = matchedType + '.png';
             }
 
-            // Add version to bust cache
             const iconUrl = `{% static 'img/markers/' %}${iconName}?v=1`;
-
-            return `<div class="vehicle-marker">${device.status === 'moving' ? '<div class="pulse-effect" style="background: ' + color + ';"></div>' : ''}
-            <div class="vehicle-icon" style="transform: rotate(${rotation}deg);"><img src="${iconUrl}" alt="vehicle" onerror="this.src='{% static 'img/markers/arrow.png' %}'" /></div></div>`;
+            return `<img src="${iconUrl}" class="vehicle-img" style="transform: rotate(${rotation}deg);" />`;
         }
-
 
         function createPopupContent(device) {
             return `<div style="font-family: 'Vazirmatn'; text-align: right; min-width: 250px;">
@@ -1310,8 +1261,8 @@
 
             ws.onmessage = function (e) {
                 try {
+                    console.log('WebSocket Message:', e.data);
                     const data = JSON.parse(e.data);
-                    console.log('WS device update:', data);
                     if (data.type === 'device_update') {
                         handleDeviceUpdate(data.data);
                     }
