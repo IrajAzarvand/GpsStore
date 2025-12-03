@@ -323,6 +323,17 @@ class HQFullDecoder:
         res["lac"] = self._safe_int(lac_raw)
         res["cid"] = self._safe_int(cid_raw)
 
+        # Extract ACC status from flags
+        # Bit 10 (0-indexed) of statusHex usually indicates ACC (1=On, 0=Off)
+        if flags_raw:
+            try:
+                flags_int = int(flags_raw, 16)
+                res["acc_on"] = bool((flags_int >> 10) & 1)
+            except Exception:
+                res["acc_on"] = None
+        else:
+            res["acc_on"] = None
+
         if res["gps_valid"]:
             res["latitude"] = dm_to_dd(lat_raw, lat_dir)
             res["longitude"] = dm_to_dd(lon_raw, lon_dir)

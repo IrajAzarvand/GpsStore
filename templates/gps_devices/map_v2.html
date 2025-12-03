@@ -362,8 +362,8 @@
 
         .vehicle-icon {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 0;
+            left: 0;
             width: 30px;
             height: 30px;
             transition: all 0.3s ease;
@@ -1163,8 +1163,8 @@
                 className: 'vehicle-divicon',
                 html: markerHtml,
                 iconSize: [30, 30],
-                iconAnchor: [15, 25],
-                popupAnchor: [0, -25]
+                iconAnchor: [15, 15],
+                popupAnchor: [0, -15]
             });
 
             if (markers[device.id]) {

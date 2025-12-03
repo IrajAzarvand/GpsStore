@@ -350,24 +350,42 @@ class GPSReceiver:
                     # Get last DeviceState and LocationData
                     last_device_state = DeviceState.objects.filter(device=device).order_by('-timestamp').first()
                     last_location = LocationData.objects.filter(device=device).order_by('-created_at').first()
-                    
                     # Determine if we should save LocationData
                     should_save_location = True
                     
-                    # If device is stopped and hasn't moved significantly, skip LocationData
-                    if current_speed == 0 and last_location:
+                    # Smart Movement Detection Logic
+                    # 1. Calculate distance from last location
+                    distance = 0.0
+                    if last_location:
                         last_lat = float(last_location.latitude)
                         last_lon = float(last_location.longitude)
                         distance = haversine_distance(current_lat, current_lon, last_lat, last_lon)
-                        
-                        if distance < 5.0:  # Less than 5 meters
-                            should_save_location = False
-                            logger.info(f"Skipping LocationData for {device.imei} - stopped and distance < 5m")
+
+                    # 2. Check ACC status (if available)
+                    acc_on = parsed_data.get('acc_on')
                     
+                    # 3. Apply Logic
+                    if acc_on is False: # ACC is explicitly OFF
+                        if distance <= 5.0:
+                            # ACC Off + No significant movement = Parked
+                            current_speed = 0.0
+                            should_save_location = False # Optional: skip saving if completely static
+                            logger.info(f"Device {device.imei}: ACC Off + Dist {distance:.1f}m -> Forced Stop")
+                        else:
+                            # ACC Off + Significant movement = Moving (Faulty ACC wiring?)
+                            # Trust the GPS speed
+                            should_save_location = True
+                            logger.info(f"Device {device.imei}: ACC Off + Dist {distance:.1f}m -> Moving (Faulty ACC?)")
+                    
+                    elif current_speed == 0 and distance < 5.0:
+                         # Standard stop check (regardless of ACC)
+                         should_save_location = False
+                         logger.info(f"Skipping LocationData for {device.imei} - stopped and distance < 5m")
+
                     # Determine if we should save DeviceState (state change)
                     should_save_state = False
                     state_name = None
-                    
+
                     if not last_device_state:
                         # First time - save state
                         should_save_state = True
