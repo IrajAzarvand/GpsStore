@@ -453,6 +453,7 @@ class GPSReceiver:
                                 
                                 # فراخوانی Map Matching اگر حداقل 2 نقطه داریم
                                 if len(points) >= 2:
+                                    logger.info(f"Attempting map matching for device {device.imei} with {len(points)} points")
                                     map_matching_service = MapMatchingService()
                                     result = map_matching_service.match_points(points, use_cache=True)
                                     
@@ -467,9 +468,52 @@ class GPSReceiver:
                                             is_map_matched = True
                                             matched_geometry = map_matching_service.get_geometry(result)
                                             logger.info(f'Map matched coordinates for device {device.imei}: ({original_lat}, {original_lon}) -> ({matched_lat}, {matched_lon})')
+                                        else:
+                                            logger.warning(f"Map matching returned result but no snappedPoints for {device.imei}")
+                                    else:
+                                        logger.warning(f"Map matching failed or returned no result for {device.imei}. Result: {result}")
+                                else:
+                                    logger.info(f"Skipping map matching for {device.imei}: Not enough points ({len(points)})")
+                            else:
+                                logger.info(f"Skipping map matching for {device.imei}: Speed is 0")
                         except Exception as e:
-                            logger.warning(f'Map matching failed for device {device.imei}: {e}')
+                            logger.error(f'Map matching failed for device {device.imei}: {e}', exc_info=True)
                             # در صورت خطا، از مختصات اصلی استفاده می‌شود
+
+                        # try:
+                        #     from apps.gps_devices.services import MapMatchingService
+                            
+                        #     # فقط برای دستگاه‌های در حال حرکت Map Matching اعمال می‌شود
+                        #     if current_speed > 0:
+                        #         # دریافت 9 نقطه آخر برای Map Matching
+                        #         recent_locations = LocationData.objects.filter(
+                        #             device=device
+                        #         ).order_by('-created_at')[:9]  # 9 نقطه قبلی + نقطه فعلی = 10
+                                
+                        #         # ساخت لیست نقاط
+                        #         points = [(float(original_lat), float(original_lon))]
+                        #         for loc in reversed(list(recent_locations)):
+                        #             points.insert(0, (float(loc.latitude), float(loc.longitude)))
+                                
+                        #         # فراخوانی Map Matching اگر حداقل 2 نقطه داریم
+                        #         if len(points) >= 2:
+                        #             map_matching_service = MapMatchingService()
+                        #             result = map_matching_service.match_points(points, use_cache=True)
+                                    
+                        #             if result and 'snappedPoints' in result:
+                        #                 # استفاده از آخرین نقطه تصحیح شده
+                        #                 snapped_points = result['snappedPoints']
+                        #                 if snapped_points:
+                        #                     last_snapped = snapped_points[-1]
+                        #                     location = last_snapped.get('location', {})
+                        #                     matched_lat = location.get('latitude', current_lat)
+                        #                     matched_lon = location.get('longitude', current_lon)
+                        #                     is_map_matched = True
+                        #                     matched_geometry = map_matching_service.get_geometry(result)
+                        #                     logger.info(f'Map matched coordinates for device {device.imei}: ({original_lat}, {original_lon}) -> ({matched_lat}, {matched_lon})')
+                        # except Exception as e:
+                        #     logger.warning(f'Map matching failed for device {device.imei}: {e}')
+                        #     # در صورت خطا، از مختصات اصلی استفاده می‌شود
                         
                         location_data = LocationData.objects.create(
                             device=device,

@@ -63,6 +63,7 @@ def map_v2(request):
             'driver_name': device.driver_name,
             'sim_card_number': device.sim_no,
             'model': device.model.model_name if device.model else None,
+            'matched_geometry': latest_location.matched_geometry if latest_location else None,
         })
     
     context = {
