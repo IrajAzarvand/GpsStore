@@ -1035,6 +1035,7 @@
                 updateDeviceMarker(device);
                 if (device.matched_geometry) {
                     updateDevicePolyline(device.id, device.matched_geometry);
+                    updateDeviceStatusIcons(device);
                 }
             });
         }
