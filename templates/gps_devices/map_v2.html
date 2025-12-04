@@ -349,11 +349,6 @@
             transform: scale(1.05);
         }
 
-        /* Leaflet Marker Override - حذف کامل margin */
-        .leaflet-marker-icon {
-            margin: 0 !important;
-        }
-
         /* Vehicle Marker Container */
         .vehicle-divicon {
             width: 30px !important;
@@ -361,62 +356,23 @@
             margin: 0 !important;
             padding: 0 !important;
             background: transparent !important;
-            border: none !important;
+            border: 1px solid red !important;
+            /* کادر قرمز برای تشخیص محدوده */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
         }
 
         /* Vehicle Image */
         .vehicle-img {
-            width: 30px;
-            height: 30px;
+            width: 100% !important;
+            /* پر کردن کامل کادر قرمز */
+            height: 100% !important;
             display: block;
             object-fit: contain;
             transform-origin: center center;
-        }
-
-        .pulse-effect {
-            position: absolute;
-            left: 0;
-            top: 0;
-            /* transform: translate(-50%, -50%) در HTML هم گذاشته شده، اما تکرار مشکلی ایجاد نمیکند */
-            pointer-events: auto;
-            z-index: 500;
-        }
-
-        .vehicle-marker-centered .vehicle-icon-img {
-            display: block;
-            transform-origin: center center;
-            will-change: transform, left, top;
-        }
-
-        .vehicle-marker-centered .pulse-effect {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            opacity: 0.6;
-            animation: pulse 2s infinite;
-            z-index: -1;
-        }
-
-
-        @keyframes pulse {
-            0% {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 0.6;
-            }
-
-            50% {
-                transform: translate(-50%, -50%) scale(1.8);
-                opacity: 0.2;
-            }
-
-            100% {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 0.6;
-            }
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         /* Light Theme */
@@ -1030,6 +986,7 @@
         let markers = {};
         // Map Matching Polylines
         let devicePolylines = {}; // ذخیره Polyline هر دستگاه
+        let debugCircles = {}; // ذخیره دایره‌های دیباگ برای هر دستگاه
         let devices = {};
         let ws;
         let pollInterval;
@@ -1098,7 +1055,7 @@
                 className: 'vehicle-divicon',
                 html: markerHtml,
                 iconSize: [30, 30],
-                iconAnchor: [15, 15],
+                iconAnchor: [15, 15], // مرکز باکس 30 در 30
                 popupAnchor: [0, -15]
             });
 
@@ -1128,7 +1085,77 @@
             if (selectedDeviceId == device.id) {
                 updateBottomDevicePanelContent(device);
             }
+
+            // نمایش دایره‌های دیباگ
+            updateDebugCircles(device);
+
         }
+
+
+        // نمایش دایره‌های دیباگ برای مقایسه مختصات
+        function updateDebugCircles(device) {
+            const deviceId = device.id;
+
+            // حذف دایره‌های قبلی
+            if (debugCircles[deviceId]) {
+                debugCircles[deviceId].forEach(circle => map.removeLayer(circle));
+                delete debugCircles[deviceId];
+            }
+
+            debugCircles[deviceId] = [];
+
+            // 🔴 دایره قرمز: مختصات اصلی GPS (original_latitude, original_longitude)
+            if (device.original_lat && device.original_lng) {
+                const originalCircle = L.circleMarker(
+                    [parseFloat(device.original_lat), parseFloat(device.original_lng)],
+                    {
+                        radius: 8,
+                        color: '#ef4444',
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.6,
+                        weight: 2
+                    }
+                ).addTo(map);
+                originalCircle.bindPopup(`🔴 مختصات اصلی GPS<br>Lat: ${device.original_lat}<br>Lng: ${device.original_lng}`);
+                debugCircles[deviceId].push(originalCircle);
+            }
+
+            // 🟢 دایره سبز: مختصات Map Matched (latitude, longitude)
+            if (device.lat && device.lng) {
+                const matchedCircle = L.circleMarker(
+                    [parseFloat(device.lat), parseFloat(device.lng)],
+                    {
+                        radius: 8,
+                        color: '#22c55e',
+                        fillColor: '#22c55e',
+                        fillOpacity: 0.6,
+                        weight: 2
+                    }
+                ).addTo(map);
+                matchedCircle.bindPopup(`🟢 مختصات Map Matched<br>Lat: ${device.lat}<br>Lng: ${device.lng}`);
+                debugCircles[deviceId].push(matchedCircle);
+            }
+
+            // 🟡 دایره زرد: نقطه دقیق iconAnchor
+            if (device.lat && device.lng) {
+                const anchorCircle = L.circleMarker(
+                    [parseFloat(device.lat), parseFloat(device.lng)],
+                    {
+                        radius: 3,
+                        color: '#f59e0b',
+                        fillColor: '#f59e0b',
+                        fillOpacity: 1,
+                        weight: 1
+                    }
+                ).addTo(map);
+                anchorCircle.bindPopup(`🟡 نقطه iconAnchor [15, 15]`);
+                debugCircles[deviceId].push(anchorCircle);
+            }
+
+            console.log(`Debug circles updated for device ${deviceId}`);
+        }
+
+
 
         // رسم یا به‌روزرسانی Polyline برای یک دستگاه
         function updateDevicePolyline(deviceId, geometry) {
@@ -1271,22 +1298,21 @@
                 try {
                     console.log('WebSocket Message:', e.data);
                     const data = JSON.parse(e.data);
-                    if (data.type === 'device_update') {
-                        handleDeviceUpdate(data.data);
-                    }
-                    // به‌روزرسانی مارکر
-                    updateDeviceMarker(data.data);
 
-                    // رسم Polyline اگر وجود داشت
-                    if (data.data.matched_geometry) {
-                        updateDevicePolyline(data.data.id, data.data.matched_geometry);
-                    }
-                }
+                    if (data.type === 'device_update' && data.data) {
+                        const deviceData = data.data;
 
-                catch (err) {
+                        // به‌روزرسانی state و UI
+                        handleDeviceUpdate(deviceData);
+
+                        // رسم Polyline اگر وجود داشت
+                        if (deviceData.matched_geometry) {
+                            updateDevicePolyline(deviceData.id, deviceData.matched_geometry);
+                        }
+                    }
+                } catch (err) {
                     console.error('Error parsing WS message:', err);
                 }
-
             };
 
             ws.onclose = function () {
