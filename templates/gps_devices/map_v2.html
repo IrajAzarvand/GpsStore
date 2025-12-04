@@ -1030,6 +1030,7 @@
         }
 
         function createMarkers() {
+            console.log("Initial Devices Data:", devices);
             Object.values(devices).forEach(device => {
                 updateDeviceMarker(device);
                 if (device.matched_geometry) {
