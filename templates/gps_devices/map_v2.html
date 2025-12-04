@@ -1500,24 +1500,34 @@
             // Status Icon
             const statusIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="status"]`);
             if (statusIcon) {
-                statusIcon.classList.add('active');
-                statusIcon.classList.remove('inactive');
-
                 // تغییر آیکون بر اساس وضعیت
-                const iconElement = statusIcon.querySelector('i');
                 if (device.status === 'moving') {
-                    iconElement.className = 'fas fa-car-side';
-                    statusIcon.style.color = '#4361ee';
-                } else if (device.status === 'parked') {
-                    iconElement.className = 'fas fa-parking';
-                    statusIcon.style.color = '#f59e0b';
+                    // نمایش آیکون ماشین برای حالت در حرکت
+                    statusIcon.innerHTML = '<i class="fas fa-car"></i>';
+                    statusIcon.style.color = '#22c55e'; // سبز
+                    statusIcon.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+                    statusIcon.classList.add('active');
+                    statusIcon.classList.remove('inactive');
+                } else if (device.status === 'parked' || device.speed === 0) {
+                    // نمایش حرف P برای حالت پارک
+                    statusIcon.innerHTML = '<strong style="font-size: 12px;">P</strong>';
+                    statusIcon.style.color = '#f8fafc'; // سفید
+                    statusIcon.style.backgroundColor = 'rgba(100, 116, 139, 0.2)';
+                    statusIcon.classList.add('active');
+                    statusIcon.classList.remove('inactive');
                 } else if (device.status === 'offline') {
-                    iconElement.className = 'fas fa-power-off';
+                    statusIcon.innerHTML = '<i class="fas fa-power-off"></i>';
+                    statusIcon.style.color = '#64748b';
+                    statusIcon.style.backgroundColor = 'rgba(100, 116, 139, 0.2)';
                     statusIcon.classList.add('inactive');
                     statusIcon.classList.remove('active');
                 } else {
-                    iconElement.className = 'fas fa-circle';
+                    // حالت پیش‌فرض
+                    statusIcon.innerHTML = '<i class="fas fa-circle"></i>';
                     statusIcon.style.color = '#22c55e';
+                    statusIcon.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
+                    statusIcon.classList.add('active');
+                    statusIcon.classList.remove('inactive');
                 }
             }
         }
