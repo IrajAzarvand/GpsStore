@@ -351,13 +351,11 @@
 
         /* Vehicle Marker Container */
         .vehicle-divicon {
+            border: none !important;
             width: 30px !important;
             height: 30px !important;
-            margin: 0 !important;
             padding: 0 !important;
             background: transparent !important;
-            border: 1px solid red !important;
-            /* کادر قرمز برای تشخیص محدوده */
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -366,7 +364,6 @@
         /* Vehicle Image */
         .vehicle-img {
             width: 100% !important;
-            /* پر کردن کامل کادر قرمز */
             height: 100% !important;
             display: block;
             object-fit: contain;
@@ -1035,6 +1032,9 @@
         function createMarkers() {
             Object.values(devices).forEach(device => {
                 updateDeviceMarker(device);
+                if (device.matched_geometry) {
+                    updateDevicePolyline(device.id, device.matched_geometry);
+                }
             });
         }
 
@@ -1085,77 +1085,7 @@
             if (selectedDeviceId == device.id) {
                 updateBottomDevicePanelContent(device);
             }
-
-            // نمایش دایره‌های دیباگ
-            updateDebugCircles(device);
-
         }
-
-
-        // نمایش دایره‌های دیباگ برای مقایسه مختصات
-        function updateDebugCircles(device) {
-            const deviceId = device.id;
-
-            // حذف دایره‌های قبلی
-            if (debugCircles[deviceId]) {
-                debugCircles[deviceId].forEach(circle => map.removeLayer(circle));
-                delete debugCircles[deviceId];
-            }
-
-            debugCircles[deviceId] = [];
-
-            // 🔴 دایره قرمز: مختصات اصلی GPS (original_latitude, original_longitude)
-            if (device.original_lat && device.original_lng) {
-                const originalCircle = L.circleMarker(
-                    [parseFloat(device.original_lat), parseFloat(device.original_lng)],
-                    {
-                        radius: 8,
-                        color: '#ef4444',
-                        fillColor: '#ef4444',
-                        fillOpacity: 0.6,
-                        weight: 2
-                    }
-                ).addTo(map);
-                originalCircle.bindPopup(`🔴 مختصات اصلی GPS<br>Lat: ${device.original_lat}<br>Lng: ${device.original_lng}`);
-                debugCircles[deviceId].push(originalCircle);
-            }
-
-            // 🟢 دایره سبز: مختصات Map Matched (latitude, longitude)
-            if (device.lat && device.lng) {
-                const matchedCircle = L.circleMarker(
-                    [parseFloat(device.lat), parseFloat(device.lng)],
-                    {
-                        radius: 8,
-                        color: '#22c55e',
-                        fillColor: '#22c55e',
-                        fillOpacity: 0.6,
-                        weight: 2
-                    }
-                ).addTo(map);
-                matchedCircle.bindPopup(`🟢 مختصات Map Matched<br>Lat: ${device.lat}<br>Lng: ${device.lng}`);
-                debugCircles[deviceId].push(matchedCircle);
-            }
-
-            // 🟡 دایره زرد: نقطه دقیق iconAnchor
-            if (device.lat && device.lng) {
-                const anchorCircle = L.circleMarker(
-                    [parseFloat(device.lat), parseFloat(device.lng)],
-                    {
-                        radius: 3,
-                        color: '#f59e0b',
-                        fillColor: '#f59e0b',
-                        fillOpacity: 1,
-                        weight: 1
-                    }
-                ).addTo(map);
-                anchorCircle.bindPopup(`🟡 نقطه iconAnchor [15, 15]`);
-                debugCircles[deviceId].push(anchorCircle);
-            }
-
-            console.log(`Debug circles updated for device ${deviceId}`);
-        }
-
-
 
         // رسم یا به‌روزرسانی Polyline برای یک دستگاه
         function updateDevicePolyline(deviceId, geometry) {
