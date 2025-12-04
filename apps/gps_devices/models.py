@@ -57,6 +57,13 @@ class LocationData(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='locations')
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    
+    # فیلدهای Map Matching
+    original_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text='مختصات اصلی دریافتی از GPS')
+    original_longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text='مختصات اصلی دریافتی از GPS')
+    is_map_matched = models.BooleanField(default=False, help_text='آیا این نقطه Map Match شده است؟')
+    matched_geometry = models.TextField(blank=True, null=True, help_text='Encoded Polyline دریافتی از API نشان')
+    
     speed = models.FloatField(default=0)
     heading = models.FloatField(default=0)
     altitude = models.FloatField(default=0)

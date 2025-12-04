@@ -470,6 +470,11 @@ if not DEBUG and sentry_dsn and not sentry_dsn.startswith('your-'):
     except ImportError:
         pass  # Sentry not installed, skip silently
 
+# Neshan Map Matching API Configuration
+NESHAN_MAP_API_KEY = os.getenv('NESHAN_MAP_API_KEY', '')
+NESHAN_SERVICE_API_KEY = os.getenv('NESHAN_SERVICE_API_KEY', '')
+
 import logging
 logging.info("Test log from settings.py")
 print("Settings file loaded. LOGGING is configured:", bool(LOGGING))
+

@@ -1028,7 +1028,8 @@
         let map;
 
         let markers = {};
-
+        // Map Matching Polylines
+        let devicePolylines = {}; // ذخیره Polyline هر دستگاه
         let devices = {};
         let ws;
         let pollInterval;
@@ -1129,34 +1130,41 @@
             }
         }
 
+        // رسم یا به‌روزرسانی Polyline برای یک دستگاه
+        function updateDevicePolyline(deviceId, geometry) {
+            // حذف Polyline قبلی اگر وجود داشت
+            if (devicePolylines[deviceId]) {
+                map.removeLayer(devicePolylines[deviceId]);
+                delete devicePolylines[deviceId];
+            }
 
-        // function createVehicleMarker(device) {
-        //     const color = getStatusColor(device.status);
-        //     const rotation = device.heading || 0;
+            // اگر geometry وجود نداشت، فقط حذف کن
+            if (!geometry) {
+                return;
+            }
 
-        //     let iconName = 'arrow.png';
-        //     const status = device.status ? device.status.toLowerCase() : '';
-        //     const type = device.vehicle_type ? device.vehicle_type.toLowerCase() : '';
+            try {
+                // Decode کردن Encoded Polyline
+                const points = decodePolyline(geometry);
 
-        //     if (status.includes('alarm') || status.includes('sos')) iconName = 'alarm - sos.png';
-        //     else if (status.includes('battery') || status.includes('power')) iconName = 'Battery-Power Fault.png';
-        //     else if (status.includes('geofence')) iconName = 'Geofence In-Out.png';
-        //     else if (status.includes('park')) iconName = 'park.png';
-        //     else if (status.includes('offline')) iconName = 'offline.png';
-        //     else if (status.includes('towing')) iconName = 'Towing - Movement while Engine Off.png';
-        //     else if (status.includes('stop')) iconName = 'stop.png';
-        //     else if (type) {
-        //         const validTypes = ['405', '206', 'mazda3', 'trailer', 'pridewanet', 'samand', 'kamunet', 'landcruise'];
-        //         const matchedType = validTypes.find(t => type.includes(t));
-        //         if (matchedType) iconName = matchedType + '.png';
-        //     }
+                if (points && points.length > 0) {
+                    // ایجاد Polyline جدید
+                    const polyline = L.polyline(points, {
+                        color: '#4361ee',        // رنگ آبی
+                        weight: 4,               // ضخامت خط
+                        opacity: 0.7,            // شفافیت
+                        smoothFactor: 1.0        // نرمی خط
+                    }).addTo(map);
 
-        //     // Add version to bust cache
-        //     const iconUrl = `{% static 'img/markers/' %}${iconName}?v=1`;
+                    // ذخیره برای استفاده بعدی
+                    devicePolylines[deviceId] = polyline;
 
-        //     return `<img src="${iconUrl}" class="vehicle-img" style="transform: rotate(${rotation}deg);" />`;
-        // }
-
+                    console.log(`Polyline drawn for device ${deviceId} with ${points.length} points`);
+                }
+            } catch (error) {
+                console.error(`Error drawing polyline for device ${deviceId}:`, error);
+            }
+        }
 
         function createVehicleMarker(device) {
             const rotation = device.heading || 0;
@@ -1265,6 +1273,13 @@
                     const data = JSON.parse(e.data);
                     if (data.type === 'device_update') {
                         handleDeviceUpdate(data.data);
+                    }
+                    // به‌روزرسانی مارکر
+                    updateDeviceMarker(data.data);
+
+                    // رسم Polyline اگر وجود داشت
+                    if (data.data.matched_geometry) {
+                        updateDevicePolyline(data.data.id, data.data.matched_geometry);
                     }
                 }
 
@@ -1548,6 +1563,42 @@
                     statusIcon.style.color = '#22c55e';
                 }
             }
+        }
+    </script>
+    <!-- Polyline Decoder for Map Matching -->
+    <script>
+        // تابع decode کردن Encoded Polyline
+        function decodePolyline(encoded) {
+            if (!encoded) return [];
+
+            let points = [];
+            let index = 0, len = encoded.length;
+            let lat = 0, lng = 0;
+
+            while (index < len) {
+                let b, shift = 0, result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+
+                points.push([lat / 1e5, lng / 1e5]);
+            }
+
+            return points;
         }
     </script>
 </body>

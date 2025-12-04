@@ -426,10 +426,59 @@ class GPSReceiver:
                     # Save LocationData if needed
                     location_data = None
                     if should_save_location:
+                        # ذخیره مختصات اصلی
+                        original_lat = current_lat
+                        original_lon = current_lon
+                        
+                        # اعمال Map Matching
+                        matched_lat = current_lat
+                        matched_lon = current_lon
+                        is_map_matched = False
+                        matched_geometry = None
+                        
+                        try:
+                            from apps.gps_devices.services import MapMatchingService
+                            
+                            # فقط برای دستگاه‌های در حال حرکت Map Matching اعمال می‌شود
+                            if current_speed > 0:
+                                # دریافت 9 نقطه آخر برای Map Matching
+                                recent_locations = LocationData.objects.filter(
+                                    device=device
+                                ).order_by('-created_at')[:9]  # 9 نقطه قبلی + نقطه فعلی = 10
+                                
+                                # ساخت لیست نقاط
+                                points = [(float(original_lat), float(original_lon))]
+                                for loc in reversed(list(recent_locations)):
+                                    points.insert(0, (float(loc.latitude), float(loc.longitude)))
+                                
+                                # فراخوانی Map Matching اگر حداقل 2 نقطه داریم
+                                if len(points) >= 2:
+                                    map_matching_service = MapMatchingService()
+                                    result = map_matching_service.match_points(points, use_cache=True)
+                                    
+                                    if result and 'snappedPoints' in result:
+                                        # استفاده از آخرین نقطه تصحیح شده
+                                        snapped_points = result['snappedPoints']
+                                        if snapped_points:
+                                            last_snapped = snapped_points[-1]
+                                            location = last_snapped.get('location', {})
+                                            matched_lat = location.get('latitude', current_lat)
+                                            matched_lon = location.get('longitude', current_lon)
+                                            is_map_matched = True
+                                            matched_geometry = map_matching_service.get_geometry(result)
+                                            logger.info(f'Map matched coordinates for device {device.imei}: ({original_lat}, {original_lon}) -> ({matched_lat}, {matched_lon})')
+                        except Exception as e:
+                            logger.warning(f'Map matching failed for device {device.imei}: {e}')
+                            # در صورت خطا، از مختصات اصلی استفاده می‌شود
+                        
                         location_data = LocationData.objects.create(
                             device=device,
-                            latitude=parsed_data['latitude'],
-                            longitude=parsed_data['longitude'],
+                            latitude=matched_lat,  # مختصات تصحیح شده
+                            longitude=matched_lon,  # مختصات تصحیح شده
+                            original_latitude=original_lat,  # مختصات اصلی
+                            original_longitude=original_lon,  # مختصات اصلی
+                            is_map_matched=is_map_matched,
+                            matched_geometry=matched_geometry,
                             speed=current_speed,
                             heading=parsed_data.get('course'),
                             accuracy=parsed_data.get('accuracy', 0),
@@ -580,6 +629,7 @@ class GPSReceiver:
                 'accuracy': getattr(location_data, 'accuracy', 0) if location_data else 0,
                 'satellites': getattr(location_data, 'satellites', 0) if location_data else 0,
                 'signal_strength': getattr(location_data, 'signal_strength', 0) if location_data else 0,
+            'matched_geometry': getattr(location_data, 'matched_geometry', None) if location_data else None,
             }
 
             # Send to admins group (they see all devices)
