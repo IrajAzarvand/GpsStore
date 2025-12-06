@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 import json
 import os
+import re
 from typing import Optional, Dict, Any, Callable
 from functools import lru_cache
 from datetime import datetime, timezone
@@ -78,21 +79,85 @@ def format_time_date(hhmmss: Optional[str], ddmmyy: Optional[str]) -> Optional[s
         return None
 
 
-def interpret_flags_basic(hex_flags: Optional[str]) -> Dict[str, Any]:
-    """Minimal flags parsing — return raw, binary string and example bits."""
-    if not hex_flags:
-        return {"raw": None, "bits": None}
-    try:
-        s = str(hex_flags).lower().replace("0x", "")
-        if len(s) % 2 != 0:
-            s = "0" + s
-        bin_str = bin(int(s, 16))[2:].zfill(len(s) * 4)
-        # LSB-first convenience
-        lsb_first = bin_str[::-1]
-        return {"raw": hex_flags, "bits": bin_str, "lsb_first": lsb_first}
-    except Exception:
-        return {"raw": hex_flags, "bits": None}
 
+def parse_flags_from_hex(hex_str, byteorder='little'):
+    """
+    Parse a hex string like 'fbfffbff' into 32 boolean bits.
+    byteorder: 'little' or 'big' — default 'little' (common in many text trackers).
+    Returns integer value and dict bits.
+    """
+    try:
+        # Clean: remove non-hex
+        cleaned = re.sub(r'[^0-9a-fA-F]', '', str(hex_str))
+        # ensure even-length
+        if len(cleaned) % 2 == 1:
+            cleaned = '0' + cleaned
+        b = bytes.fromhex(cleaned)
+        # pad or trim to 4 bytes
+        if len(b) < 4:
+            b = b.ljust(4, b'\x00')
+        elif len(b) > 4:
+            b = b[:4]
+        if byteorder == 'little':
+            value = int.from_bytes(b, 'little')
+        else:
+            value = int.from_bytes(b, 'big')
+        bits = {}
+        for bit in range(32):
+            bit_val = (value >> bit) & 1
+            meta = FLAGS_MAP.get(bit, {"name": f"bit_{bit}", "desc":"Unknown/reserved", "notes":""})
+            bits[bit] = {
+                "bit": bit,
+                "value": bool(bit_val),
+                "name": meta.get("name"),
+                "desc": meta.get("desc"),
+                "notes": meta.get("notes", "")
+            }
+        return value, bits
+    except Exception:
+        # fallback: all zero
+        bits = {bit: {"bit": bit, "value": False, "name": FLAGS_MAP.get(bit, {}).get("name", f"bit_{bit}"),
+                      "desc": FLAGS_MAP.get(bit, {}).get("desc",""), "notes":""} for bit in range(32)}
+        return 0, bits
+
+
+# ---------- Flags map (bits 0..31) ----------
+# This is a comprehensive, editable mapping of bit index -> metadata.
+# If you get an official spec, replace names/descriptions accordingly.
+FLAGS_MAP = {
+    0:  {"name":"acc_on", "desc":"ACC (ignition) ON", "notes":"1=ignition on (engine running/ignition)"},
+    1:  {"name":"gps_fixed", "desc":"GPS position valid/fix", "notes":"1=GPS fix (valid lat/lon)"},
+    2:  {"name":"charging", "desc":"External power / charging", "notes":"1=charging/connected to external power"},
+    3:  {"name":"sos", "desc":"SOS / emergency alarm", "notes":"panic button triggered"},
+    4:  {"name":"overspeed", "desc":"Overspeed alarm", "notes":"1=overspeed condition"},
+    5:  {"name":"gps_tamper", "desc":"GPS antenna tamper/cut", "notes":"antenna fault / cut"},
+    6:  {"name":"low_battery", "desc":"Low internal battery", "notes":"device battery low"},
+    7:  {"name":"power_cut", "desc":"External power cut / ignition off", "notes":"external power removed"},
+    8:  {"name":"tamper", "desc":"Device tamper", "notes":"case opened / tamper sensor"},
+    9:  {"name":"geofence", "desc":"Geofence breach", "notes":"in/out geofence event"},
+    10: {"name":"input1", "desc":"Digital input 1", "notes":"usage-defined (e.g. door, sensor)"},
+    11: {"name":"input2", "desc":"Digital input 2", "notes":"usage-defined"},
+    12: {"name":"relay_on", "desc":"Relay/immobilizer active", "notes":"cut-off / relay engaged"},
+    13: {"name":"gps_disabled", "desc":"GPS disabled/standby", "notes":"GPS module disabled or sleep"},
+    14: {"name":"acc_alarm", "desc":"ACC tamper/rapid on-off", "notes":"fluctuating ignition event"},
+    15: {"name":"pir_alarm", "desc":"Motion/PIR alarm", "notes":"internal motion sensor triggered"},
+    16: {"name":"seatbelt", "desc":"Seatbelt status", "notes":"1=unfastened (vendor-specific)"},
+    17: {"name":"backup_batt_low", "desc":"Backup battery low", "notes":""},
+    18: {"name":"oil_cut", "desc":"Oil/electronic fuel cut", "notes":"immobilizer action or fuel cut detected"},
+    19: {"name":"door_open", "desc":"Door open", "notes":"one of doors is open"},
+    20: {"name":"tilt_alarm", "desc":"Tilt/rollover alarm", "notes":"possible tilt/rollover"},
+    21: {"name":"shock_alarm", "desc":"Vibration/shock alarm", "notes":"impact detected"},
+    22: {"name":"temperature_alarm", "desc":"Temperature sensor alarm", "notes":""},
+    23: {"name":"reserved_23", "desc":"Reserved / vendor specific", "notes":""},
+    24: {"name":"reserved_24", "desc":"Reserved / vendor specific", "notes":""},
+    25: {"name":"reserved_25", "desc":"Reserved / vendor specific", "notes":""},
+    26: {"name":"reserved_26", "desc":"Reserved / vendor specific", "notes":""},
+    27: {"name":"reserved_27", "desc":"Reserved / vendor specific", "notes":""},
+    28: {"name":"reserved_28", "desc":"Reserved / vendor specific", "notes":""},
+    29: {"name":"reserved_29", "desc":"Reserved / vendor specific", "notes":""},
+    30: {"name":"reserved_30", "desc":"Reserved / vendor specific", "notes":""},
+    31: {"name":"reserved_31", "desc":"Reserved / vendor specific", "notes":""},
+}
 
 # -----------------------
 # LBS resolver class: tries opencellid then mozilla then fallback
@@ -317,11 +382,18 @@ class HQFullDecoder:
         res["course"] = self._safe_int(angle_raw) if angle_raw is not None else None
         res["angle"] = res["course"]
         res["flags_raw"] = flags_raw
-        res["flags"] = interpret_flags_basic(flags_raw)
         res["mcc"] = self._safe_int(mcc_raw)
         res["mnc"] = self._safe_int(mnc_raw)
         res["lac"] = self._safe_int(lac_raw)
         res["cid"] = self._safe_int(cid_raw)
+        if flags_raw:
+            flags_value, flags_bits = parse_flags_from_hex(flags_raw, byteorder='little')
+            res["flags_value"] = flags_value
+            res["flags"] = flags_bits
+        else:
+            res["flags_value"] = 0
+            res["flags"] = {bit: {"bit": bit, "value": False, "name": FLAGS_MAP.get(bit, {}).get("name", f"bit_{bit}"),
+                                  "desc": FLAGS_MAP.get(bit, {}).get("desc",""), "notes": ""} for bit in range(32)}
 
         # Extract ACC status from flags
         # Bit 10 (0-indexed) of statusHex usually indicates ACC (1=On, 0=Off)
@@ -410,7 +482,14 @@ class HQFullDecoder:
         res["timestamp"] = format_time_date(time_raw, date_raw)
         res["status"] = status
         res["alarm_raw"] = alarm_raw
-        res["alarm_info"] = interpret_flags_basic(alarm_raw)
+        if alarm_raw:
+            alarm_value, alarm_bits = parse_flags_from_hex(alarm_raw, byteorder='little')
+            res["alarm_value"] = alarm_value
+            res["alarm_info"] = alarm_bits
+        else:
+            res["alarm_value"] = 0
+            res["alarm_info"] = {bit: {"bit": bit, "value": False, "name": FLAGS_MAP.get(bit, {}).get("name", f"bit_{bit}"),
+                                       "desc": FLAGS_MAP.get(bit, {}).get("desc",""), "notes": ""} for bit in range(32)}
         return res
 
     def _handle_hb(self, parts: list) -> dict:

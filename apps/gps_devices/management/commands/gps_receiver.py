@@ -306,23 +306,58 @@ class GPSReceiver:
                     
                     # Get or create a default Model for unknown devices
                     from apps.gps_devices.models import Model
-                    default_model, _ = Model.objects.get_or_create(
-                        model_name='Unknown',
-                        defaults={
-                            'manufacturer': 'Unknown',
+
+                    # Map decoder_type to model info
+                    protocol_model_map = {
+                        'HQ': {
+                            'model_name': 'HQ TR02',
+                            'manufacturer': 'Huabao',
                             'protocol_type': 'TCP',
-                            'description': 'Auto-created for unregistered devices'
+                            'description': 'HQ Text Protocol GPS Tracker'
+                        },
+                        'GT06': {
+                            'model_name': 'GT06',
+                            'manufacturer': 'Concox',
+                            'protocol_type': 'TCP',
+                            'description': 'GT06 Binary Protocol GPS Tracker'
+                        },
+                        'JT808': {
+                            'model_name': 'JT808',
+                            'manufacturer': 'Generic',
+                            'protocol_type': 'TCP',
+                            'description': 'JT808 Protocol GPS Tracker (Chinese Standard)'
+                        }
+                    }
+
+                    # Get model info based on detected protocol
+                    model_info = protocol_model_map.get(decoder_type, {
+                        'model_name': 'Unknown',
+                        'manufacturer': 'Unknown',
+                        'protocol_type': 'TCP',
+                        'description': 'Auto-created for unregistered devices'
+                    })
+
+                    # Get or create model
+                    default_model, created = Model.objects.get_or_create(
+                        model_name=model_info['model_name'],
+                        manufacturer=model_info['manufacturer'],
+                        defaults={
+                            'protocol_type': model_info['protocol_type'],
+                            'description': model_info['description']
                         }
                     )
-                    
+
+                    if created:
+                        logger.info(f'Created new model: {model_info["manufacturer"]} {model_info["model_name"]} ({decoder_type})')
                     device = Device.objects.create(
                         imei=device_id,
                         name=f'{device_id}',
                         owner=admin_user,
-                        model=default_model,
+                        model=default_model,  # حالا مدل صحیح استفاده می‌شود
                         status='active'
                     )
-                    logger.info(f'Automatically created device {device.imei} and assigned to admin')
+                    logger.info(f'Automatically created device {device.imei} with model {default_model.model_name} and assigned to admin')
+
                 except Exception as e:
                     logger.error(f'Failed to auto-create device {device_id}: {e}')
                     self.save_raw_data(data, ip_address, protocol_type, error_message=f'Auto-create failed: {str(e)}')
@@ -550,12 +585,15 @@ class GPSReceiver:
                     if should_save_location:
                         self.broadcast_device_update(device, speed=current_speed, heading=parsed_data.get('course'), location_data=location_data)
 
-                    # Successfully processed - delete raw data to avoid redundancy
-                    # We delete it even if we skipped saving LocationData, because it was "processed"
-                    RawGpsData.objects.filter(
-                        ip_address=ip_address,
-                        raw_data=data.hex()
-                    ).delete()
+                    # فقط اگر LocationData ذخیره شد، RawGpsData را حذف کن
+                    if should_save_location and location_data:
+                        RawGpsData.objects.filter(
+                            ip_address=ip_address,
+                            raw_data=data.hex()
+                        ).delete()
+                        logger.info(f'Deleted RawGpsData for device {device.imei} after successful save')
+                    else:
+                        logger.info(f'Kept RawGpsData for device {device.imei} - LocationData was not saved')
                     
                     # --- NEW LOGIC END ---
                     
@@ -563,11 +601,100 @@ class GPSReceiver:
                     logger.info(f'GPS invalid for device {device.imei}')
 
             elif packet_type == 'HB':
-                # Heartbeat - just log it
+                # Heartbeat - save with last location
                 logger.info(f'Heartbeat received for device {device.imei}')
+    
+                last_location = LocationData.objects.filter(device=device).order_by('-created_at').first()
+                if last_location:
+                    voltage = parsed_data.get('voltage_v')
+                    signal = parsed_data.get('signal_strength')
+        
+                    LocationData.objects.create(
+                        device=device,
+                        latitude=last_location.latitude,
+                        longitude=last_location.longitude,
+                        speed=0,
+                        battery_level=int(voltage * 1000) if voltage else None,
+                        signal_strength=signal or 0,
+                        raw_data={
+                            'protocol': decoder_type,
+                            'ip_address': ip_address,
+                            'raw_hex': data.hex(),
+                            'packet_type': 'HB'
+                        }
+                    )
+        
+                    # حالا که ذخیره شد، RawGpsData را حذف کن
+                    RawGpsData.objects.filter(
+                        ip_address=ip_address,
+                        raw_data=data.hex()
+                    ).delete()
+                    logger.info(f'Saved and deleted RawGpsData for HB packet from {device.imei}')
+                else:
+                    logger.warning(f'No previous location for HB packet from {device.imei}, keeping RawGpsData')
+
+            # --- HB BLOCK END ---
+
+            # --- JT808 BLOCK START ---
+            elif packet_type == 'JT808':
+                # JT808 Protocol - Chinese Standard GPS Tracker
+                logger.info(f'JT808 packet received for device {device.imei}')
                 
-            # Delete raw data for registered device to save space
-            RawGpsData.objects.filter(device=device).delete()
+                # نمایش ساختار کامل parsed_data برای تحلیل
+                logger.info(f'JT808 parsed_data structure: {json.dumps(parsed_data, indent=2, default=str)}')
+
+                # بررسی معتبر بودن GPS
+                if parsed_data.get('gps_valid'):
+                    # استخراج اطلاعات
+                    current_speed = float(parsed_data.get('speed_kph') or parsed_data.get('speed', 0))
+                    current_lat = float(parsed_data.get('latitude'))
+                    current_lon = float(parsed_data.get('longitude'))
+        
+                    # ذخیره LocationData
+                    location_data = LocationData.objects.create(
+                        device=device,
+                        latitude=current_lat,
+                        longitude=current_lon,
+                        original_latitude=current_lat,
+                        original_longitude=current_lon,
+                        speed=current_speed,
+                        heading=parsed_data.get('course') or parsed_data.get('heading', 0),
+                        altitude=parsed_data.get('altitude', 0),
+                        accuracy=parsed_data.get('accuracy', 0),
+                        satellites=parsed_data.get('satellites', 0),
+                        signal_strength=parsed_data.get('signal_strength', 0),
+                        battery_level=parsed_data.get('battery_level'),
+                        raw_data={
+                            'protocol': decoder_type,
+                            'ip_address': ip_address,
+                            'raw_hex': data.hex(),
+                            'packet_type': 'JT808'
+                        }
+                    )
+                    logger.info(f'Saved JT808 LocationData for device {device.imei}')
+        
+                    # Broadcast به WebSocket
+                    self.broadcast_device_update(
+                        device, 
+                        speed=current_speed, 
+                        heading=parsed_data.get('course') or parsed_data.get('heading', 0),
+                        location_data=location_data
+                    )
+        
+                    # حذف RawGpsData بعد از ذخیره موفق
+                    RawGpsData.objects.filter(
+                        ip_address=ip_address,
+                        raw_data=data.hex()
+                    ).delete()
+                    logger.info(f'Deleted RawGpsData for JT808 packet from {device.imei}')
+                else:
+                    logger.warning(f'JT808 packet from {device.imei} has invalid GPS, keeping RawGpsData')
+
+
+
+            # --- JT808 BLOCK END ---
+
+
 
         except Exception as e:
             logger.error(f'Error processing GPS data: {e}')
