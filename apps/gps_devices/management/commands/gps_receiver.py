@@ -428,6 +428,18 @@ class GPSReceiver:
                     'packet_type': 'HB'
                 }
             )
+
+            # ایجاد state اولیه اگر وجود ندارد
+            if not DeviceState.objects.filter(device=device).exists():
+                idle_state, _ = State.objects.get_or_create(name='Idle')
+                DeviceState.objects.create(
+                    device=device,
+                    state=idle_state,
+                    location_data=None
+                )
+                logger.info(f'Created initial Idle state for device {device.imei}')
+
+
             # Update counter and check for Idle state
             if self.increment_consecutive_count(device, 'HB'):
                 idle_state, _ = State.objects.get_or_create(name='Idle')
@@ -978,19 +990,33 @@ class GPSReceiver:
             active_patterns = MaliciousPattern.objects.filter(is_active=True)
             for pattern in active_patterns:
                 matched = False
+
+                # بررسی IP (اگر در الگو تعریف شده باشد)
+                ip_matched = True  # به صورت پیش‌فرض فرض می‌کنیم IP مطابقت دارد
+                if pattern.ip_address:
+                    ip_matched = (ip_address == pattern.ip_address)
                 
-                if pattern.pattern_type == 'exact':
-                    matched = data_str == pattern.pattern or data.hex() == pattern.pattern
-                elif pattern.pattern_type == 'startswith':
-                    matched = data_str.startswith(pattern.pattern) or data.hex().startswith(pattern.pattern)
-                elif pattern.pattern_type == 'contains':
-                    matched = pattern.pattern in data_str or pattern.pattern in data.hex()
-                elif pattern.pattern_type == 'regex':
-                    try:
-                        matched = re.search(pattern.pattern, data_str) is not None or re.search(pattern.pattern, data.hex()) is not None
-                    except:
-                        pass
+                # بررسی محتوا (اگر الگو تعریف شده باشد)
+                content_matched = False
+                if pattern.pattern:
+                    if pattern.pattern_type == 'exact':
+                        content_matched = data_str == pattern.pattern or data.hex() == pattern.pattern
+                    elif pattern.pattern_type == 'startswith':
+                        content_matched = data_str.startswith(pattern.pattern) or data.hex().startswith(pattern.pattern)
+                    elif pattern.pattern_type == 'contains':
+                        content_matched = pattern.pattern in data_str or pattern.pattern in data.hex()
+                    elif pattern.pattern_type == 'regex':
+                        try:
+                            content_matched = re.search(pattern.pattern, data_str) is not None or re.search(pattern.pattern, data.hex()) is not None
+                        except:
+                            pass
+                else:
+                    content_matched = True  # اگر الگو خالی باشد، فقط IP چک می‌شود
                 
+                # اگر هم IP و هم محتوا مطابقت داشت
+                matched = ip_matched and content_matched
+                
+
                 if matched:
                     # به‌روزرسانی آمار
                     from django.utils import timezone
@@ -1002,7 +1028,7 @@ class GPSReceiver:
                     return 'malicious'
         except Exception as e:
             logger.error(f'Error checking malicious patterns: {e}')
-
+            
 
         # Rate limiting: max 20 requests per minute per IP
         if ip_address not in self.rate_limit_cache:
@@ -1104,7 +1130,7 @@ class GPSReceiver:
                 'heading': float(heading) if heading is not None else 0,
                 'accuracy': getattr(location_data, 'accuracy', 0) if location_data else 0,
                 'satellites': getattr(location_data, 'satellites', 0) if location_data else 0,
-                'signal_strength': getattr(location_data, 'signal_strength', 0) if location_data else 0,
+                'signal_strength': getattr(location_data, 'signal_strength', None) or (latest_loc.signal_strength if latest_loc and hasattr(latest_loc, 'signal_strength') else 0),
                 'matched_geometry': getattr(location_data, 'matched_geometry', None) if location_data else None,
                 'is_alarm': getattr(location_data, 'is_alarm', False) if location_data else False,
                 'alarm_type': getattr(location_data, 'alarm_type', '') if location_data else '',           

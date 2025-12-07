@@ -139,6 +139,7 @@ class MaliciousPattern(models.Model):
     الگوهای مخرب شناسایی شده برای فیلتر کردن داده‌های ناخواسته
     """
     pattern = models.TextField(unique=True, help_text="الگوی مخرب (می‌تواند متن یا hex باشد)")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, help_text="آدرس IP مخرب (اختیاری)")
     pattern_type = models.CharField(
         max_length=20,
         choices=[
@@ -161,6 +162,7 @@ class MaliciousPattern(models.Model):
         verbose_name = 'الگوی مخرب'
         verbose_name_plural = 'الگوهای مخرب'
         ordering = ['-created_at']
+        unique_together = [['pattern', 'ip_address']]  # ترکیب pattern + IP باید یکتا باشد
 
     def __str__(self):
         return f"{self.pattern_type}: {self.pattern[:50]}"

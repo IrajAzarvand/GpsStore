@@ -49,23 +49,41 @@ class RawGpsDataAdmin(admin.ModelAdmin):
     
     def mark_as_malicious_pattern(self, request, queryset):
         """
-        اضافه کردن داده‌های انتخاب شده به الگوهای مخرب
+        اضافه کردن داده‌های انتخاب شده به الگوهای مخرب و حذف موارد مشابه
         """
         from apps.gps_devices.models import MaliciousPattern
+        from django.db.models import Q
         
         added_count = 0
         skipped_count = 0
+        deleted_count = 0
         
         for raw_data in queryset:
-            # بررسی اینکه آیا این الگو قبلاً وجود دارد
-            if not MaliciousPattern.objects.filter(pattern=raw_data.raw_data).exists():
-                MaliciousPattern.objects.create(
-                    pattern=raw_data.raw_data,
-                    pattern_type='contains',  # می‌توانید به 'contains' یا 'startswith' تغییر دهید
-                    description=f'Added from RawGpsData - IP: {raw_data.ip_address}',
-                    is_active=True
-                )
+            # ایجاد الگوی مخرب با IP و محتوا
+            pattern, created = MaliciousPattern.objects.get_or_create(
+                pattern=raw_data.raw_data,
+                ip_address=raw_data.ip_address,
+                defaults={
+                    'pattern_type': 'contains',
+                    'description': f'Added from RawGpsData - IP: {raw_data.ip_address}',
+                    'is_active': True
+                }
+            )
+            
+            if created:
                 added_count += 1
+                
+                # حذف تمام رکوردهای مشابه از RawGpsData
+                # حذف بر اساس IP یا محتوای مشابه
+                similar_records = RawGpsData.objects.filter(
+                    Q(ip_address=raw_data.ip_address) | Q(raw_data__icontains=raw_data.raw_data[:50])
+                ).exclude(id=raw_data.id)  # خود رکورد فعلی را حذف نکن
+                
+                deleted = similar_records.count()
+                similar_records.delete()
+                deleted_count += deleted
+                
+                logger.info(f'Deleted {deleted} similar records for pattern: {raw_data.raw_data[:50]}')
             else:
                 skipped_count += 1
         
@@ -73,23 +91,23 @@ class RawGpsDataAdmin(admin.ModelAdmin):
         if added_count > 0:
             self.message_user(
                 request,
-                f'{added_count} الگوی مخرب با موفقیت اضافه شد.'
+                f'{added_count} الگوی مخرب اضافه شد و {deleted_count} رکورد مشابه حذف شد.'
             )
         if skipped_count > 0:
             self.message_user(
                 request,
-                f'{skipped_count} الگو قبلاً وجود داشت و نادیده گرفته شد.',
+                f'{skipped_count} الگو قبلاً وجود داشت.',
                 level='WARNING'
             )
     
-    mark_as_malicious_pattern.short_description = "افزودن به الگوهای مخرب"
+    mark_as_malicious_pattern.short_description = "افزودن به الگوهای مخرب و حذف موارد مشابه"
 
 
 @admin.register(MaliciousPattern)
 class MaliciousPatternAdmin(admin.ModelAdmin):
-    list_display = ('pattern_type', 'pattern_preview', 'description', 'is_active', 'hit_count', 'last_hit', 'created_at')
-    list_filter = ('pattern_type', 'is_active', 'created_at')
-    search_fields = ('pattern', 'description')
+    list_display = ('pattern_type', 'ip_address', 'pattern_preview', 'description', 'is_active', 'hit_count', 'last_hit', 'created_at')
+    list_filter = ('pattern_type', 'is_active', 'created_at', 'ip_address')
+    search_fields = ('pattern', 'description', 'ip_address')
     readonly_fields = ('hit_count', 'last_hit', 'created_at')
     
     def pattern_preview(self, obj):
