@@ -1268,6 +1268,17 @@
             if (!devices[id]) devices[id] = {};
             Object.assign(devices[id], data);
 
+            // >> این بلوک را اضافه کنید: <<
+            if (data.is_alarm) {
+                console.log('ALARM RECEIVED:', data.alarm_type);
+                // پخش صدای هشدار (مطمئن شوید فایل صدا وجود دارد یا از لینک خارجی استفاده کنید)
+                // const audio = new Audio('/static/audio/alert.mp3'); 
+                // audio.play().catch(e => console.log('Audio play failed:', e));
+
+                // تغییر وضعیت به alert برای قرمز شدن آیکون
+                devices[id].status = 'alert';
+            }
+
             // Update Map Marker    
             updateDeviceMarker(devices[id]);
 

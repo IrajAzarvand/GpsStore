@@ -1,0 +1,104 @@
+INFO 2025-12-06 08:32:00,001 gps_receiver 3228 2264 GPS receiver command started successfully
+INFO 2025-12-06 08:32:00,002 gps_receiver 3228 2264 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 08:32:04,087 gps_receiver 3228 12596 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 08:41:48,910 gps_receiver 10920 17468 GPS receiver command started successfully
+INFO 2025-12-06 08:41:48,911 gps_receiver 10920 17468 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 08:41:52,972 gps_receiver 10920 6780 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 08:41:57,981 gps_receiver 15192 15936 GPS receiver command started successfully
+INFO 2025-12-06 08:41:57,982 gps_receiver 15192 15936 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 08:42:02,073 gps_receiver 15192 18204 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 08:43:53,647 gps_receiver 15192 5940 TCP connection from ('127.0.0.1', 6728)
+INFO 2025-12-06 08:43:53,647 gps_receiver 15192 19920 Received TCP data from ('127.0.0.1', 6728): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023
+INFO 2025-12-06 08:43:53,648 gps_receiver 15192 19920 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 08:43:58,578 gps_receiver 15192 19920 V0 (LBS) packet received for device 123456789012345
+ERROR 2025-12-06 08:43:58,580 gps_receiver 15192 19920 Error processing GPS data: NOT NULL constraint failed: gps_devices_locationdata.accuracy
+INFO 2025-12-06 08:44:33,011 gps_receiver 15192 5940 TCP connection from ('127.0.0.1', 6743)
+INFO 2025-12-06 08:44:33,012 gps_receiver 15192 19920 Received TCP data from ('127.0.0.1', 6743): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023
+INFO 2025-12-06 08:44:33,012 gps_receiver 15192 19920 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 08:44:33,014 gps_receiver 15192 19920 V0 (LBS) packet received for device 123456789012345
+ERROR 2025-12-06 08:44:33,015 gps_receiver 15192 19920 Error processing GPS data: NOT NULL constraint failed: gps_devices_locationdata.accuracy
+INFO 2025-12-06 08:48:42,693 gps_receiver 17556 14460 GPS receiver command started successfully
+INFO 2025-12-06 08:48:42,694 gps_receiver 17556 14460 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 08:48:46,791 gps_receiver 17556 5972 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 08:48:47,870 gps_receiver 17556 13488 TCP connection from ('127.0.0.1', 6811)
+INFO 2025-12-06 08:48:47,871 gps_receiver 17556 10940 Received TCP data from ('127.0.0.1', 6811): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023
+INFO 2025-12-06 08:48:47,871 gps_receiver 17556 10940 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 08:48:53,386 gps_receiver 17556 10940 V0 (LBS) packet received for device 123456789012345
+INFO 2025-12-06 08:48:53,399 gps_receiver 17556 10940 Saved LBS LocationData for device 123456789012345 (Source: pseudo)
+ERROR 2025-12-06 08:48:53,621 gps_receiver 17556 10940 Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed.
+INFO 2025-12-06 08:48:53,622 gps_receiver 17556 10940 Deleted RawGpsData for V0 packet from 123456789012345
+INFO 2025-12-06 08:50:00,112 gps_receiver 17556 13488 TCP connection from ('127.0.0.1', 6838)
+INFO 2025-12-06 08:50:00,112 gps_receiver 17556 10940 Received TCP data from ('127.0.0.1', 6838): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023
+INFO 2025-12-06 08:50:00,113 gps_receiver 17556 10940 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 08:50:00,122 gps_receiver 17556 10940 V0 (LBS) packet received for device 123456789012345
+INFO 2025-12-06 08:50:00,135 gps_receiver 17556 10940 Saved LBS LocationData for device 123456789012345 (Source: pseudo)
+ERROR 2025-12-06 08:50:00,142 gps_receiver 17556 10940 Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed.
+INFO 2025-12-06 08:50:00,143 gps_receiver 17556 10940 Deleted RawGpsData for V0 packet from 123456789012345
+INFO 2025-12-06 09:03:59,801 gps_receiver 10692 10912 GPS receiver command started successfully
+INFO 2025-12-06 09:03:59,802 gps_receiver 10692 10912 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 09:04:03,866 gps_receiver 10692 384 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 09:04:06,491 gps_receiver 10692 14688 TCP connection from ('127.0.0.1', 7076)
+INFO 2025-12-06 09:04:06,492 gps_receiver 10692 14244 Received TCP data from ('127.0.0.1', 7076): 2a48512c3132333435363738393031323334352c534f532c3132303030302c3031303132352c333534322e303030302c4e2c30353132342e303030302c452c31302e302c3138302c3031303132352c464646464642464623
+INFO 2025-12-06 09:04:06,492 gps_receiver 10692 14244 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 09:04:06,498 gps_receiver 10692 14244 SOS packet received for device 123456789012345
+WARNING 2025-12-06 09:04:06,498 gps_receiver 10692 14244 SOS packet from 123456789012345 has invalid GPS. Keeping RawGpsData.
+INFO 2025-12-06 09:14:25,702 gps_receiver 10692 14688 TCP connection from ('127.0.0.1', 7203)
+INFO 2025-12-06 09:14:25,702 gps_receiver 10692 14244 Received TCP data from ('127.0.0.1', 7203): 2a48512c3132333435363738393031323334352c534f532c3132303030302c412c333534322e303030302c4e2c30353132342e303030302c452c31302e302c3138302c3031303132352c464646464642464623
+INFO 2025-12-06 09:14:25,702 gps_receiver 10692 14244 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 09:14:25,705 gps_receiver 10692 14244 SOS packet received for device 123456789012345
+INFO 2025-12-06 09:14:25,728 gps_receiver 10692 14244 Saved SOS LocationData for device 123456789012345
+ERROR 2025-12-06 09:14:25,801 gps_receiver 10692 14244 Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed.
+INFO 2025-12-06 09:14:25,802 gps_receiver 10692 14244 Deleted RawGpsData for SOS packet from 123456789012345
+INFO 2025-12-06 09:51:15,703 gps_receiver 15312 2308 GPS receiver command started successfully
+INFO 2025-12-06 09:51:15,703 gps_receiver 15312 2308 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 09:51:19,814 gps_receiver 15312 8396 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 09:51:24,920 gps_receiver 15312 11764 TCP connection from ('127.0.0.1', 7674)
+INFO 2025-12-06 09:51:24,920 gps_receiver 15312 8128 Received TCP data from ('127.0.0.1', 7674): 2a48512c3132333435363738393031323334352c534f532c3132303030302c412c333534322e303030302c4e2c30353132342e303030302c452c31302e302c3138302c3031303132352c464646464642464623
+INFO 2025-12-06 09:51:24,921 gps_receiver 15312 8128 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 09:51:24,925 gps_receiver 15312 8128 SOS packet received for device 123456789012345
+INFO 2025-12-06 09:51:24,937 gps_receiver 15312 8128 Saved SOS LocationData for device 123456789012345
+ERROR 2025-12-06 09:51:25,009 gps_receiver 15312 8128 Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed.
+INFO 2025-12-06 09:51:25,010 gps_receiver 15312 8128 Deleted RawGpsData for SOS packet from 123456789012345
+INFO 2025-12-06 09:59:09,268 gps_receiver 12708 608 GPS receiver command started successfully
+INFO 2025-12-06 09:59:09,268 gps_receiver 12708 608 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 09:59:13,336 gps_receiver 12708 16616 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 09:59:14,290 gps_receiver 12708 18604 TCP connection from ('127.0.0.1', 7832)
+INFO 2025-12-06 09:59:14,290 gps_receiver 12708 6804 Received TCP data from ('127.0.0.1', 7832): 2a48512c3132333435363738393031323334352c56322c3132303030302c412c30303030303031302c30313031323523
+INFO 2025-12-06 09:59:14,291 gps_receiver 12708 6804 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 09:59:14,296 gps_receiver 12708 6804 V2 (Alarm) packet received for device 123456789012345
+INFO 2025-12-06 09:59:14,312 gps_receiver 12708 6804 Saved V2 Alarm (reserved_28) for device 123456789012345 using last known location
+ERROR 2025-12-06 09:59:14,389 gps_receiver 12708 6804 Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed.
+INFO 2025-12-06 13:47:17,324 gps_receiver 10672 1940 GPS receiver command started successfully
+INFO 2025-12-06 13:47:17,325 gps_receiver 10672 1940 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 13:47:21,385 gps_receiver 10672 9024 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 13:47:35,384 gps_receiver 10672 15132 TCP connection from ('127.0.0.1', 3255)
+INFO 2025-12-06 13:47:35,385 gps_receiver 10672 17164 Received TCP data from ('127.0.0.1', 3255): 2a48512c3836363038353035353030303030302c55504c4f41442c322c56312c3130303030302c412c333534322e303030302c4e2c30353132342e303030302c452c31302e30302c302c3036313232352c46464646464646462c56312c3130303130302c412c333534322e313030302c4e2c30353132342e313030302c452c31352e30302c39302c3036313232352c464646464646464623
+INFO 2025-12-06 13:47:35,386 gps_receiver 10672 17164 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 13:47:35,390 gps_receiver 10672 17164 UPLOAD packet received from 866085055000000 with 23 records
+INFO 2025-12-06 13:49:20,214 gps_receiver 10672 15132 TCP connection from ('127.0.0.1', 3284)
+INFO 2025-12-06 13:49:20,214 gps_receiver 10672 17164 Received TCP data from ('127.0.0.1', 3284): 2a48512c3836363038353035353030303030302c55504c4f41442c322c56313a3130303030303a413a333534322e303030303a4e3a30353132342e303030303a453a31302e30303a303a3036313232353a46464646464646462c56313a3130303130303a413a333534322e313030303a4e3a30353132342e313030303a453a31352e30303a39303a3036313232353a464646464646464623
+INFO 2025-12-06 13:49:20,216 gps_receiver 10672 17164 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 13:49:20,218 gps_receiver 10672 17164 UPLOAD packet received from 866085055000000 with 3 records
+INFO 2025-12-06 13:49:20,222 gps_receiver 10672 17164 First state for device 866085055000000: Moving
+INFO 2025-12-06 13:49:20,232 gps_receiver 10672 17164 Skipping map matching for 866085055000000: Not enough points (1)
+ERROR 2025-12-06 13:49:20,233 gps_receiver 10672 17164 Error processing GPS data: name 'data' is not defined
+INFO 2025-12-06 13:51:36,269 gps_receiver 10672 1940 Shutting down GPS receiver
+INFO 2025-12-06 13:51:53,810 gps_receiver 14848 10036 GPS receiver command started successfully
+INFO 2025-12-06 13:51:53,810 gps_receiver 14848 10036 GPS receiver listening on 0.0.0.0:5000 for TCP and UDP
+ERROR 2025-12-06 13:51:57,900 gps_receiver 14848 19948 MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO 2025-12-06 13:52:14,171 gps_receiver 14848 11948 TCP connection from ('127.0.0.1', 3321)
+INFO 2025-12-06 13:52:14,172 gps_receiver 14848 7972 Received TCP data from ('127.0.0.1', 3321): 2a48512c3836363038353035353030303030302c55504c4f41442c322c56313a3130303030303a413a333534322e303030303a4e3a30353132342e303030303a453a31302e30303a303a3036313232353a46464646464646462c56313a3130303130303a413a333534322e313030303a4e3a30353132342e313030303a453a31352e30303a39303a3036313232353a464646464646464623
+INFO 2025-12-06 13:52:14,173 gps_receiver 14848 7972 Detected HQ Text Protocol from 127.0.0.1
+INFO 2025-12-06 13:52:14,178 gps_receiver 14848 7972 UPLOAD packet received from 866085055000000 with 3 records
+INFO 2025-12-06 13:52:14,181 gps_receiver 14848 7972 First state for device 866085055000000: Moving
+INFO 2025-12-06 13:52:14,184 gps_receiver 14848 7972 Skipping map matching for 866085055000000: Not enough points (1)
+INFO 2025-12-06 13:52:14,198 gps_receiver 14848 7972 Saved LocationData for device 866085055000000
+INFO 2025-12-06 13:52:14,228 gps_receiver 14848 7972 Saved DeviceState for device 866085055000000: Moving
+ERROR 2025-12-06 13:52:14,341 gps_receiver 14848 7972 Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed.
+INFO 2025-12-06 13:52:14,342 gps_receiver 14848 7972 Deleted RawGpsData for device 866085055000000 after successful save
+INFO 2025-12-06 13:52:14,345 gps_receiver 14848 7972 Attempting map matching for device 866085055000000 with 2 points
+WARNING 2025-12-06 13:52:15,659 map_matching 14848 7972 NotFound (404): Too many points could not be matched
+WARNING 2025-12-06 13:52:15,661 gps_receiver 14848 7972 Map matching failed or returned no result for 866085055000000. Result: None
+INFO 2025-12-06 13:52:15,696 gps_receiver 14848 7972 Saved LocationData for device 866085055000000
+ERROR 2025-12-06 13:52:15,700 gps_receiver 14848 7972 Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed.
+INFO 2025-12-06 13:52:15,702 gps_receiver 14848 7972 Deleted RawGpsData for device 866085055000000 after successful save

@@ -20,8 +20,8 @@ class DeviceAdmin(admin.ModelAdmin):
 
 @admin.register(LocationData)
 class LocationDataAdmin(admin.ModelAdmin):
-    list_display = ('device', 'latitude', 'longitude', 'speed', 'created_at')
-    list_filter = ('created_at', 'is_valid')
+    list_display = ('device', 'latitude', 'longitude', 'speed', 'is_alarm', 'alarm_type', 'created_at')
+    list_filter = ('created_at', 'is_valid', 'is_alarm', 'alarm_type')
     search_fields = ('device__name', 'device__imei')
     readonly_fields = ('created_at',)
 
@@ -37,3 +37,4 @@ class RawGpsDataAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at')
     search_fields = ('ip_address', 'raw_data')
     readonly_fields = ('created_at',)
+

@@ -46,6 +46,7 @@ class Device(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_devices')
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    consecutive_count = models.JSONField(default=dict, blank=True, help_text='Tracks consecutive occurrences of packet types/states')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -55,8 +56,8 @@ class Device(models.Model):
 
 class LocationData(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name='locations')
-    latitude = models.DecimalField(max_digits=10, decimal_places=7)
-    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
     
     # فیلدهای Map Matching
     original_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text='مختصات اصلی دریافتی از GPS')
@@ -72,6 +73,10 @@ class LocationData(models.Model):
     battery_level = models.IntegerField(default=0, null=True, blank=True)
     signal_strength = models.IntegerField(default=0)
     gsm_operator = models.CharField(max_length=50, blank=True, null=True)
+    packet_type = models.CharField(max_length=20, blank=True, null=True, help_text='Type of packet (V1, HB, SOS, etc.)')
+    location_source = models.CharField(max_length=20, default='GPS', help_text='Source of location data (GPS, LBS, etc.)')
+    is_alarm = models.BooleanField(default=False, help_text='True if this location is an alarm/SOS')
+    alarm_type = models.CharField(max_length=50, null=True, blank=True, help_text='Type of alarm (SOS, Overspeed, etc.)')
     raw_data = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     is_valid = models.BooleanField(default=True)

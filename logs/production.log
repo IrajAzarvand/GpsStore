@@ -1,0 +1,104 @@
+{"timestamp": "2025-12-06 08:32:00,001", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 08:32:00,002", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 08:32:04,087", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 08:41:48,910", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 08:41:48,911", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 08:41:52,972", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 08:41:57,981", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 08:41:57,982", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 08:42:02,073", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 08:43:53,647", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 6728)"}
+{"timestamp": "2025-12-06 08:43:53,647", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 6728): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023"}
+{"timestamp": "2025-12-06 08:43:53,648", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 08:43:58,578", "level": "INFO", "module": "gps_receiver", "message": "V0 (LBS) packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 08:43:58,580", "level": "ERROR", "module": "gps_receiver", "message": "Error processing GPS data: NOT NULL constraint failed: gps_devices_locationdata.accuracy"}
+{"timestamp": "2025-12-06 08:44:33,011", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 6743)"}
+{"timestamp": "2025-12-06 08:44:33,012", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 6743): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023"}
+{"timestamp": "2025-12-06 08:44:33,012", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 08:44:33,014", "level": "INFO", "module": "gps_receiver", "message": "V0 (LBS) packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 08:44:33,015", "level": "ERROR", "module": "gps_receiver", "message": "Error processing GPS data: NOT NULL constraint failed: gps_devices_locationdata.accuracy"}
+{"timestamp": "2025-12-06 08:48:42,693", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 08:48:42,694", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 08:48:46,791", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 08:48:47,870", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 6811)"}
+{"timestamp": "2025-12-06 08:48:47,871", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 6811): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023"}
+{"timestamp": "2025-12-06 08:48:47,871", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 08:48:53,386", "level": "INFO", "module": "gps_receiver", "message": "V0 (LBS) packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 08:48:53,399", "level": "INFO", "module": "gps_receiver", "message": "Saved LBS LocationData for device 123456789012345 (Source: pseudo)"}
+{"timestamp": "2025-12-06 08:48:53,621", "level": "ERROR", "module": "gps_receiver", "message": "Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed."}
+{"timestamp": "2025-12-06 08:48:53,622", "level": "INFO", "module": "gps_receiver", "message": "Deleted RawGpsData for V0 packet from 123456789012345"}
+{"timestamp": "2025-12-06 08:50:00,112", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 6838)"}
+{"timestamp": "2025-12-06 08:50:00,112", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 6838): 2a48512c3132333435363738393031323334352c56302c3132303030302c3031303132352c3433322c31312c31323334352c363738393023"}
+{"timestamp": "2025-12-06 08:50:00,113", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 08:50:00,122", "level": "INFO", "module": "gps_receiver", "message": "V0 (LBS) packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 08:50:00,135", "level": "INFO", "module": "gps_receiver", "message": "Saved LBS LocationData for device 123456789012345 (Source: pseudo)"}
+{"timestamp": "2025-12-06 08:50:00,142", "level": "ERROR", "module": "gps_receiver", "message": "Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed."}
+{"timestamp": "2025-12-06 08:50:00,143", "level": "INFO", "module": "gps_receiver", "message": "Deleted RawGpsData for V0 packet from 123456789012345"}
+{"timestamp": "2025-12-06 09:03:59,801", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 09:03:59,802", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 09:04:03,866", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 09:04:06,491", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 7076)"}
+{"timestamp": "2025-12-06 09:04:06,492", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 7076): 2a48512c3132333435363738393031323334352c534f532c3132303030302c3031303132352c333534322e303030302c4e2c30353132342e303030302c452c31302e302c3138302c3031303132352c464646464642464623"}
+{"timestamp": "2025-12-06 09:04:06,492", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 09:04:06,498", "level": "INFO", "module": "gps_receiver", "message": "SOS packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 09:04:06,498", "level": "WARNING", "module": "gps_receiver", "message": "SOS packet from 123456789012345 has invalid GPS. Keeping RawGpsData."}
+{"timestamp": "2025-12-06 09:14:25,702", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 7203)"}
+{"timestamp": "2025-12-06 09:14:25,702", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 7203): 2a48512c3132333435363738393031323334352c534f532c3132303030302c412c333534322e303030302c4e2c30353132342e303030302c452c31302e302c3138302c3031303132352c464646464642464623"}
+{"timestamp": "2025-12-06 09:14:25,702", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 09:14:25,705", "level": "INFO", "module": "gps_receiver", "message": "SOS packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 09:14:25,728", "level": "INFO", "module": "gps_receiver", "message": "Saved SOS LocationData for device 123456789012345"}
+{"timestamp": "2025-12-06 09:14:25,801", "level": "ERROR", "module": "gps_receiver", "message": "Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed."}
+{"timestamp": "2025-12-06 09:14:25,802", "level": "INFO", "module": "gps_receiver", "message": "Deleted RawGpsData for SOS packet from 123456789012345"}
+{"timestamp": "2025-12-06 09:51:15,703", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 09:51:15,703", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 09:51:19,814", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 09:51:24,920", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 7674)"}
+{"timestamp": "2025-12-06 09:51:24,920", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 7674): 2a48512c3132333435363738393031323334352c534f532c3132303030302c412c333534322e303030302c4e2c30353132342e303030302c452c31302e302c3138302c3031303132352c464646464642464623"}
+{"timestamp": "2025-12-06 09:51:24,921", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 09:51:24,925", "level": "INFO", "module": "gps_receiver", "message": "SOS packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 09:51:24,937", "level": "INFO", "module": "gps_receiver", "message": "Saved SOS LocationData for device 123456789012345"}
+{"timestamp": "2025-12-06 09:51:25,009", "level": "ERROR", "module": "gps_receiver", "message": "Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed."}
+{"timestamp": "2025-12-06 09:51:25,010", "level": "INFO", "module": "gps_receiver", "message": "Deleted RawGpsData for SOS packet from 123456789012345"}
+{"timestamp": "2025-12-06 09:59:09,268", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 09:59:09,268", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 09:59:13,336", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 09:59:14,290", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 7832)"}
+{"timestamp": "2025-12-06 09:59:14,290", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 7832): 2a48512c3132333435363738393031323334352c56322c3132303030302c412c30303030303031302c30313031323523"}
+{"timestamp": "2025-12-06 09:59:14,291", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 09:59:14,296", "level": "INFO", "module": "gps_receiver", "message": "V2 (Alarm) packet received for device 123456789012345"}
+{"timestamp": "2025-12-06 09:59:14,312", "level": "INFO", "module": "gps_receiver", "message": "Saved V2 Alarm (reserved_28) for device 123456789012345 using last known location"}
+{"timestamp": "2025-12-06 09:59:14,389", "level": "ERROR", "module": "gps_receiver", "message": "Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed."}
+{"timestamp": "2025-12-06 13:47:17,324", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 13:47:17,325", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 13:47:21,385", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 13:47:35,384", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 3255)"}
+{"timestamp": "2025-12-06 13:47:35,385", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 3255): 2a48512c3836363038353035353030303030302c55504c4f41442c322c56312c3130303030302c412c333534322e303030302c4e2c30353132342e303030302c452c31302e30302c302c3036313232352c46464646464646462c56312c3130303130302c412c333534322e313030302c4e2c30353132342e313030302c452c31352e30302c39302c3036313232352c464646464646464623"}
+{"timestamp": "2025-12-06 13:47:35,386", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 13:47:35,390", "level": "INFO", "module": "gps_receiver", "message": "UPLOAD packet received from 866085055000000 with 23 records"}
+{"timestamp": "2025-12-06 13:49:20,214", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 3284)"}
+{"timestamp": "2025-12-06 13:49:20,214", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 3284): 2a48512c3836363038353035353030303030302c55504c4f41442c322c56313a3130303030303a413a333534322e303030303a4e3a30353132342e303030303a453a31302e30303a303a3036313232353a46464646464646462c56313a3130303130303a413a333534322e313030303a4e3a30353132342e313030303a453a31352e30303a39303a3036313232353a464646464646464623"}
+{"timestamp": "2025-12-06 13:49:20,216", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 13:49:20,218", "level": "INFO", "module": "gps_receiver", "message": "UPLOAD packet received from 866085055000000 with 3 records"}
+{"timestamp": "2025-12-06 13:49:20,222", "level": "INFO", "module": "gps_receiver", "message": "First state for device 866085055000000: Moving"}
+{"timestamp": "2025-12-06 13:49:20,232", "level": "INFO", "module": "gps_receiver", "message": "Skipping map matching for 866085055000000: Not enough points (1)"}
+{"timestamp": "2025-12-06 13:49:20,233", "level": "ERROR", "module": "gps_receiver", "message": "Error processing GPS data: name 'data' is not defined"}
+{"timestamp": "2025-12-06 13:51:36,269", "level": "INFO", "module": "gps_receiver", "message": "Shutting down GPS receiver"}
+{"timestamp": "2025-12-06 13:51:53,810", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver command started successfully"}
+{"timestamp": "2025-12-06 13:51:53,810", "level": "INFO", "module": "gps_receiver", "message": "GPS receiver listening on 0.0.0.0:5000 for TCP and UDP"}
+{"timestamp": "2025-12-06 13:51:57,900", "level": "ERROR", "module": "gps_receiver", "message": "MQTT connection error: [WinError 10061] No connection could be made because the target machine actively refused it"}
+{"timestamp": "2025-12-06 13:52:14,171", "level": "INFO", "module": "gps_receiver", "message": "TCP connection from ('127.0.0.1', 3321)"}
+{"timestamp": "2025-12-06 13:52:14,172", "level": "INFO", "module": "gps_receiver", "message": "Received TCP data from ('127.0.0.1', 3321): 2a48512c3836363038353035353030303030302c55504c4f41442c322c56313a3130303030303a413a333534322e303030303a4e3a30353132342e303030303a453a31302e30303a303a3036313232353a46464646464646462c56313a3130303130303a413a333534322e313030303a4e3a30353132342e313030303a453a31352e30303a39303a3036313232353a464646464646464623"}
+{"timestamp": "2025-12-06 13:52:14,173", "level": "INFO", "module": "gps_receiver", "message": "Detected HQ Text Protocol from 127.0.0.1"}
+{"timestamp": "2025-12-06 13:52:14,178", "level": "INFO", "module": "gps_receiver", "message": "UPLOAD packet received from 866085055000000 with 3 records"}
+{"timestamp": "2025-12-06 13:52:14,181", "level": "INFO", "module": "gps_receiver", "message": "First state for device 866085055000000: Moving"}
+{"timestamp": "2025-12-06 13:52:14,184", "level": "INFO", "module": "gps_receiver", "message": "Skipping map matching for 866085055000000: Not enough points (1)"}
+{"timestamp": "2025-12-06 13:52:14,198", "level": "INFO", "module": "gps_receiver", "message": "Saved LocationData for device 866085055000000"}
+{"timestamp": "2025-12-06 13:52:14,228", "level": "INFO", "module": "gps_receiver", "message": "Saved DeviceState for device 866085055000000: Moving"}
+{"timestamp": "2025-12-06 13:52:14,341", "level": "ERROR", "module": "gps_receiver", "message": "Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed."}
+{"timestamp": "2025-12-06 13:52:14,342", "level": "INFO", "module": "gps_receiver", "message": "Deleted RawGpsData for device 866085055000000 after successful save"}
+{"timestamp": "2025-12-06 13:52:14,345", "level": "INFO", "module": "gps_receiver", "message": "Attempting map matching for device 866085055000000 with 2 points"}
+{"timestamp": "2025-12-06 13:52:15,659", "level": "WARNING", "module": "map_matching", "message": "NotFound (404): Too many points could not be matched"}
+{"timestamp": "2025-12-06 13:52:15,661", "level": "WARNING", "module": "gps_receiver", "message": "Map matching failed or returned no result for 866085055000000. Result: None"}
+{"timestamp": "2025-12-06 13:52:15,696", "level": "INFO", "module": "gps_receiver", "message": "Saved LocationData for device 866085055000000"}
+{"timestamp": "2025-12-06 13:52:15,700", "level": "ERROR", "module": "gps_receiver", "message": "Error broadcasting device update: Error 11001 connecting to redis:6379. getaddrinfo failed."}
+{"timestamp": "2025-12-06 13:52:15,702", "level": "INFO", "module": "gps_receiver", "message": "Deleted RawGpsData for device 866085055000000 after successful save"}
