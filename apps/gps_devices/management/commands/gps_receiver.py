@@ -489,12 +489,12 @@ class GPSReceiver:
                         logger.info(f"Device {device.imei}: ACC Off + Dist {distance:.1f}m -> Moving (Faulty ACC?)")
                 
                 if current_speed == 0 and distance < 5.0:
-                    if increment_consecutive_count(device, 'stopped'):
+                    if self.increment_consecutive_count(device, 'stopped'):
                         stopped_state, _ = State.objects.get_or_create(name='Stopped')
                         DeviceState.objects.create(device=device, state=stopped_state, location_data=location_data)
                         device.consecutive_count['stopped'] = 0
                 else:
-                    if increment_consecutive_count(device, 'moving'):
+                    if self.increment_consecutive_count(device, 'moving'):
                         moving_state, _ = State.objects.get_or_create(name='Moving')
                         DeviceState.objects.create(device=device, state=moving_state, location_data=location_data)
                         device.consecutive_count['moving'] = 0
@@ -887,16 +887,16 @@ class GPSReceiver:
                             reply_callback
                         )
                 
-                else:
-                    # حالت عادی (تک پکت)
-                    self.process_parsed_packet(
-                        device, 
-                        parsed_data, 
-                        ip_address, 
-                        decoder_type, 
-                        data.hex(), 
-                        reply_callback
-                    )
+            else:
+                # حالت عادی (تک پکت)
+                self.process_parsed_packet(
+                    device, 
+                    parsed_data, 
+                    ip_address, 
+                    decoder_type, 
+                    data.hex(), 
+                    reply_callback
+                )
 
 
                 # After processing all records, send reply if needed
