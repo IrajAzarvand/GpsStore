@@ -27,9 +27,17 @@ class LocationDataAdmin(admin.ModelAdmin):
 
 @admin.register(DeviceState)
 class DeviceStateAdmin(admin.ModelAdmin):
-    list_display = ('device', 'state', 'timestamp')
-    list_filter = ('state', 'timestamp')
-    search_fields = ('device__name',)
+    list_display = ('get_device_name', 'get_device_imei', 'state', 'timestamp')
+    list_filter = ('state', 'timestamp', 'device')
+    search_fields = ('device__name', 'device__imei')
+
+    @admin.display(ordering='device__name', description='Device Name')
+    def get_device_name(self, obj):
+        return obj.device.name
+
+    @admin.display(ordering='device__imei', description='IMEI')
+    def get_device_imei(self, obj):
+        return obj.device.imei
 
 @admin.register(RawGpsData)
 class RawGpsDataAdmin(admin.ModelAdmin):
