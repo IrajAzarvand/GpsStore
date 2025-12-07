@@ -24,6 +24,7 @@ from HQ_Decoder import HQFullDecoder
 from GT06_Decoder import GT06Decoder
 from JT808_Decoder import JT808Decoder
 from apps.gps_devices.models import DeviceState, State
+from apps.gps_devices.models import MaliciousPattern
 
 try:
     import paho.mqtt.client as mqtt
@@ -494,6 +495,13 @@ class GPSReceiver:
                     self.increment_consecutive_count(device, 'moving')
                 device.save()
 
+                                # جلوگیری از ذخیره داده‌های تکراری با سرعت صفر
+                if current_speed == 0 and distance < 5.0:
+                    if last_location and last_location.speed == 0:
+                        should_save_location = False
+                        logger.info(f"Device {device.imei}: Redundant zero-speed record skipped")
+                        
+
                 # Determine if we should save DeviceState (state change)
                 should_save_state = False
                 state_name = None
@@ -736,18 +744,6 @@ class GPSReceiver:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     def process_gps_data(self, data, ip_address, protocol_type, reply_callback=None):
         """
         Process GPS data: parse, validate, check device, save to LocationData
@@ -758,7 +754,12 @@ class GPSReceiver:
             # Security check
             security_result = self.check_security(ip_address, data)
             if security_result != 'safe':
-                # Log and save as blocked/rejected
+                # اگر داده مخرب بود، کلاً نادیده بگیر و ذخیره نکن
+                if security_result == 'malicious':
+                    logger.warning(f'Malicious data dropped from {ip_address}')
+                    return
+
+                # برای سایر موارد (مثل محدودیت نرخ)، ذخیره کن اما با وضعیت rejected
                 self.save_raw_data(data, ip_address, protocol_type, status='rejected', error_message=f'Security check failed: {security_result}')
                 return
 
@@ -963,6 +964,46 @@ class GPSReceiver:
 
         current_time = datetime.now()
 
+        # بررسی الگوهای مخرب از دیتابیس
+        
+        
+        try:
+            # تبدیل data به رشته برای بررسی
+            try:
+                data_str = data.decode('utf-8', errors='ignore')
+            except:
+                data_str = data.hex()
+            
+            # بررسی تمام الگوهای فعال
+            active_patterns = MaliciousPattern.objects.filter(is_active=True)
+            for pattern in active_patterns:
+                matched = False
+                
+                if pattern.pattern_type == 'exact':
+                    matched = data_str == pattern.pattern or data.hex() == pattern.pattern
+                elif pattern.pattern_type == 'startswith':
+                    matched = data_str.startswith(pattern.pattern) or data.hex().startswith(pattern.pattern)
+                elif pattern.pattern_type == 'contains':
+                    matched = pattern.pattern in data_str or pattern.pattern in data.hex()
+                elif pattern.pattern_type == 'regex':
+                    try:
+                        matched = re.search(pattern.pattern, data_str) is not None or re.search(pattern.pattern, data.hex()) is not None
+                    except:
+                        pass
+                
+                if matched:
+                    # به‌روزرسانی آمار
+                    from django.utils import timezone
+                    pattern.hit_count += 1
+                    pattern.last_hit = timezone.now()
+                    pattern.save(update_fields=['hit_count', 'last_hit'])
+                    
+                    logger.warning(f'Malicious pattern matched from {ip_address}: {pattern.description or pattern.pattern[:50]}')
+                    return 'malicious'
+        except Exception as e:
+            logger.error(f'Error checking malicious patterns: {e}')
+
+
         # Rate limiting: max 20 requests per minute per IP
         if ip_address not in self.rate_limit_cache:
             self.rate_limit_cache[ip_address] = []
@@ -1005,6 +1046,15 @@ class GPSReceiver:
                 pass
 
         # Unknown format
+
+                # Check for HTTP requests (Crawlers/Scanners)
+        try:
+            text_data = data.decode('utf-8', errors='ignore').upper()
+            http_methods = ['GET ', 'POST ', 'HEAD ', 'CONNECT ', 'OPTIONS ', 'PUT ', 'DELETE ', 'TRACE ', 'PATCH ']
+            if any(text_data.startswith(method) for method in http_methods):
+                return 'malicious' # Treat HTTP requests on GPS port as malicious/spam
+        except:
+            pass
         return 'suspicious'
 
     

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import State, Model, Device, LocationData, DeviceState, RawGpsData
+from .models import State, Model, Device, LocationData, DeviceState, RawGpsData, MaliciousPattern
 
 @admin.register(State)
 class StateAdmin(admin.ModelAdmin):
@@ -41,8 +41,57 @@ class DeviceStateAdmin(admin.ModelAdmin):
 
 @admin.register(RawGpsData)
 class RawGpsDataAdmin(admin.ModelAdmin):
-    list_display = ('ip_address', 'status', 'created_at')
+    list_display = ('ip_address', 'device', 'status', 'created_at')
     list_filter = ('status', 'created_at')
     search_fields = ('ip_address', 'raw_data')
     readonly_fields = ('created_at',)
+    actions = ['mark_as_malicious_pattern']
+    
+    def mark_as_malicious_pattern(self, request, queryset):
+        """
+        اضافه کردن داده‌های انتخاب شده به الگوهای مخرب
+        """
+        from apps.gps_devices.models import MaliciousPattern
+        
+        added_count = 0
+        skipped_count = 0
+        
+        for raw_data in queryset:
+            # بررسی اینکه آیا این الگو قبلاً وجود دارد
+            if not MaliciousPattern.objects.filter(pattern=raw_data.raw_data).exists():
+                MaliciousPattern.objects.create(
+                    pattern=raw_data.raw_data,
+                    pattern_type='contains',  # می‌توانید به 'contains' یا 'startswith' تغییر دهید
+                    description=f'Added from RawGpsData - IP: {raw_data.ip_address}',
+                    is_active=True
+                )
+                added_count += 1
+            else:
+                skipped_count += 1
+        
+        # نمایش پیام به کاربر
+        if added_count > 0:
+            self.message_user(
+                request,
+                f'{added_count} الگوی مخرب با موفقیت اضافه شد.'
+            )
+        if skipped_count > 0:
+            self.message_user(
+                request,
+                f'{skipped_count} الگو قبلاً وجود داشت و نادیده گرفته شد.',
+                level='WARNING'
+            )
+    
+    mark_as_malicious_pattern.short_description = "افزودن به الگوهای مخرب"
 
+
+@admin.register(MaliciousPattern)
+class MaliciousPatternAdmin(admin.ModelAdmin):
+    list_display = ('pattern_type', 'pattern_preview', 'description', 'is_active', 'hit_count', 'last_hit', 'created_at')
+    list_filter = ('pattern_type', 'is_active', 'created_at')
+    search_fields = ('pattern', 'description')
+    readonly_fields = ('hit_count', 'last_hit', 'created_at')
+    
+    def pattern_preview(self, obj):
+        return obj.pattern[:100] + '...' if len(obj.pattern) > 100 else obj.pattern
+    pattern_preview.short_description = 'الگو'

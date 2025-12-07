@@ -130,5 +130,37 @@ class RawGpsData(models.Model):
         verbose_name = 'داده خام GPS'
         verbose_name_plural = 'داده‌های خام GPS'
 
+
     def __str__(self):
         return f"{self.ip_address} - {self.status} - {self.created_at}"
+
+class MaliciousPattern(models.Model):
+    """
+    الگوهای مخرب شناسایی شده برای فیلتر کردن داده‌های ناخواسته
+    """
+    pattern = models.TextField(unique=True, help_text="الگوی مخرب (می‌تواند متن یا hex باشد)")
+    pattern_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('exact', 'تطابق دقیق'),
+            ('startswith', 'شروع با'),
+            ('contains', 'شامل'),
+            ('regex', 'عبارت منظم')
+        ],
+        default='contains',
+        help_text="نوع تطابق"
+    )
+    description = models.CharField(max_length=255, blank=True, help_text="توضیحات الگو")
+    is_active = models.BooleanField(default=True, help_text="فعال/غیرفعال")
+    created_at = models.DateTimeField(auto_now_add=True)
+    hit_count = models.IntegerField(default=0, help_text="تعداد دفعات تشخیص")
+    last_hit = models.DateTimeField(null=True, blank=True, help_text="آخرین بار تشخیص")
+
+    class Meta:
+        db_table = 'malicious_patterns'
+        verbose_name = 'الگوی مخرب'
+        verbose_name_plural = 'الگوهای مخرب'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.pattern_type}: {self.pattern[:50]}"
