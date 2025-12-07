@@ -665,7 +665,7 @@ class GPSReceiver:
                 if should_save_location and location_data:
                     RawGpsData.objects.filter(
                         ip_address=ip_address,
-                        raw_data=data.hex()
+                        raw_data=raw_data_hex
                     ).delete()
                     logger.info(f'Deleted RawGpsData for device {device.imei} after successful save')
                 else:
