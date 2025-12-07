@@ -608,7 +608,7 @@ class GPSReceiver:
                         raw_data={
                             'protocol': decoder_type,
                             'ip_address': ip_address,
-                            'raw_hex': data.hex()
+                            'raw_hex': raw_data_hex
                         }
                     )
                     logger.info(f'Saved LocationData for device {device.imei}')
