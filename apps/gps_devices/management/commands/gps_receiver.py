@@ -1117,6 +1117,11 @@ class GPSReceiver:
                 from datetime import datetime, timezone
                 last_update = datetime.now(timezone.utc).isoformat()
 
+            device_state = self.get_device_state(device)
+            
+            # تعیین آیکون، رنگ و متن بر اساس device_state
+            status_info = self.get_status_display_info(device_state, getattr(location_data, 'is_alarm', False) if location_data else False)
+
             device_data = {
                 'id': device.id,
                 'name': device.name,
@@ -1135,7 +1140,12 @@ class GPSReceiver:
                 'matched_geometry': getattr(location_data, 'matched_geometry', None) if location_data else None,
                 'is_alarm': getattr(location_data, 'is_alarm', False) if location_data else False,
                 'alarm_type': getattr(location_data, 'alarm_type', '') if location_data else '',           
-                'device_state': self.get_device_state(device),  # وضعیت دستگاه (P, M, S, I)
+                'device_state': device_state,  # وضعیت دستگاه (P, M, S, I)
+                'status_icon': status_info['icon'],  # آیکون برای نمایش
+                'status_color': status_info['color'],  # رنگ وضعیت
+                'status_text': status_info['text'],  # متن فارسی وضعیت
+                'gps_valid': (getattr(location_data, 'satellites', 0) if location_data else 0) > 0,  # آیا GPS معتبر است
+                'gsm_valid': (getattr(location_data, 'signal_strength', 0) if location_data else 0) > 0,  # آیا سیگنال GSM معتبر است            
             }
 
             # Send to admins group (they see all devices)
@@ -1210,3 +1220,46 @@ class GPSReceiver:
         except Exception as e:
             logger.error(f'Error getting device state: {e}')
             return None
+    
+    def get_status_display_info(self, device_state, is_alarm=False):
+        """
+        تعیین آیکون، رنگ و متن برای نمایش در Frontend
+        Returns: dict با کلیدهای 'icon', 'color', 'text'
+        """
+        if is_alarm:
+            return {
+                'icon': 'fa-exclamation-triangle',
+                'color': '#ef4444',
+                'text': 'هشدار'
+            }
+    
+        if device_state == 'M':  # Moving
+            return {
+                'icon': 'fa-car',
+                'color': '#22c55e',
+                'text': 'در حرکت'
+            }
+        elif device_state == 'P':  # Parked
+            return {
+                'icon': 'P',  # حرف P
+                'color': '#f59e0b',
+                'text': 'پارک شده'
+            }
+        elif device_state == 'S':  # Stopped
+            return {
+                'icon': 'S',  # حرف S
+                'color': '#ef4444',
+                'text': 'متوقف شده'
+            }
+        elif device_state == 'I':  # Idle
+            return {
+                'icon': 'fa-pause',
+                'color': '#64748b',
+                'text': 'بی‌حرکت'
+            }
+        else:  # Unknown
+            return {
+                'icon': 'fa-circle',
+                'color': '#f8fafc',
+                'text': 'نامشخص'
+            }
