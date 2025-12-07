@@ -1094,6 +1094,7 @@ class GPSReceiver:
             last_update = None
             lat = None
             lng = None
+            latest_loc = None
             
             # 1. Try to get data from the provided location_data
             if location_data:
@@ -1134,6 +1135,7 @@ class GPSReceiver:
                 'matched_geometry': getattr(location_data, 'matched_geometry', None) if location_data else None,
                 'is_alarm': getattr(location_data, 'is_alarm', False) if location_data else False,
                 'alarm_type': getattr(location_data, 'alarm_type', '') if location_data else '',           
+                'device_state': self.get_device_state(device),  # وضعیت دستگاه (P, M, S, I)
             }
 
             # Send to admins group (they see all devices)
@@ -1185,4 +1187,26 @@ class GPSReceiver:
             return raw_data
         except Exception as e:
             logger.error(f'Error saving raw data: {e}')
+            return None
+
+    def get_device_state(self, device):
+        """
+        دریافت آخرین وضعیت دستگاه
+        Returns: 'P' (Parked), 'M' (Moving), 'S' (Stopped), 'I' (Idle), یا None
+        """
+        try:
+            last_state = DeviceState.objects.filter(device=device).order_by('-timestamp').first()
+            if last_state:
+                state_name = last_state.state.name
+                if state_name == 'Moving':
+                    return 'M'
+                elif state_name == 'Stopped':
+                    return 'S'
+                elif state_name == 'Idle':
+                    return 'I'
+                # اگر وضعیت دیگری بود
+                return state_name[0].upper()
+            return None
+        except Exception as e:
+            logger.error(f'Error getting device state: {e}')
             return None
