@@ -267,9 +267,9 @@ start_services() {
     # Stop any existing containers
     docker compose down -v 2>/dev/null || true
 
-    # Step 1: Build Docker images
-    log_info "Building Docker images..."
-    docker compose build
+    # Step 1: Build Docker images (force rebuild without cache)
+    log_info "Building Docker images without cache to ensure latest code..."
+    docker compose build --no-cache
 
     # Step 2: Start all Docker containers
     log_info "Starting all Docker containers..."

@@ -23,8 +23,15 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
-COPY . .
+# Copy project files (invalidates cache when Python files change)
+COPY manage.py .
+COPY gps_store/ ./gps_store/
+COPY apps/ ./apps/
+COPY templates/ ./templates/
+COPY static/ ./static/
+COPY *.py .
+COPY *.sh .
+COPY HQ_Decoder.py GT06_Decoder.py JT808_Decoder.py .
 
 # Create directories for static files and media
 RUN mkdir -p /app/staticfiles /app/media /app/logs
