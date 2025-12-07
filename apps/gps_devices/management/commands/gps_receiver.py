@@ -489,15 +489,9 @@ class GPSReceiver:
                         logger.info(f"Device {device.imei}: ACC Off + Dist {distance:.1f}m -> Moving (Faulty ACC?)")
                 
                 if current_speed == 0 and distance < 5.0:
-                    if self.increment_consecutive_count(device, 'stopped'):
-                        stopped_state, _ = State.objects.get_or_create(name='Stopped')
-                        DeviceState.objects.create(device=device, state=stopped_state, location_data=location_data)
-                        device.consecutive_count['stopped'] = 0
+                    self.increment_consecutive_count(device, 'stopped')
                 else:
-                    if self.increment_consecutive_count(device, 'moving'):
-                        moving_state, _ = State.objects.get_or_create(name='Moving')
-                        DeviceState.objects.create(device=device, state=moving_state, location_data=location_data)
-                        device.consecutive_count['moving'] = 0
+                    self.increment_consecutive_count(device, 'moving')
                 device.save()
 
                 # Determine if we should save DeviceState (state change)
@@ -620,14 +614,48 @@ class GPSReceiver:
                     logger.info(f'Saved LocationData for device {device.imei}')
                 
                 # Save DeviceState if state changed
+                # Save DeviceState if state changed (Standard logic)
                 if should_save_state and state_name:
                     state_obj, _ = State.objects.get_or_create(name=state_name)
                     DeviceState.objects.create(
                         device=device,
                         state=state_obj,
-                        location_data=location_data or last_location  # Use new or last location
+                        location_data=location_data or last_location
                     )
                     logger.info(f'Saved DeviceState for device {device.imei}: {state_name}')
+                
+                # Check for counter-based state changes (Stopped/Moving)
+                # This logic runs AFTER location_data is created
+                if current_speed == 0 and distance < 5.0:
+                    if device.consecutive_count.get('stopped', 0) >= 3:
+                        stopped_state, _ = State.objects.get_or_create(name='Stopped')
+                        # Check if we are already in Stopped state to avoid duplicate entries if logic overlaps
+                        current_state_record = DeviceState.objects.filter(device=device).order_by('-timestamp').first()
+                        if not current_state_record or current_state_record.state.name != 'Stopped':
+                            DeviceState.objects.create(
+                                device=device, 
+                                state=stopped_state, 
+                                location_data=location_data or last_location
+                            )
+                            logger.info(f"Counter-based state change for {device.imei}: -> Stopped")
+                        
+                        device.consecutive_count['stopped'] = 0
+                        device.save()
+                else:
+                    if device.consecutive_count.get('moving', 0) >= 3:
+                        moving_state, _ = State.objects.get_or_create(name='Moving')
+                        # Check if we are already in Moving state
+                        current_state_record = DeviceState.objects.filter(device=device).order_by('-timestamp').first()
+                        if not current_state_record or current_state_record.state.name != 'Moving':
+                            DeviceState.objects.create(
+                                device=device, 
+                                state=moving_state, 
+                                location_data=location_data or last_location
+                            )
+                            logger.info(f"Counter-based state change for {device.imei}: -> Moving")
+                        
+                        device.consecutive_count['moving'] = 0
+                        device.save()
                 
                 # Broadcast update if we saved location data
                 if should_save_location:
