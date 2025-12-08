@@ -1084,7 +1084,17 @@
                 traffic: false,
                 center: [35.6892, 51.3890],
                 zoom: 11,
-                zoomControl: false // We use custom controls
+                zoomControl: false, // We use custom controls
+                inertia: false      // برای جلوگیری از کشیده‌شدن ناخواسته
+            });
+
+            // با تغییر اندازه، مرکز تصحیح شود
+            window.addEventListener('resize', () => {
+                map.invalidateSize();
+                if (followingDeviceId && devices[followingDeviceId]) {
+                    const d = devices[followingDeviceId];
+                    if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
+                }
             });
 
             // Create markers for initial data
@@ -1149,12 +1159,12 @@
                 if (marker.isPopupOpen()) {
                     marker.setPopupContent(createPopupContent(device));
                 } else {
-                    marker.bindPopup(createPopupContent(device));
+                    marker.bindPopup(createPopupContent(device), { autoPan: false, closeOnClick: false, autoClose: false });
                 }
             } else {
                 // Create new marker
                 marker = L.marker(coords, { icon }).addTo(map);
-                marker.bindPopup(createPopupContent(device));
+                marker.bindPopup(createPopupContent(device), { autoPan: false, closeOnClick: false, autoClose: false });
                 marker.on('click', () => focusOnDevice(device.id));
 
                 markers[device.id] = marker;  // ذخیره
@@ -1380,11 +1390,10 @@
 
             // If we're following this device, smoothly pan to its new location
             if (followingDeviceId === id && devices[id].lat && devices[id].lng) {
-                // تغییر به setView برای جلوگیری از انحراف
                 map.setView([devices[id].lat, devices[id].lng], map.getZoom(), {
                     animate: true,
-                    duration: 0.5,
-                    easeLinearity: 0.25
+                    duration: 0.6,
+                    easeLinearity: 0.15
                 });
             }
 
@@ -1468,6 +1477,15 @@
             // اضافه کردن کلاس به main-content برای کوچک کردن نقشه
             const mainContent = document.querySelector('.main-content');
             mainContent.classList.add('with-bottom-panel');
+
+            // بعد از تغییر ارتفاع، اندازه نقشه و مرکز را اصلاح کن
+            setTimeout(() => {
+                map.invalidateSize();
+                if (followingDeviceId && devices[followingDeviceId]) {
+                    const d = devices[followingDeviceId];
+                    if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
+                }
+            }, 80);
         }
 
         function updateBottomDevicePanelContent(device) {
@@ -1562,6 +1580,8 @@
             // پاک کردن deviceId انتخاب شده
             selectedDeviceId = null;
             followingDeviceId = null; // Stop following when panel closes
+
+            setTimeout(() => map.invalidateSize(), 80);
         }
 
         function toggleLayers() {
