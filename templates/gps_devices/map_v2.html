@@ -695,7 +695,7 @@
         }
 
         .panel-header {
-            padding: 8px 15px;
+            padding: 6px 10px; 
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             justify-content: space-between;
@@ -735,7 +735,7 @@
         }
 
         .panel-content {
-            padding: 20px;
+            padding: 15px;
             flex: 1;
             overflow-y: auto;
         }
@@ -744,17 +744,19 @@
             display: flex;
             flex-direction: row;
             gap: 0;
-            flex-wrap: nowrap;
-            overflow-x: auto;
+            flex-wrap: nowrap; /* ستون‌ها در یک ردیف بمانند */
+            overflow-x: auto;   /* اگر جا کم آمد، به راست برود نه پایین */
         }
 
         .detail-section {
+            display: flex;
             background: transparent;
             border-radius: 0;
-            padding: 8px 15px;
+            padding: 6px 8px;
             border-left: 1px solid rgba(255, 255, 255, 0.1);
-            flex: 1;
-            min-width: 200px;
+            min-width: 260px;
+            margin-bottom: 0;
+            flex-wrap: nowrap;      /* آیتم‌ها در یک ستون بمانند */
         }
 
         .detail-section:first-child {
@@ -765,20 +767,24 @@
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--primary-light);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             display: flex;
             align-items: center;
             gap: 4px;
             padding-bottom: 4px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-basis: 100%;
+            white-space: nowrap;
         }
 
         .detail-item {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            padding: 3px 0;
-            gap: 2px;
+            padding: 2px 0;
+            gap: 0;
+            margin-bottom: 0;
+            white-space: nowrap;  /* از رفتن به خط بعد جلوگیری کن؛ اسکرول افقی فعال است */
         }
 
 
@@ -1040,21 +1046,37 @@
 
         // --- Helpers ---
         function formatGpsStrength(device) {
-            const sats = Number(device.satellites || 0);
-            const gpsValid = device.gps_valid === true;
+            const hasData = (device.satellites !== undefined && device.satellites !== null) ||
+                device.gps_valid !== undefined || device.gps_timestamp;
+            if (!hasData) return 'نامعتبر';
+
             const time = formatTimeShort(device.gps_timestamp);
-            if (sats > 0) return `${sats} ماهواره${device.gps_from_cache ? ` (آخرین: ${time})` : ''}`;
-            if (gpsValid) return `معتبر${device.gps_from_cache ? ` (آخرین: ${time})` : ''}`;
-            return `نامعتبر${device.gps_from_cache && time ? ` (آخرین: ${time})` : ''}`;
+            if (device.satellites !== undefined && device.satellites !== null) {
+                return `${device.satellites} ماهواره${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            if (device.gps_valid !== undefined) {
+                return `${device.gps_valid ? 'معتبر' : '0 ماهواره'}${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            return `نامشخص${time ? ` (آخرین: ${time})` : ''}`;
         }
 
         function formatGsmStrength(device) {
-            const sig = Number(device.signal_strength || 0);
-            const gsmValid = device.gsm_valid === true;
+            const hasData = (device.signal_strength !== undefined && device.signal_strength !== null) ||
+                device.gsm_valid !== undefined || device.gsm_timestamp;
+            if (!hasData) return 'نامعتبر';
+
             const time = formatTimeShort(device.gsm_timestamp);
-            if (sig > 0) return `${sig}%${device.gsm_from_cache ? ` (آخرین: ${time})` : ''}`;
-            if (gsmValid) return `معتبر${device.gsm_from_cache ? ` (آخرین: ${time})` : ''}`;
-            return `نامعتبر${device.gsm_from_cache && time ? ` (آخرین: ${time})` : ''}`;
+            if (device.signal_strength !== undefined && device.signal_strength !== null) {
+                return `${device.signal_strength}%${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            if (device.gsm_valid !== undefined) {
+                return `${device.gsm_valid ? 'معتبر' : '0%'}${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            return `نامشخص${time ? ` (آخرین: ${time})` : ''}`;
         }
 
         function formatTimeShort(ts) {
@@ -1063,6 +1085,12 @@
             const h = d.getHours().toString().padStart(2, '0');
             const m = d.getMinutes().toString().padStart(2, '0');
             return `${h}:${m}`;
+        }
+
+        function isSignalFresh(ts, maxMinutes = 5) {
+            if (!ts) return false;
+            const diff = Date.now() - new Date(ts).getTime();
+            return diff <= maxMinutes * 60 * 1000;
         }
 
         // Initialize from server data
@@ -1621,7 +1649,10 @@
             // GPS Icon
             const gpsIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gps"]`);
             if (gpsIcon) {
-                const gpsOk = device.gps_valid === true || Number(device.satellites || 0) > 0;
+                const gpsFresh = isSignalFresh(device.gps_timestamp, 5);
+                const gpsHasData = (device.satellites !== undefined && device.satellites !== null) ||
+                    device.gps_valid !== undefined || device.gps_timestamp;
+                const gpsOk = gpsHasData && gpsFresh;
                 gpsIcon.classList.toggle('active', gpsOk);
                 gpsIcon.classList.toggle('inactive', !gpsOk);
             }
@@ -1629,7 +1660,10 @@
             // GSM Icon
             const gsmIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gsm"]`);
             if (gsmIcon) {
-                const gsmOk = device.gsm_valid === true || Number(device.signal_strength || 0) > 0;
+                const gsmFresh = isSignalFresh(device.gsm_timestamp, 5);
+                const gsmHasData = (device.signal_strength !== undefined && device.signal_strength !== null) ||
+                    device.gsm_valid !== undefined || device.gsm_timestamp;
+                const gsmOk = gsmHasData && gsmFresh;
                 gsmIcon.classList.toggle('active', gsmOk);
                 gsmIcon.classList.toggle('inactive', !gsmOk);
             }
