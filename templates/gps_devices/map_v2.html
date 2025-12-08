@@ -1036,7 +1036,6 @@
         let ws;
         let pollInterval;
         let userLocation;
-        let selectedDeviceId = null;
         let followingDeviceId = null;
 
         // --- Helpers ---
@@ -1171,9 +1170,20 @@
             }
 
             // آپدیت پنل پایین
-            if (selectedDeviceId == device.id) {
+            if (followingDeviceId == device.id) {
                 updateBottomDevicePanelContent(device);
             }
+
+            // اگر این دستگاه انتخاب شده، نقشه را نرم روی آن نگه دار
+            if (followingDeviceId === device.id) {
+                map.panTo([device.lat, device.lng], {
+                    animate: true,
+                    duration: 0.8,
+                    easeLinearity: 0.25
+                });
+            }
+
+
         }
 
         // رسم یا به‌روزرسانی Polyline برای یک دستگاه
@@ -1465,7 +1475,7 @@
             if (!device) return;
 
             // ذخیره deviceId انتخاب شده
-            selectedDeviceId = deviceId;
+            followingDeviceId = deviceId;
 
             // به‌روزرسانی محتوای پنل
             updateBottomDevicePanelContent(device);
@@ -1578,7 +1588,6 @@
             mainContent.classList.remove('with-bottom-panel');
 
             // پاک کردن deviceId انتخاب شده
-            selectedDeviceId = null;
             followingDeviceId = null; // Stop following when panel closes
 
             setTimeout(() => map.invalidateSize(), 80);
