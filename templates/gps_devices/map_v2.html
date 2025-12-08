@@ -999,6 +999,14 @@
                         <span class="value" id="deviceAccuracyDetail">-</span>
                     </div>
                     <div class="detail-item">
+                        <span class="label">سیگنال GPS:</span>
+                        <span class="value" id="deviceGpsSignalDetail">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">سیگنال GSM:</span>
+                        <span class="value" id="deviceGsmSignalDetail">-</span>
+                    </div>
+                    <div class="detail-item">
                         <span class="label">ولتاژ:</span>
                         <span class="value" id="deviceVoltageDetail">-</span>
                     </div>
@@ -1030,6 +1038,33 @@
         let userLocation;
         let selectedDeviceId = null;
         let followingDeviceId = null;
+
+        // --- Helpers ---
+        function formatGpsStrength(device) {
+            const sats = Number(device.satellites || 0);
+            const gpsValid = device.gps_valid === true;
+            const time = formatTimeShort(device.gps_timestamp);
+            if (sats > 0) return `${sats} ماهواره${device.gps_from_cache ? ` (آخرین: ${time})` : ''}`;
+            if (gpsValid) return `معتبر${device.gps_from_cache ? ` (آخرین: ${time})` : ''}`;
+            return `نامعتبر${device.gps_from_cache && time ? ` (آخرین: ${time})` : ''}`;
+        }
+
+        function formatGsmStrength(device) {
+            const sig = Number(device.signal_strength || 0);
+            const gsmValid = device.gsm_valid === true;
+            const time = formatTimeShort(device.gsm_timestamp);
+            if (sig > 0) return `${sig}%${device.gsm_from_cache ? ` (آخرین: ${time})` : ''}`;
+            if (gsmValid) return `معتبر${device.gsm_from_cache ? ` (آخرین: ${time})` : ''}`;
+            return `نامعتبر${device.gsm_from_cache && time ? ` (آخرین: ${time})` : ''}`;
+        }
+
+        function formatTimeShort(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            const h = d.getHours().toString().padStart(2, '0');
+            const m = d.getMinutes().toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
 
         // Initialize from server data
         const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
@@ -1206,8 +1241,10 @@
                             <div style="font-weight: bold;">${device.speed || 0}km/h</div>
                             <div style="color: #666;"><i class="fas fa-battery-half" style="color: #f59e0b; width: 20px;"></i>باتری:</div>
                             <div style="font-weight: bold;">${device.battery_level || '--'}%</div>
-                            <div style="color: #666;"><i class="fas fa-signal" style="color: #22c55e; width: 20px;"></i>سیگنال:</div>
-                            <div style="font-weight: bold;">${device.signal_strength || '--'}%</div>
+                            <div style="color: #666;"><i class="fas fa-satellite-dish" style="color: #22c55e; width: 20px;"></i>GPS:</div>
+                            <div style="font-weight: bold;">${formatGpsStrength(device)}</div>
+                            <div style="color: #666;"><i class="fas fa-signal" style="color: #22c55e; width: 20px;"></i>GSM:</div>
+                            <div style="font-weight: bold;">${formatGsmStrength(device)}</div>
                             <div style="color: #666;"><i class="fas fa-crosshairs" style="color: #8b5cf6; width: 20px;"></i>دقت GPS:</div>
                             <div style="font-weight: bold;">${device.accuracy ? device.accuracy.toFixed(1) + 'm' : 'N/A'}</div>
                             <div style="color: #666;"><i class="fas fa-compass" style="color: #8b5cf6; width: 20px;"></i>جهت:</div>
@@ -1443,7 +1480,8 @@
             document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
             document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
             document.getElementById('deviceAccuracyDetail').textContent = (device.accuracy ? device.accuracy.toFixed(1) + ' m' : '-');
-            // document.getElementById('deviceSignalDetail').textContent = (device.signal_strength || '-') + '%';
+            document.getElementById('deviceGpsSignalDetail').textContent = formatGpsStrength(device);
+            document.getElementById('deviceGsmSignalDetail').textContent = formatGsmStrength(device);
             document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
             document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
 
@@ -1554,32 +1592,39 @@
             // GPS Icon
             const gpsIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gps"]`);
             if (gpsIcon) {
-                if (device.gps_valid || device.lat) {
-                    gpsIcon.classList.add('active');
-                    gpsIcon.classList.remove('inactive');
-                } else {
-                    gpsIcon.classList.add('inactive');
-                    gpsIcon.classList.remove('active');
-                }
+                const gpsOk = device.gps_valid === true || Number(device.satellites || 0) > 0;
+                gpsIcon.classList.toggle('active', gpsOk);
+                gpsIcon.classList.toggle('inactive', !gpsOk);
             }
 
             // GSM Icon
             const gsmIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gsm"]`);
             if (gsmIcon) {
-                if (device.signal_strength && device.signal_strength > 0) {
-                    gsmIcon.classList.add('active');
-                    gsmIcon.classList.remove('inactive');
-                } else {
-                    gsmIcon.classList.add('inactive');
-                    gsmIcon.classList.remove('active');
-                }
+                const gsmOk = device.gsm_valid === true || Number(device.signal_strength || 0) > 0;
+                gsmIcon.classList.toggle('active', gsmOk);
+                gsmIcon.classList.toggle('inactive', !gsmOk);
             }
 
             // Status Icon
             const statusIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="status"]`);
             if (statusIcon) {
                 const rawStatus = (device.status || '').toLowerCase();
-                const matchedKey = Object.keys(statusMeta).find(key => rawStatus.includes(key)) || 'default';
+                let effectiveStatus = rawStatus;
+
+                // اولویت: هشدار/SOS > یدک/مشکلات خاص > حرکت > سایر
+                const speedValue = Number(device.speed || 0);
+                const isAlarm = device.is_alarm || rawStatus.includes('sos') || rawStatus.includes('alert') || rawStatus.includes('alarm');
+
+                if (rawStatus.includes('offline')) {
+                    effectiveStatus = 'offline';
+                } else if (isAlarm) {
+                    effectiveStatus = rawStatus || 'alert';
+                } else if (speedValue > 1) {
+                    // اگر سرعت بالاست، حرکت را تحمیل کن حتی اگر سرور وضعیت نفرستاده
+                    effectiveStatus = 'moving';
+                }
+
+                const matchedKey = Object.keys(statusMeta).find(key => effectiveStatus.includes(key)) || 'default';
                 const meta = statusMeta[matchedKey] || statusMeta['default'];
 
                 statusIcon.innerHTML = `<i class="${meta.icon}"></i>`;

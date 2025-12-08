@@ -1101,7 +1101,7 @@ class GPSReceiver:
                 lat = float(location_data.latitude)
                 lng = float(location_data.longitude)
                 if location_data.created_at:
-                     last_update = location_data.created_at.isoformat()
+                    last_update = location_data.created_at.isoformat()
             
             # 2. Fallback: Query the latest LocationData from DB if not provided
             if lat is None or lng is None:
@@ -1118,6 +1118,28 @@ class GPSReceiver:
                 last_update = datetime.now(timezone.utc).isoformat()
 
             device_state = self.get_device_state(device)
+
+            # تعیین مقادیر GPS/GSM با حفظ آخرین مقدار معتبر
+            latest_loc = latest_loc or LocationData.objects.filter(device=device).order_by('-created_at').first()
+            satellites_val = getattr(location_data, 'satellites', None)
+            gps_from_cache = False
+            if (satellites_val is None or satellites_val == 0) and latest_loc:
+                satellites_val = getattr(latest_loc, 'satellites', 0)
+                gps_from_cache = True
+
+            signal_val = getattr(location_data, 'signal_strength', None)
+            gsm_from_cache = False
+            if (signal_val is None or signal_val == 0) and latest_loc:
+                signal_val = getattr(latest_loc, 'signal_strength', 0)
+                gsm_from_cache = True
+
+            gps_ts = getattr(location_data, 'created_at', None)
+            if gps_from_cache and latest_loc and not gps_ts:
+                gps_ts = getattr(latest_loc, 'created_at', None)
+
+            gsm_ts = getattr(location_data, 'created_at', None)
+            if gsm_from_cache and latest_loc and not gsm_ts:
+                gsm_ts = getattr(latest_loc, 'created_at', None)
             
             # تعیین آیکون، رنگ و متن بر اساس device_state
             status_info = self.get_status_display_info(device_state, getattr(location_data, 'is_alarm', False) if location_data else False)
@@ -1135,8 +1157,8 @@ class GPSReceiver:
                 'speed': float(speed) if speed is not None else 0,
                 'heading': float(heading) if heading is not None else 0,
                 'accuracy': getattr(location_data, 'accuracy', 0) if location_data else 0,
-                'satellites': getattr(location_data, 'satellites', 0) if location_data else 0,
-                'signal_strength': getattr(location_data, 'signal_strength', None) or (latest_loc.signal_strength if latest_loc and hasattr(latest_loc, 'signal_strength') else 0),
+                'satellites': satellites_val if satellites_val is not None else 0,
+                'signal_strength': signal_val if signal_val is not None else 0,
                 'matched_geometry': getattr(location_data, 'matched_geometry', None) if location_data else None,
                 'is_alarm': getattr(location_data, 'is_alarm', False) if location_data else False,
                 'alarm_type': getattr(location_data, 'alarm_type', '') if location_data else '',           
@@ -1144,8 +1166,12 @@ class GPSReceiver:
                 'status_icon': status_info['icon'],  # آیکون برای نمایش
                 'status_color': status_info['color'],  # رنگ وضعیت
                 'status_text': status_info['text'],  # متن فارسی وضعیت
-                'gps_valid': (getattr(location_data, 'satellites', 0) if location_data else 0) > 0,  # آیا GPS معتبر است
-                'gsm_valid': (getattr(location_data, 'signal_strength', 0) if location_data else 0) > 0,  # آیا سیگنال GSM معتبر است            
+                'gps_valid': (satellites_val or 0) > 0,  # آیا GPS معتبر است
+                'gsm_valid': (signal_val or 0) > 0,  # آیا سیگنال GSM معتبر است
+                'gps_timestamp': gps_ts.isoformat() if gps_ts else None,
+                'gsm_timestamp': gsm_ts.isoformat() if gsm_ts else None,
+                'gps_from_cache': gps_from_cache,
+                'gsm_from_cache': gsm_from_cache,
             }
 
             # Send to admins group (they see all devices)
@@ -1184,7 +1210,7 @@ class GPSReceiver:
             else:
                 raw_data_str = str(data)
 
-           
+        
 
             # Save raw data (without protocol reference)
             raw_data = RawGpsData.objects.create(
