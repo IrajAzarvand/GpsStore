@@ -46,7 +46,10 @@ def map_v2(request):
     for device in devices:
         # Get the latest location for this device
         latest_location = device.locations.first()
-        
+
+        # Determine status based on latest location
+        status = determine_device_status(latest_location)
+
         device_data.append({
             'id': device.id,
             'name': device.name,
@@ -54,7 +57,7 @@ def map_v2(request):
             'lat': float(latest_location.latitude) if latest_location else None,
             'lng': float(latest_location.longitude) if latest_location else None,
             'last_update': latest_location.created_at.isoformat() if latest_location else None,
-            'status': device.status,
+            'status': status,
             'battery_level': latest_location.battery_level if latest_location else None,
             'speed': latest_location.speed if latest_location else 0,
             'heading': latest_location.heading if latest_location else 0,
@@ -76,6 +79,22 @@ def map_v2(request):
     return render(request, 'gps_devices/map_v2.html', context)
 
 
+
+def determine_device_status(latest_location):
+    """Determine device status based on latest location data"""
+    if latest_location:
+        if latest_location.is_alarm:
+            return 'alert'
+        elif latest_location.speed > 0:
+            return 'moving'
+        elif latest_location.packet_type == 'HB':
+            return 'idle'
+        else:
+            return 'parked'
+    else:
+        return 'offline'
+    
+    
 def build_user_tree(user, is_admin=False):
     """
     Build hierarchical tree structure for a user and their devices
@@ -90,11 +109,14 @@ def build_user_tree(user, is_admin=False):
     devices_list = []
     for device in user_devices:
         latest_location = device.locations.first()
+        # Determine status based on latest location
+        status = determine_device_status(latest_location)
+        
         devices_list.append({
             'id': device.id,
             'name': device.name,
             'imei': device.imei,
-            'status': device.status,
+            'status': status,
             'speed': latest_location.speed if latest_location else 0,
         })
     

@@ -22,7 +22,7 @@
         <!-- Devices -->
         {% for device in node.devices %}
         <div class="user-item" onclick="focusOnDevice('{{ device.id }}')" id="sidebar-device-{{ device.id }}">
-            <div class="user-avatar" style="background: var(--card-bg); color: var(--light);">
+            <div class="user-avatar status-bg-{{ device.status|default:'offline' }}" style="color: var(--light);">
                 <i class="fas fa-car"></i>
             </div>
             <div class="user-info">

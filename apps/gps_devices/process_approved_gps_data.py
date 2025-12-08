@@ -92,13 +92,17 @@ class Command(BaseCommand):
             logger.info(f'LBS packet received for device {device.imei}')
 
         elif packet_type == 'V2':
-            # Alarm/Status packet - just log it (Alert model doesn't exist)
+            # Alarm/Status packet - log and broadcast alert
             alarm = parsed_data.get('alarm')
             logger.info(f'Alarm packet received for device {device.imei}: {alarm}')
+            # Broadcast alert status
+            self.broadcast_device_update(device, status_override='alert')
 
         elif packet_type == 'HB':
-            # Heartbeat packet - just log it
+            # Heartbeat packet - log and broadcast
             logger.info(f'Heartbeat received for device {device.imei}')
+            # Broadcast idle status
+            self.broadcast_device_update(device, status_override='idle')
 
         elif packet_type == 'UPLOAD':
             # Multi-record packet - process each record
@@ -389,18 +393,56 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f'Error processing GPS data in UPLOAD: {e}')
 
-    def broadcast_device_update(self, device):
+    def broadcast_device_update(device, location_data=None, status_override=None):
         """
         Broadcast device location update to WebSocket clients
         """
         try:
             channel_layer = get_channel_layer()
+            if status_override:
+                status = status_override
+            elif location_data:
+                if location_data.is_alarm:
+                    status = 'alert'
+                elif location_data.speed > 0:
+                    status = 'moving'
+                elif location_data.packet_type == 'HB':
+                    status = 'idle'
+                else:
+                    status = 'parked'
+            else:
+                # Get latest location for status determination if no location_data provided
+                latest_location = device.locations.first()
+                if latest_location:
+                    if latest_location.is_alarm:
+                        status = 'alert'
+                    elif latest_location.speed > 0:
+                        status = 'moving'
+                    elif latest_location.packet_type == 'HB':
+                        status = 'idle'
+                    else:
+                        status = 'parked'
+                else:
+                    status = 'offline'
+
+            # Get latest location data for broadcasting
+            latest_location = location_data or device.locations.first()
+
             device_data = {
                 'id': device.id,
                 'name': device.name,
                 'imei': device.imei,
-                'status': device.status,
+                'status': status,
                 'driver_name': device.driver_name,
+                'lat': float(latest_location.latitude) if latest_location and latest_location.latitude else None,
+                'lng': float(latest_location.longitude) if latest_location and latest_location.longitude else None,
+                'last_update': latest_location.created_at.isoformat() if latest_location else None,
+                'battery_level': latest_location.battery_level if latest_location else None,
+                'speed': latest_location.speed if latest_location else 0,
+                'heading': latest_location.heading if latest_location else 0,
+                'signal_strength': latest_location.signal_strength if latest_location else None,
+                'satellites': latest_location.satellites if latest_location else None,
+                'matched_geometry': latest_location.matched_geometry if latest_location else None,
             }
 
             # Send to admins group (they see all devices)

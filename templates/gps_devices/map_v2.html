@@ -833,6 +833,46 @@
             background: rgba(100, 116, 139, 0.2);
             color: #64748b;
         }
+
+        /* افکت حرکت برای آیکون وضعیت حرکت */
+        .status-icon.moving {
+            animation: moving-glow 1.1s ease-in-out infinite;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+        }
+
+        @keyframes moving-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.35);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+            }
+        }
+
+        .device-status-text {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 2px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.1);
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .device-status-text {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-color);
+        }
+
+        body.light-theme .device-status-text {
+            color: rgba(0, 0, 0, 0.6);
+        }
     </style>
 </head>
 
@@ -1033,10 +1073,12 @@
             console.log("Initial Devices Data:", devices);
             Object.values(devices).forEach(device => {
                 updateDeviceMarker(device);
+                // Polyline اگر وجود داشت
                 if (device.matched_geometry) {
                     updateDevicePolyline(device.id, device.matched_geometry);
-                    updateDeviceStatusIcons(device);
                 }
+                // همیشه وضعیت آیکون را به‌روز کن
+                updateDeviceStatusIcons(device);
             });
         }
 
@@ -1130,6 +1172,10 @@
             let iconName = 'arrow.png';
             const status = device.status ? device.status.toLowerCase() : '';
             const type = device.vehicle_type ? device.vehicle_type.toLowerCase() : '';
+            
+            if (status === 'idle') {
+                iconUrl = '/static/img/markers/arrow.png'; // یا idle.png اگر موجود باشد
+            }
 
             if (status.includes('alarm') || status.includes('sos')) iconName = 'alarm - sos.png';
             else if (status.includes('battery') || status.includes('power')) iconName = 'Battery-Power Fault.png';
@@ -1138,6 +1184,7 @@
             else if (status.includes('offline')) iconName = 'offline.png';
             else if (status.includes('towing')) iconName = 'Towing - Movement while Engine Off.png';
             else if (status.includes('stop')) iconName = 'stop.png';
+            else if (status.includes('idle')) iconName = 'arrow.png';
             else if (type) {
                 const validTypes = ['405', '206', 'mazda3', 'trailer', 'pridewanet', 'samand', 'kamunet', 'landcruise'];
                 const matchedType = validTypes.find(t => type.includes(t));
@@ -1197,7 +1244,8 @@
                 'online': '#22c55e',
                 'alert': '#ef4444',
                 'parked': '#f59e0b',
-                'offline': '#64748b'
+                'offline': '#64748b',
+                'idle': '#f59e0b'
             };
             return colors[status] || colors['offline'];
         }
@@ -1208,7 +1256,8 @@
                 'online': 'آنلاین',
                 'alert': 'هشدار',
                 'parked': 'توقف',
-                'offline': 'آفلاین'
+                'offline': 'آفلاین',
+                'idle': 'بیکار'
             };
             return statusMap[status] || status || 'نامشخص';
         }
@@ -1266,7 +1315,12 @@
 
             // Update local state
             if (!devices[id]) devices[id] = {};
+            const prevStatus = devices[id].status; // وضعیت قبلی را نگه‌دار
             Object.assign(devices[id], data);
+            // اگر پیام جدید status نداشت ولی قبلاً moving/parked/... داشتیم، همان را حفظ کن
+            if (!data.status && prevStatus) {
+                devices[id].status = prevStatus;
+            }
 
             // >> این بلوک را اضافه کنید: <<
             if (data.is_alarm) {
@@ -1307,12 +1361,6 @@
             // Update Sidebar Item
             const sidebarItem = document.getElementById(`sidebar-device-${device.id}`);
             if (sidebarItem) {
-                const statusSpan = sidebarItem.querySelector('.device-status-text');
-                if (statusSpan) {
-                    statusSpan.textContent = getStatusText(device.status);
-                    statusSpan.className = `device-status-text ${device.status === 'online' ? 'text-success' : device.status === 'moving' ? 'text-primary' : 'text-warning'}`;
-                }
-
                 // Update icon background
                 const avatar = sidebarItem.querySelector('.user-avatar');
                 if (avatar) {
@@ -1485,6 +1533,24 @@
         function updateDeviceStatusIcons(device) {
             const deviceId = device.id;
 
+            // مپ وضعیت‌ها به آیکون و رنگ
+            const statusMeta = {
+                'moving': { icon: 'fas fa-car', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.2)' },        // سبز – حرکت
+                'online': { icon: 'fas fa-circle', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.2)' },     // آنلاین عادی
+                'parked': { icon: 'fas fa-parking', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },   // پارک
+                'idle': { icon: 'fas fa-pause', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },        // بیکار
+                'stop': { icon: 'fas fa-stop', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },         // توقف
+                'offline': { icon: 'fas fa-power-off', color: '#64748b', bg: 'rgba(100, 116, 139, 0.2)' },// خاموش/آفلاین
+                'alert': { icon: 'fas fa-exclamation-triangle', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' }, // هشدار
+                'sos': { icon: 'fas fa-exclamation-triangle', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' },   // SOS
+                'alarm': { icon: 'fas fa-exclamation-triangle', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' }, // سایر هشدارها
+                'geofence': { icon: 'fas fa-draw-polygon', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },     // ورود/خروج حصار
+                'towing': { icon: 'fas fa-truck-moving', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' },        // یدک/حرکت غیرمجاز
+                'battery': { icon: 'fas fa-battery-quarter', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },   // مشکل باتری
+                'power': { icon: 'fas fa-plug', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },                // مشکل برق
+                'default': { icon: 'fas fa-circle', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.2)' }              // پیش‌فرض
+            };
+
             // GPS Icon
             const gpsIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gps"]`);
             if (gpsIcon) {
@@ -1512,34 +1578,28 @@
             // Status Icon
             const statusIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="status"]`);
             if (statusIcon) {
-                // تغییر آیکون بر اساس وضعیت
-                if (device.status === 'moving') {
-                    // نمایش آیکون ماشین برای حالت در حرکت
-                    statusIcon.innerHTML = '<i class="fas fa-car"></i>';
-                    statusIcon.style.color = '#22c55e'; // سبز
-                    statusIcon.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
-                    statusIcon.classList.add('active');
-                    statusIcon.classList.remove('inactive');
-                } else if (device.status === 'parked' || device.speed === 0) {
-                    // نمایش حرف P برای حالت پارک
-                    statusIcon.innerHTML = '<strong style="font-size: 12px;">P</strong>';
-                    statusIcon.style.color = '#f8fafc'; // سفید
-                    statusIcon.style.backgroundColor = 'rgba(100, 116, 139, 0.2)';
-                    statusIcon.classList.add('active');
-                    statusIcon.classList.remove('inactive');
-                } else if (device.status === 'offline') {
-                    statusIcon.innerHTML = '<i class="fas fa-power-off"></i>';
-                    statusIcon.style.color = '#64748b';
-                    statusIcon.style.backgroundColor = 'rgba(100, 116, 139, 0.2)';
+                const rawStatus = (device.status || '').toLowerCase();
+                const matchedKey = Object.keys(statusMeta).find(key => rawStatus.includes(key)) || 'default';
+                const meta = statusMeta[matchedKey] || statusMeta['default'];
+
+                statusIcon.innerHTML = `<i class="${meta.icon}"></i>`;
+                statusIcon.style.color = meta.color;
+                statusIcon.style.backgroundColor = meta.bg;
+
+                // وضعیت‌های آفلاین را غیرفعال نشان بده
+                if (matchedKey === 'offline') {
                     statusIcon.classList.add('inactive');
                     statusIcon.classList.remove('active');
                 } else {
-                    // حالت پیش‌فرض
-                    statusIcon.innerHTML = '<i class="fas fa-circle"></i>';
-                    statusIcon.style.color = '#22c55e';
-                    statusIcon.style.backgroundColor = 'rgba(34, 197, 94, 0.2)';
                     statusIcon.classList.add('active');
                     statusIcon.classList.remove('inactive');
+                }
+
+                // افکت ویژه حرکت
+                if (matchedKey === 'moving') {
+                    statusIcon.classList.add('moving');
+                } else {
+                    statusIcon.classList.remove('moving');
                 }
             }
         }
