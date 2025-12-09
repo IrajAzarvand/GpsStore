@@ -59,10 +59,6 @@ def dm_to_dd(value: Optional[str], direction: Optional[str]) -> Optional[float]:
 
 
 def format_time_date(hhmmss: Optional[str], ddmmyy: Optional[str]) -> Optional[str]:
-    """
-    Parse hhmmss and ddmmyy into an ISO8601 UTC datetime string.
-    Returns like: '2025-06-16T00:02:54+00:00' or None if malformed.
-    """
     if not hhmmss or len(hhmmss) < 6 or not ddmmyy or len(ddmmyy) < 6:
         return None
     try:
@@ -72,7 +68,11 @@ def format_time_date(hhmmss: Optional[str], ddmmyy: Optional[str]) -> Optional[s
         dd = int(ddmmyy[0:2])
         mo = int(ddmmyy[2:4])
         yy = int(ddmmyy[4:6])
-        year = 2000 + yy
+        # Year logic: 80–99 → 1980–1999, 00–79 → 2000–2079
+        if yy >= 80:
+            year = 1900 + yy
+        else:
+            year = 2000 + yy
         dt = datetime(year, mo, dd, hh, mm, ss, tzinfo=timezone.utc)
         return dt.isoformat()
     except Exception:
@@ -180,7 +180,43 @@ class LBSResolver:
         self.providers = providers
 
     @lru_cache(maxsize=4096)
-    def resolve(self, mcc: int, mnc: int, lac: int, cid: int) -> Optional[Dict[str, Any]]:
+    def resolve(self, lac: int, cid: int, mcc: int = 432, mnc: int = 1) -> Optional[Dict[str, Any]]:
+        """
+        Attempt providers in order: opencellid -> mozilla -> fallback.
+        Uses Iran's default MCC=432, MNC=1 if not provided.
+        Returns dict {lat, lon, accuracy, provider} or None.
+        """
+        # try OpenCellID if configured
+        if "opencellid" in self.providers and requests is not None:
+            cfg = self.providers["opencellid"]
+            key = cfg.get("key")
+            if key:
+                try:
+                    loc = self._resolve_opencellid(key, mcc, mnc, lac, cid)
+                    if loc:
+                        loc["provider"] = "opencellid"
+                        return loc
+                except Exception:
+                    pass
+
+        # try Mozilla Location Service
+        if "mozilla" in self.providers and requests is not None:
+            cfg = self.providers["mozilla"]
+            key = cfg.get("key", "test")
+            try:
+                loc = self._resolve_mozilla(key, mcc, mnc, lac, cid)
+                if loc:
+                    loc["provider"] = "mozilla"
+                    return loc
+            except Exception:
+                pass
+
+        # fallback
+        loc = self._fallback_pseudo(mcc, mnc, lac, cid)
+        loc["provider"] = "pseudo"
+        return loc
+    
+    
         """
         Attempt providers in order: opencellid -> mozilla -> fallback.
         Returns dict {lat, lon, accuracy, provider} or None.
@@ -316,10 +352,17 @@ class HQFullDecoder:
         if len(parts) < 2:
             out.update({"error": "malformed_packet", "parts": parts})
             return out
+
         protocol = parts[0]
-        out["protocol"] = protocol
         imei = parts[1] if len(parts) > 1 else None
+        out["protocol"] = protocol
         out["imei"] = imei
+
+        # 🔹 Special case: Heartbeat formats
+        if working == "HTBT" or (len(parts) >= 3 and parts[2] == "XT"):
+            return self._handle_heartbeat(parts)
+
+        # Normal packet type (V1, V0, etc.)
         pkt_type = parts[2] if len(parts) > 2 else None
         out["type_raw"] = pkt_type
         handler = self.packet_handlers.get(pkt_type)
@@ -334,113 +377,118 @@ class HQFullDecoder:
                 return {"error": "handler_exception", "exception": str(e), "raw": raw_packet, "type_tried": pkt_type}
         else:
             return {"type": "unknown", "raw": raw_packet, "parts": parts}
-
+    
+    
     # ---------- Handlers ----------
-    def _handle_v1(self, parts: list) -> dict:
-        """
-        V1: GPS packet. Typical fields (comma separated):
-        [0]=HQ, [1]=imei, [2]=V1, [3]=hhmmss, [4]=A/V, [5]=lat (DDMM.MMMM), [6]=N/S,
-        [7]=lon (DDDMM.MMMM), [8]=E/W, [9]=speed, [10]=course, [11]=ddmmyy, [12]=statusHex,
-        [13]=mcc, [14]=mnc, [15]=lac, [16]=cid, ...
-        """
-        if len(parts) < 11:
-            raise ValueError("V1 packet too short")
-        # safe unpacking; if some trailing fields missing they'll be None
+    def _handle_heartbeat(self, parts: list) -> dict:
+        """Handle heartbeat packets: HTBT or XT."""
         protocol = parts[0] if len(parts) > 0 else None
         imei = parts[1] if len(parts) > 1 else None
-        pkt = parts[2] if len(parts) > 2 else None
-        time_raw = parts[3] if len(parts) > 3 else None
-        status = parts[4] if len(parts) > 4 else None
-        lat_raw = parts[5] if len(parts) > 5 else None
-        lat_dir = parts[6] if len(parts) > 6 else None
-        lon_raw = parts[7] if len(parts) > 7 else None
-        lon_dir = parts[8] if len(parts) > 8 else None
-        speed_raw = parts[9] if len(parts) > 9 else None
-        angle_raw = parts[10] if len(parts) > 10 else None
-        date_raw = parts[11] if len(parts) > 11 else None
-        flags_raw = parts[12] if len(parts) > 12 else None
-        mcc_raw = parts[13] if len(parts) > 13 else None
-        mnc_raw = parts[14] if len(parts) > 14 else None
-        lac_raw = parts[15] if len(parts) > 15 else None
-        cid_raw = parts[16] if len(parts) > 16 else None
+        return {
+            "type": "HEARTBEAT",
+            "protocol": protocol,
+            "imei": imei,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "note": "Device is online"
+        }
 
-        res: Dict[str, Any] = {"type": "V1", "protocol": protocol, "imei": imei}
-        res["gps_valid"] = (status == "A")
-        # timestamp: ISO8601 UTC string or None
-        res["timestamp"] = format_time_date(time_raw, date_raw)
-        # keep raw values
-        res["time_raw"] = time_raw
-        res["date_raw"] = date_raw
-        res["status_raw"] = status
-        res["speed_raw"] = speed_raw
-        res["angle_raw"] = angle_raw
-        # Convert speed from knots to km/h (1 knot = 1.852 km/h)
-        speed_knots = self._safe_float(speed_raw) if speed_raw is not None else None
+    def _handle_v1(self, parts: list) -> dict:
+        if len(parts) < 12:
+            raise ValueError("V1 packet too short")
+        protocol = parts[0]
+        imei = parts[1]
+        time_raw = parts[3]
+        status = parts[4]
+        lat_raw = parts[5]
+        lat_dir = parts[6]
+        lon_raw = parts[7]
+        lon_dir = parts[8]
+        speed_raw = parts[9]
+        angle_raw = parts[10]
+        date_raw = parts[11]
+        flags_raw = parts[12] if len(parts) > 12 else None
+
+        res = {
+            "type": "V1",
+            "protocol": protocol,
+            "imei": imei,
+            "gps_valid": (status == "A"),
+            "timestamp": format_time_date(time_raw, date_raw),
+            "time_raw": time_raw,
+            "date_raw": date_raw,
+            "status_raw": status,
+            "speed_raw": speed_raw,
+            "angle_raw": angle_raw,
+        }
+
+        # Speed: convert knots to km/h
+        speed_knots = self._safe_float(speed_raw)
         res["speed_kph"] = round(speed_knots * 1.852, 2) if speed_knots is not None else None
-        # put a fallback alias for frontend that may expect 'speed'
         res["speed"] = res["speed_kph"]
-        res["course"] = self._safe_int(angle_raw) if angle_raw is not None else None
+        res["course"] = self._safe_int(angle_raw)
         res["angle"] = res["course"]
-        res["flags_raw"] = flags_raw
-        res["mcc"] = self._safe_int(mcc_raw)
-        res["mnc"] = self._safe_int(mnc_raw)
-        res["lac"] = self._safe_int(lac_raw)
-        res["cid"] = self._safe_int(cid_raw)
+
+        # Flags
         if flags_raw:
             flags_value, flags_bits = parse_flags_from_hex(flags_raw, byteorder='little')
             res["flags_value"] = flags_value
             res["flags"] = flags_bits
+            # Extract ACC and SOS from flags
+            res["acc_on"] = flags_bits.get(1, {}).get("value", False)  # Bit 1 = ACC
+            res["sos_active"] = flags_bits.get(3, {}).get("value", False)  # Bit 3 = SOS
+            if res["sos_active"]:
+                res["alarm_type"] = "sos"
         else:
             res["flags_value"] = 0
-            res["flags"] = {bit: {"bit": bit, "value": False, "name": FLAGS_MAP.get(bit, {}).get("name", f"bit_{bit}"),
-                                  "desc": FLAGS_MAP.get(bit, {}).get("desc",""), "notes": ""} for bit in range(32)}
-
-        # Extract ACC status from flags
-        # Bit 10 (0-indexed) of statusHex usually indicates ACC (1=On, 0=Off)
-        if flags_raw:
-            try:
-                flags_int = int(flags_raw, 16)
-                res["acc_on"] = bool((flags_int >> 10) & 1)
-                # Extract GPS fixed status from flags (bit 1)
-                res["gps_fixed"] = bool((flags_int >> 1) & 1)
-            except Exception:
-                res["acc_on"] = None
-                res["gps_fixed"] = None
-        else:
+            res["flags"] = {bit: {"bit": bit, "value": False, **FLAGS_MAP.get(bit, {"name": f"bit_{bit}", "desc": "", "notes": ""})}
+                            for bit in range(32)}
             res["acc_on"] = None
-            res["gps_fixed"] = None
+            res["sos_active"] = False
 
-        # Set satellites based on GPS validity and gps_fixed flag
-        # If GPS is valid (status="A") and gps_fixed=True, assume GPS is working
-        # We can't get exact satellite count from HQ V1, so we use a default value
-        if res["gps_valid"] and res.get("gps_fixed", False):
-            res["satellites"] = 1  # Indicates GPS is fixed/working (we don't have exact count)
-        elif res["gps_valid"]:
-            res["satellites"] = 1  # GPS valid but gps_fixed flag not set, still assume working
-        else:
-            res["satellites"] = 0  # GPS invalid
-
+        # Coordinates
         if res["gps_valid"]:
             res["latitude"] = dm_to_dd(lat_raw, lat_dir)
             res["longitude"] = dm_to_dd(lon_raw, lon_dir)
             res["location_source"] = "GPS"
         else:
-            # Attempt LBS resolution
             res["latitude"] = None
             res["longitude"] = None
             res["location_source"] = "LBS"
-            if None not in (res["mcc"], res["mnc"], res["lac"], res["cid"]):
-                loc = self.lbs.resolve(res["mcc"], res["mnc"], res["lac"], res["cid"])
-                if loc:
-                    res["latitude"] = loc.get("lat")
-                    res["longitude"] = loc.get("lon")
-                    res["location_resolved_via"] = loc.get("provider")
-                    res["accuracy_m"] = loc.get("accuracy")
-                else:
-                    res["location_resolved_via"] = "none"
+
+        # Parse extra fields: voltage, signal, LAC, CID (if present)
+        res["lac"] = None
+        res["cid"] = None
+        res["voltage_mv"] = None
+        res["voltage_v"] = None
+        res["gsm_signal"] = None
+
+        if len(parts) >= 17:
+            # Check if parts[13] to [16] are numeric and plausible
+            v_mv = self._safe_int(parts[13])
+            sig = self._safe_int(parts[14])
+            lac = self._safe_int(parts[15])
+            cid = self._safe_int(parts[16])
+            if v_mv is not None and sig is not None and lac is not None and cid is not None:
+                res["voltage_mv"] = v_mv
+                res["voltage_v"] = round(v_mv / 1000.0, 3)
+                res["gsm_signal"] = sig
+                res["lac"] = lac
+                res["cid"] = cid
+
+        # LBS fallback if no GPS
+        if not res["gps_valid"] and res["lac"] is not None and res["cid"] is not None:
+            loc = self.lbs.resolve(res["lac"], res["cid"])  # Note: MCC/MNC are now optional in LBSResolver
+            if loc:
+                res["latitude"] = loc.get("lat")
+                res["longitude"] = loc.get("lon")
+                res["location_resolved_via"] = loc.get("provider")
+                res["accuracy_m"] = loc.get("accuracy")
             else:
-                res["location_resolved_via"] = "insufficient_lbs"
+                res["location_resolved_via"] = "none"
+
         return res
+
+
 
     def _handle_v0(self, parts: list) -> dict:
         """V0: LBS-only packet. Resolve to coords if possible."""
@@ -505,61 +553,34 @@ class HQFullDecoder:
             res["alarm_info"] = {bit: {"bit": bit, "value": False, "name": FLAGS_MAP.get(bit, {}).get("name", f"bit_{bit}"),
                                        "desc": FLAGS_MAP.get(bit, {}).get("desc",""), "notes": ""} for bit in range(32)}
         return res
+    
+    def _handle_v3(self, parts: list) -> dict:
+        """V3: LBS-only packet (rare, but documented)."""
+        if len(parts) < 7:
+            raise ValueError("V3 too short")
+        protocol = parts[0]
+        imei = parts[1]
+        time_raw = parts[3]
+        date_raw = parts[6]
+        flags_raw = parts[7] if len(parts) > 7 else None
 
-    def _handle_hb(self, parts: list) -> dict:
-        """
-        HB: Heartbeat. Many formats exist; we attempt to detect voltage & signal.
-        Typical: *HQ,imei,HB,hhmmss,A,voltage_mv,signal#
-        """
-        if len(parts) < 3:
-            raise ValueError("HB too short")
-        protocol = parts[0] if len(parts) > 0 else None
-        imei = parts[1] if len(parts) > 1 else None
-        pkt = parts[2] if len(parts) > 2 else None
-        time_raw = parts[3] if len(parts) > 3 else None
-        rest = parts[4:] if len(parts) > 4 else []
-        voltage_raw = None
-        signal_raw = None
-        status = None
-        if rest:
-            # detect optional status char
-            if len(rest[0]) == 1 and not rest[0].isdigit():
-                status = rest[0]
-                if len(rest) >= 3:
-                    voltage_raw = rest[1]; signal_raw = rest[2]
-                elif len(rest) >= 2:
-                    voltage_raw = rest[1]
-            else:
-                voltage_raw = rest[0]
-                if len(rest) >= 2:
-                    signal_raw = rest[1]
-        res = {"type": "HB", "protocol": protocol, "imei": imei}
-        res["timestamp"] = format_time_date(time_raw, "000000") if time_raw else None
-        res["status"] = status
-        res["voltage_raw"] = voltage_raw
-        res["signal_raw"] = signal_raw
-        res["voltage_v"] = None
-        # Interpret voltage: if >=1000 -> mV else ambiguous
-        try:
-            if voltage_raw is not None:
-                v = float(voltage_raw)
-                if v >= 1000:
-                    res["voltage_v"] = round(v / 1000.0, 3)
-                    res["voltage_interpretation"] = "mV->V"
-                elif 0 <= v <= 100:
-                    res["voltage_percent"] = round(v, 2)
-                    res["voltage_interpretation"] = "percent_or_unknown"
-                else:
-                    res["voltage_v"] = round(v, 3)
-                    res["voltage_interpretation"] = "raw_guess"
-        except Exception:
-            pass
-        try:
-            if signal_raw is not None:
-                res["signal_strength"] = int(float(signal_raw))
-        except Exception:
-            pass
+        res = {
+            "type": "V3",
+            "protocol": protocol,
+            "imei": imei,
+            "gps_valid": False,
+            "timestamp": format_time_date(time_raw, date_raw),
+            "location_source": "LBS",
+            "latitude": None,
+            "longitude": None,
+        }
+
+        # Try to parse LAC/CID from later fields if structure matches
+        # (V3 format varies; safe fallback is to rely on server-side buffering)
+        res["location_resolved_via"] = "unsupported_in_v3"
         return res
+   
+    
 
     def _handle_upload(self, parts: list) -> dict:
         """UPLOAD: multi-record. We'll try to parse embedded V1/V0/V2 entries."""

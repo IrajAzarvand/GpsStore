@@ -560,9 +560,16 @@ class GPSReceiver:
                                 state_name = 'Moving'
                                 logger.info(f"State change for {device.imei}: Stopped -> Moving (speed > 0, distance: {distance:.2f}m)")
                 
-                # Extract satellites and signal_strength for logging (even if not saving)
-                satellites_val = parsed_data.get('satellites', 0)
+                # استخراج سیگنال‌ها از خروجی دیکودر جدید HQ
+                satellites_val = parsed_data.get('satellites')
+                if satellites_val is None:
+                    # در HQ V1 تعداد ماهواره نداریم؛ اگر gps_valid=True یک مقدار 1 می‌دهیم
+                    satellites_val = 1 if parsed_data.get('gps_valid') else 0
+
                 signal_strength_val = parsed_data.get('signal_strength')
+                if signal_strength_val is None:
+                    signal_strength_val = parsed_data.get('gsm_signal')  # نام فیلد در HQ_Decoder
+
                 if signal_strength_val is None or signal_strength_val == 0:
                     # Try to get from last HB packet
                     last_hb = LocationData.objects.filter(
@@ -574,7 +581,11 @@ class GPSReceiver:
                     else:
                         signal_strength_val = 0
                 
-                logger.info(f"Device {device.imei}: Extracted satellites={satellites_val}, signal_strength={signal_strength_val} (gps_valid={parsed_data.get('gps_valid')}, gps_fixed={parsed_data.get('gps_fixed')})")
+                logger.info(
+                    f"Device {device.imei}: Extracted satellites={satellites_val}, "
+                    f"signal_strength={signal_strength_val} "
+                    f"(gps_valid={parsed_data.get('gps_valid')}, gps_fixed={parsed_data.get('gps_fixed')})"
+                )
 
                 # Save LocationData if needed
                 location_data = None
@@ -635,6 +646,8 @@ class GPSReceiver:
 
                     # Get signal_strength from parsed_data or from last HB packet
                     signal_strength = parsed_data.get('signal_strength')
+                    if signal_strength is None:
+                        signal_strength = parsed_data.get('gsm_signal')
                     if signal_strength is None or signal_strength == 0:
                         # Try to get from last HB packet
                         last_hb = LocationData.objects.filter(
@@ -658,7 +671,7 @@ class GPSReceiver:
                         heading=parsed_data.get('course'),
                         accuracy=parsed_data.get('accuracy', 0),
                         battery_level=parsed_data.get('battery_level'),
-                        satellites=parsed_data.get('satellites', 0),
+                        satellites=satellites_val,
                         signal_strength=signal_strength,
                         packet_type=packet_type,  # V1 or GT06
                         raw_data={
