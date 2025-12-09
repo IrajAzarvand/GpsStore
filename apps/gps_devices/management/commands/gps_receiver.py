@@ -560,31 +560,49 @@ class GPSReceiver:
                                 state_name = 'Moving'
                                 logger.info(f"State change for {device.imei}: Stopped -> Moving (speed > 0, distance: {distance:.2f}m)")
                 
-                # استخراج سیگنال‌ها از خروجی دیکودر جدید HQ
-                satellites_val = parsed_data.get('satellites')
+                # استخراج سیگنال‌ها از خروجی دیکودر
+                # 1. استخراج تعداد ماهواره GPS
+                satellites_val = None
+                # Try multiple possible field names from decoder
+                for field_name in ['satellites', 'gps_satellites', 'sat_count', 'satellite_count']:
+                    satellites_val = parsed_data.get(field_name)
+                    if satellites_val is not None:
+                        logger.info(f"Device {device.imei}: Found satellites in field '{field_name}' = {satellites_val}")
+                        break
+                
+                # If no satellite count available, keep as None (HQ protocol doesn't provide this)
                 if satellites_val is None:
-                    # در HQ V1 تعداد ماهواره نداریم؛ اگر gps_valid=True یک مقدار 1 می‌دهیم
-                    satellites_val = 1 if parsed_data.get('gps_valid') else 0
+                    logger.info(f"Device {device.imei}: No satellite count in decoder output (normal for HQ protocol)")
+                
+                # 2. استخراج قدرت سیگنال GSM
+                signal_strength_val = None
+                # Try to get from decoder output - check multiple field names
+                for field_name in ['gsm_signal', 'signal_strength', 'gsm_strength', 'signal']:
+                    signal_strength_val = parsed_data.get(field_name)
+                    if signal_strength_val is not None:
+                        logger.info(f"Device {device.imei}: Found GSM signal in field '{field_name}' = {signal_strength_val}")
+                        break
 
-                signal_strength_val = parsed_data.get('signal_strength')
+                # Fallback to last HB packet only if decoder didn't provide signal
                 if signal_strength_val is None:
-                    signal_strength_val = parsed_data.get('gsm_signal')  # نام فیلد در HQ_Decoder
-
-                if signal_strength_val is None or signal_strength_val == 0:
-                    # Try to get from last HB packet
                     last_hb = LocationData.objects.filter(
                         device=device, 
                         packet_type='HB'
                     ).order_by('-created_at').first()
                     if last_hb and last_hb.signal_strength:
                         signal_strength_val = last_hb.signal_strength
+                        logger.info(f"Device {device.imei}: Using GSM signal from last HB = {signal_strength_val}")
                     else:
-                        signal_strength_val = 0
+                        signal_strength_val = None
+                        logger.info(f"Device {device.imei}: No GSM signal available (decoder or HB)")
                 
+                # Log final extracted values
                 logger.info(
-                    f"Device {device.imei}: Extracted satellites={satellites_val}, "
-                    f"signal_strength={signal_strength_val} "
-                    f"(gps_valid={parsed_data.get('gps_valid')}, gps_fixed={parsed_data.get('gps_fixed')})"
+                    f"Device {device.imei}: Final extracted values - "
+                    f"satellites={satellites_val}, "
+                    f"gsm_signal={signal_strength_val}, "
+                    f"gps_valid={parsed_data.get('gps_valid')}, "
+                    f"gps_fixed={parsed_data.get('gps_fixed')}"
                 )
 
                 # Save LocationData if needed
@@ -644,21 +662,7 @@ class GPSReceiver:
                         logger.error(f'Map matching failed for device {device.imei}: {e}', exc_info=True)
                         # در صورت خطا، از مختصات اصلی استفاده می‌شود
 
-                    # Get signal_strength from parsed_data or from last HB packet
-                    signal_strength = parsed_data.get('signal_strength')
-                    if signal_strength is None:
-                        signal_strength = parsed_data.get('gsm_signal')
-                    if signal_strength is None or signal_strength == 0:
-                        # Try to get from last HB packet
-                        last_hb = LocationData.objects.filter(
-                            device=device, 
-                            packet_type='HB'
-                        ).order_by('-created_at').first()
-                        if last_hb and last_hb.signal_strength:
-                            signal_strength = last_hb.signal_strength
-                        else:
-                            signal_strength = 0  # Default if no HB available
-
+                    # Create LocationData with extracted signal values
                     location_data = LocationData.objects.create(
                         device=device,
                         latitude=matched_lat,  # مختصات تصحیح شده
@@ -671,8 +675,8 @@ class GPSReceiver:
                         heading=parsed_data.get('course'),
                         accuracy=parsed_data.get('accuracy', 0),
                         battery_level=parsed_data.get('battery_level'),
-                        satellites=satellites_val,
-                        signal_strength=signal_strength,
+                        satellites=satellites_val,  # Can be None
+                        signal_strength=signal_strength_val,  # Can be None
                         packet_type=packet_type,  # V1 or GT06
                         raw_data={
                             'protocol': decoder_type,
@@ -680,7 +684,7 @@ class GPSReceiver:
                             'raw_hex': raw_data_hex
                         }
                     )
-                    logger.info(f'Saved LocationData for device {device.imei}')
+                    logger.info(f'Saved LocationData for device {device.imei} with satellites={satellites_val}, signal={signal_strength_val}')
                 
                 # Save DeviceState if state changed
                 # Save DeviceState if state changed (Standard logic)
