@@ -401,10 +401,24 @@ class HQFullDecoder:
             try:
                 flags_int = int(flags_raw, 16)
                 res["acc_on"] = bool((flags_int >> 10) & 1)
+                # Extract GPS fixed status from flags (bit 1)
+                res["gps_fixed"] = bool((flags_int >> 1) & 1)
             except Exception:
                 res["acc_on"] = None
+                res["gps_fixed"] = None
         else:
             res["acc_on"] = None
+            res["gps_fixed"] = None
+
+        # Set satellites based on GPS validity and gps_fixed flag
+        # If GPS is valid (status="A") and gps_fixed=True, assume GPS is working
+        # We can't get exact satellite count from HQ V1, so we use a default value
+        if res["gps_valid"] and res.get("gps_fixed", False):
+            res["satellites"] = 1  # Indicates GPS is fixed/working (we don't have exact count)
+        elif res["gps_valid"]:
+            res["satellites"] = 1  # GPS valid but gps_fixed flag not set, still assume working
+        else:
+            res["satellites"] = 0  # GPS invalid
 
         if res["gps_valid"]:
             res["latitude"] = dm_to_dd(lat_raw, lat_dir)

@@ -555,6 +555,22 @@ class GPSReceiver:
                                 state_name = 'Moving'
                                 logger.info(f"State change for {device.imei}: Stopped -> Moving (speed > 0, distance: {distance:.2f}m)")
                 
+                # Extract satellites and signal_strength for logging (even if not saving)
+                satellites_val = parsed_data.get('satellites', 0)
+                signal_strength_val = parsed_data.get('signal_strength')
+                if signal_strength_val is None or signal_strength_val == 0:
+                    # Try to get from last HB packet
+                    last_hb = LocationData.objects.filter(
+                        device=device, 
+                        packet_type='HB'
+                    ).order_by('-created_at').first()
+                    if last_hb and last_hb.signal_strength:
+                        signal_strength_val = last_hb.signal_strength
+                    else:
+                        signal_strength_val = 0
+                
+                logger.info(f"Device {device.imei}: Extracted satellites={satellites_val}, signal_strength={signal_strength_val} (gps_valid={parsed_data.get('gps_valid')}, gps_fixed={parsed_data.get('gps_fixed')})")
+
                 # Save LocationData if needed
                 location_data = None
                 if should_save_location:
@@ -612,6 +628,19 @@ class GPSReceiver:
                         logger.error(f'Map matching failed for device {device.imei}: {e}', exc_info=True)
                         # در صورت خطا، از مختصات اصلی استفاده می‌شود
 
+                    # Get signal_strength from parsed_data or from last HB packet
+                    signal_strength = parsed_data.get('signal_strength')
+                    if signal_strength is None or signal_strength == 0:
+                        # Try to get from last HB packet
+                        last_hb = LocationData.objects.filter(
+                            device=device, 
+                            packet_type='HB'
+                        ).order_by('-created_at').first()
+                        if last_hb and last_hb.signal_strength:
+                            signal_strength = last_hb.signal_strength
+                        else:
+                            signal_strength = 0  # Default if no HB available
+
                     location_data = LocationData.objects.create(
                         device=device,
                         latitude=matched_lat,  # مختصات تصحیح شده
@@ -625,6 +654,8 @@ class GPSReceiver:
                         accuracy=parsed_data.get('accuracy', 0),
                         battery_level=parsed_data.get('battery_level'),
                         satellites=parsed_data.get('satellites', 0),
+                        signal_strength=signal_strength,
+                        packet_type=packet_type,  # V1 or GT06
                         raw_data={
                             'protocol': decoder_type,
                             'ip_address': ip_address,
@@ -1121,17 +1152,23 @@ class GPSReceiver:
 
             # تعیین مقادیر GPS/GSM با حفظ آخرین مقدار معتبر
             latest_loc = latest_loc or LocationData.objects.filter(device=device).order_by('-created_at').first()
-            satellites_val = getattr(location_data, 'satellites', None)
+            satellites_val = getattr(location_data, 'satellites', None) if location_data else None
             gps_from_cache = False
-            if (satellites_val is None or satellites_val == 0) and latest_loc:
+            # Only use cache if satellites_val is None (not if it's 0, as 0 is a valid value)
+            if satellites_val is None and latest_loc:
                 satellites_val = getattr(latest_loc, 'satellites', 0)
                 gps_from_cache = True
+            elif satellites_val is None:
+                satellites_val = 0
 
-            signal_val = getattr(location_data, 'signal_strength', None)
+            signal_val = getattr(location_data, 'signal_strength', None) if location_data else None
             gsm_from_cache = False
-            if (signal_val is None or signal_val == 0) and latest_loc:
+            # Only use cache if signal_val is None (not if it's 0, as 0 is a valid value)
+            if signal_val is None and latest_loc:
                 signal_val = getattr(latest_loc, 'signal_strength', 0)
                 gsm_from_cache = True
+            elif signal_val is None:
+                signal_val = 0
 
             gps_ts = getattr(location_data, 'created_at', None)
             if gps_from_cache and latest_loc and not gps_ts:
