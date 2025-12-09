@@ -329,6 +329,55 @@
             z-index: 400;
         }
 
+        /* Map Attribution (Logo) - Keep below bottom panel */
+        /* Target all possible attribution elements with high specificity */
+        .leaflet-control-attribution,
+        .neshan-attribution,
+        .leaflet-bottom.leaflet-right,
+        .leaflet-bottom.leaflet-left,
+        .leaflet-control-container .leaflet-bottom,
+        .leaflet-control-container .leaflet-bottom.leaflet-right,
+        .leaflet-control-container .leaflet-bottom.leaflet-left,
+        #mainMap .leaflet-bottom,
+        #mainMap .leaflet-bottom.leaflet-right,
+        #mainMap .leaflet-bottom.leaflet-left,
+        .leaflet-control-attribution a,
+        .leaflet-control-attribution div,
+        .leaflet-control-attribution span,
+        .leaflet-control-attribution a[href*="neshan.org"],
+        .leaflet-control-attribution a[href*="maps.neshan.org"],
+        .leaflet-control-attribution a[href*="openstreetmap.org"] {
+            z-index: 100 !important;
+        }
+
+        /* Override inline styles with maximum specificity - target any element with z-index in style attribute */
+        #mainMap .leaflet-control-attribution[style*="z-index"],
+        #mainMap .leaflet-bottom[style*="z-index"],
+        #mainMap .leaflet-control-attribution div[style*="z-index"],
+        #mainMap .leaflet-control-attribution a[style*="z-index"],
+        #mainMap .leaflet-control-attribution span[style*="z-index"] {
+            z-index: 100 !important;
+        }
+
+        /* Target nested elements inside attribution */
+        #mainMap .leaflet-control-attribution *,
+        #mainMap .leaflet-bottom * {
+            z-index: 100 !important;
+        }
+
+        /* Ensure all Leaflet controls at bottom stay below panel */
+        #mainMap .leaflet-bottom {
+            z-index: 100 !important;
+        }
+
+        /* When bottom panel is active, ensure attribution stays below */
+        .bottom-device-panel.active ~ * .leaflet-control-attribution,
+        .bottom-device-panel.active ~ * .neshan-attribution,
+        .bottom-device-panel.active ~ * .leaflet-bottom,
+        .bottom-device-panel.active ~ * .leaflet-control-attribution * {
+            z-index: 100 !important;
+        }
+
         .control-btn {
             width: 40px;
             height: 40px;
@@ -492,32 +541,38 @@
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
+            z-index: 2000;
             height: 240px;
             max-height: 240px;
-            overflow-x: auto;
-            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
             transition: transform 0.3s ease;
             transform: translateY(100%);
+        }
+        
+        .panel-content-wrapper {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
         }
-
-        .bottom-device-panel::-webkit-scrollbar {
+        
+        .panel-content-wrapper::-webkit-scrollbar {
             height: 6px;
         }
 
-        .bottom-device-panel::-webkit-scrollbar-track {
+        .panel-content-wrapper::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 3px;
         }
 
-        .bottom-device-panel::-webkit-scrollbar-thumb {
+        .panel-content-wrapper::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 3px;
         }
 
-        .bottom-device-panel::-webkit-scrollbar-thumb:hover {
+        .panel-content-wrapper::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.3);
         }
 
@@ -526,8 +581,6 @@
         }
 
         .panel-header {
-            position: sticky;
-            left: 0;
             padding: 6px 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
@@ -535,7 +588,7 @@
             align-items: center;
             background: rgba(67, 97, 238, 0.1);
             flex-shrink: 0;
-            min-width: 100%;
+            width: 100%;
         }
 
         .panel-header h3 {
@@ -577,7 +630,7 @@
             padding: 15px;
             flex-shrink: 0;
             min-width: max-content;
-            height: calc(100% - 40px);
+            height: 100%;
         }
 
         /* Info Card Styles */
@@ -1056,7 +1109,8 @@
                 <i class="fas fa-chevron-down"></i>
             </button>
         </div>
-        <div class="panel-content" id="bottomDevicePanelContent">
+        <div class="panel-content-wrapper">
+            <div class="panel-content" id="bottomDevicePanelContent">
             <!-- Basic Information Card -->
             <div class="info-card basic-card">
                 <div class="card-header">
@@ -1188,6 +1242,7 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
     </div>
 
@@ -1285,6 +1340,53 @@
             initWebSocket();
         });
 
+        // Fix map attribution z-index to stay below bottom panel
+        function fixMapAttributionZIndex() {
+            const applyZIndexFix = () => {
+                // Find all attribution elements
+                const attributionElements = document.querySelectorAll(
+                    '.leaflet-control-attribution, .leaflet-bottom, .leaflet-bottom.leaflet-right, .leaflet-bottom.leaflet-left'
+                );
+                
+                attributionElements.forEach(el => {
+                    // Set z-index on the element itself
+                    if (el) {
+                        el.style.setProperty('z-index', '100', 'important');
+                        
+                        // Also fix all child elements
+                        const children = el.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.style.setProperty('z-index', '100', 'important');
+                        });
+                    }
+                });
+            };
+
+            // Apply immediately
+            setTimeout(applyZIndexFix, 100);
+            setTimeout(applyZIndexFix, 500);
+            setTimeout(applyZIndexFix, 1000);
+
+            // Watch for changes using MutationObserver
+            const observer = new MutationObserver(() => {
+                applyZIndexFix();
+            });
+
+            // Observe the map container
+            const mapContainer = document.getElementById('mainMap');
+            if (mapContainer) {
+                observer.observe(mapContainer, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+            }
+
+            // Also check periodically to ensure z-index stays fixed
+            setInterval(applyZIndexFix, 2000);
+        }
+
         function initMap() {
             map = new L.Map('mainMap', {
                 key: NESHAN_KEY,
@@ -1305,6 +1407,9 @@
                     if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
                 }
             });
+
+            // Fix map attribution z-index to stay below bottom panel
+            fixMapAttributionZIndex();
 
             // Create markers for initial data
             createMarkers();
