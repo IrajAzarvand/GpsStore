@@ -296,11 +296,12 @@ class GPSReceiver:
                 self.broadcast_device_update(device, speed=0, heading=0, location_data=location_data)
                 
                 # Delete RawGpsData
-                RawGpsData.objects.filter(
-                    ip_address=ip_address,
-                    raw_data=raw_data_hex
-                ).delete()
-                logger.info(f'Deleted RawGpsData for V0 packet from {device.imei}')
+                # COMMENTED OUT: Keep RawGpsData for debugging
+                # RawGpsData.objects.filter(
+                #     ip_address=ip_address,
+                #     raw_data=raw_data_hex
+                # ).delete()
+                logger.info(f'Kept RawGpsData for V0 packet from {device.imei} (commented out for debugging)')
             else:
                 logger.warning(f'V0 packet from {device.imei} could not be resolved to coordinates. Keeping RawGpsData.')
 
@@ -342,11 +343,12 @@ class GPSReceiver:
                 self.broadcast_device_update(device, speed=current_speed, heading=parsed_data.get('course'), location_data=location_data)
                 
                 # Delete RawGpsData
-                RawGpsData.objects.filter(
-                    ip_address=ip_address,
-                    raw_data=raw_data_hex
-                ).delete()
-                logger.info(f'Deleted RawGpsData for SOS packet from {device.imei}')
+                # COMMENTED OUT: Keep RawGpsData for debugging
+                # RawGpsData.objects.filter(
+                #     ip_address=ip_address,
+                #     raw_data=raw_data_hex
+                # ).delete()
+                logger.info(f'Kept RawGpsData for SOS packet from {device.imei} (commented out for debugging)')
             else:
                 logger.warning(f'SOS packet from {device.imei} has invalid GPS. Keeping RawGpsData.')
 
@@ -396,10 +398,12 @@ class GPSReceiver:
                 self.broadcast_device_update(device, speed=last_location.speed, heading=last_location.heading, location_data=location_data)
                 
                 # Delete RawGpsData
-                RawGpsData.objects.filter(
-                    ip_address=ip_address,
-                    raw_data=raw_data_hex
-                ).delete()
+                # COMMENTED OUT: Keep RawGpsData for debugging
+                # RawGpsData.objects.filter(
+                #     ip_address=ip_address,
+                #     raw_data=raw_data_hex
+                # ).delete()
+                logger.info(f'Kept RawGpsData for V2 packet from {device.imei} (commented out for debugging)')
             else:
                 logger.warning(f'Received V2 packet for {device.imei} but no previous location found. Cannot save alarm.')
 
@@ -453,11 +457,12 @@ class GPSReceiver:
             
             device.save()
             # Delete RawGpsData
-            RawGpsData.objects.filter(
-                ip_address=ip_address,
-                raw_data=raw_data_hex
-            ).delete()
-            logger.info(f'Saved HB and deleted RawGpsData for {device.imei}')
+            # COMMENTED OUT: Keep RawGpsData for debugging
+            # RawGpsData.objects.filter(
+            #     ip_address=ip_address,
+            #     raw_data=raw_data_hex
+            # ).delete()
+            logger.info(f'Saved HB and kept RawGpsData for {device.imei} (commented out for debugging)')
 
         elif packet_type == 'V1' or packet_type == 'GT06': 
             # GPS location packet
@@ -682,12 +687,13 @@ class GPSReceiver:
                     self.broadcast_device_update(device, speed=current_speed, heading=parsed_data.get('course'), location_data=location_data)
 
                 # فقط اگر LocationData ذخیره شد، RawGpsData را حذف کن
+                # COMMENTED OUT: Keep RawGpsData for debugging
                 if should_save_location and location_data:
-                    RawGpsData.objects.filter(
-                        ip_address=ip_address,
-                        raw_data=raw_data_hex
-                    ).delete()
-                    logger.info(f'Deleted RawGpsData for device {device.imei} after successful save')
+                    # RawGpsData.objects.filter(
+                    #     ip_address=ip_address,
+                    #     raw_data=raw_data_hex
+                    # ).delete()
+                    logger.info(f'Kept RawGpsData for device {device.imei} after successful save (commented out for debugging)')
                 else:
                     logger.info(f'Kept RawGpsData for device {device.imei} - LocationData was not saved')
                 
@@ -746,11 +752,12 @@ class GPSReceiver:
                 )
     
                 # حذف RawGpsData بعد از ذخیره موفق
-                RawGpsData.objects.filter(
-                    ip_address=ip_address,
-                    raw_data=raw_data_hex
-                ).delete()
-                logger.info(f'Deleted RawGpsData for JT808 packet from {device.imei}')
+                # COMMENTED OUT: Keep RawGpsData for debugging
+                # RawGpsData.objects.filter(
+                #     ip_address=ip_address,
+                #     raw_data=raw_data_hex
+                # ).delete()
+                logger.info(f'Kept RawGpsData for JT808 packet from {device.imei} (commented out for debugging)')
             else:
                 logger.warning(f'JT808 packet from {device.imei} has invalid GPS, keeping RawGpsData')
 

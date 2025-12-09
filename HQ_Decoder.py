@@ -7,7 +7,7 @@ and Mozilla Location Service as fallback.
 Usage:
     from hq_full_decoder_with_opencellid import HQFullDecoder
     decoder = HQFullDecoder(lbs_providers={"opencellid": {"key": "YOUR_KEY"},
-                                           "mozilla": {"key":"test"}})
+    "mozilla": {"key":"test"}})
     parsed = decoder.decode(raw_packet)
     print(decoder.to_json(parsed))
 """
@@ -294,10 +294,10 @@ class HQFullDecoder:
             "V1": self._handle_v1,
             "V0": self._handle_v0,
             "V2": self._handle_v2,
-            "HB": self._handle_hb,
+            "V3": self._handle_v3,
             "UPLOAD": self._handle_upload,
-            "SOS": self._handle_sos,
             "CONFIG": self._handle_config,
+            # Special cases handled in decode()
         }
 
     def decode(self, raw_packet: str) -> Dict[str, Any]:
