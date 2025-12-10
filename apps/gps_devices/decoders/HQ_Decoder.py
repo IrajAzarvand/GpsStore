@@ -314,7 +314,7 @@ class LBSResolver:
 # -----------------------
 # HQFullDecoder (comprehensive)
 # -----------------------
-class HQDecoder:
+class HQFullDecoder:
     def __init__(self, lbs_providers: Optional[Dict[str, Dict[str, Any]]] = None):
         """
         Create decoder. Pass lbs_providers to configure which LBS services to use.
