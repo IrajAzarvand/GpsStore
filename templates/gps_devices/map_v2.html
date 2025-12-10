@@ -1,16 +1,8 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+{% extends "gps_devices/base_map.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل مدیریت ناوگان</title>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% block title %}پنل مدیریت ناوگان{% endblock %}
 
-    <!-- Neshan Leaflet SDK -->
-    <link rel="stylesheet" href="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.css" />
+{% block extra_head %}
 
     <style>
         :root {

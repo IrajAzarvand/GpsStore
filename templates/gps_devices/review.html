@@ -1,0 +1,577 @@
+{% extends "gps_devices/base_map.html" %}
+
+{% block title %}بازبینی مسیر دستگاه{% endblock %}
+
+{% block extra_head %}
+
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --header-height: 60px;
+            --sidebar-width: 280px;
+            --bottom-bar-height: 100px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+            font-size: 13px;
+        }
+
+        body {
+            background: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            height: var(--header-height);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: absolute;
+            right: 20px;
+        }
+
+        .logo h1 {
+            background: linear-gradient(90deg, var(--primary-light), var(--success));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        /* Main Nav */
+        .main-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--light);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link.active {
+            color: var(--primary-light);
+            background: rgba(67, 97, 238, 0.15);
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: absolute;
+            left: 20px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .theme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            color: var(--light);
+        }
+
+        .theme-switcher:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Review Form Row */
+        .review-form-row {
+            position: fixed;
+            top: var(--header-height);
+            right: 0;
+            left: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 999;
+        }
+
+        .review-form-row form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .review-form-row select,
+        .review-form-row input {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            font-size: 0.85rem;
+        }
+
+        .review-form-row select:focus,
+        .review-form-row input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+        }
+
+        .review-form-row button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .review-form-row button:hover {
+            background: var(--primary-light);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: calc(var(--header-height) + 60px); /* Adjust for form row */
+            height: calc(100vh - var(--header-height) - 60px - 200px); /* Leave space for status panel */
+            display: flex;
+        }
+
+        .map-container {
+            flex: 1;
+            background: var(--card-bg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #mainMap {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Map Controls */
+        .map-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 400;
+        }
+
+        /* Status Report Panel */
+        .status-report-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            height: 200px;
+            padding: 15px;
+            overflow-y: auto;
+            z-index: 500;
+        }
+
+        .status-report-panel h3 {
+            color: var(--light);
+            margin-bottom: 10px;
+        }
+
+        .status-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .status-value {
+            color: var(--light);
+            font-weight: 600;
+        }
+
+        /* Light Theme */
+        body.light-theme {
+            --dark: #f8fafc;
+            --darker: #e2e8f0;
+            --light: #0f172a;
+            --card-bg: rgba(15, 23, 42, 0.05);
+        }
+
+        body.light-theme .header,
+        body.light-theme .review-form-row,
+        body.light-theme .status-report-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-theme .logo h1 {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        body.light-theme .nav-link {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        body.light-theme .nav-link:hover,
+        body.light-theme .nav-link.active {
+            color: var(--primary);
+            background: rgba(67, 97, 238, 0.1);
+        }
+
+        body.light-theme .action-btn,
+        body.light-theme .theme-switcher {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: var(--light);
+        }
+
+        body.light-theme .review-form-row select,
+        body.light-theme .review-form-row input {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: var(--light);
+        }
+
+        body.light-theme .status-report-panel h3,
+        body.light-theme .status-value {
+            color: var(--light);
+        }
+
+        body.light-theme .status-label {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(67, 97, 238, 0.3);
+            transform: scale(1.05);
+        }
+
+        body.light-theme .control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: var(--light);
+        }
+    </style>
+</head>
+
+{% block content %}
+    <!-- Review Form Row -->
+    <div class="review-form-row">
+        <form id="reviewForm">
+            <select id="deviceSelect" name="device" required>
+                <option value="">انتخاب دستگاه</option>
+            </select>
+            <input type="date" id="startDate" name="start_date" required>
+            <input type="time" id="startTime" name="start_time" required>
+            <input type="date" id="endDate" name="end_date" required>
+            <input type="time" id="endTime" name="end_time" required>
+            <button type="submit">بازبینی</button>
+        </form>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="map-container">
+            <div id="mainMap"></div>
+            <div class="map-controls">
+                <button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()"><i class="fas fa-plus"></i></button>
+                <button class="control-btn" title="کوچکنمایی" onclick="map.zoomOut()"><i class="fas fa-minus"></i></button>
+                <button class="control-btn" title="موقعیت من" onclick="locateUser()"><i class="fas fa-crosshairs"></i></button>
+                <button class="control-btn" title="لایه‌ها" onclick="toggleLayers()"><i class="fas fa-layer-group"></i></button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Status Report Panel -->
+    <div class="status-report-panel">
+        <h3>گزارش وضعیت مسیر</h3>
+        <div class="status-content" id="statusContent">
+            <!-- Status items will be populated by JS -->
+        </div>
+    </div>
+{% endblock %}
+
+    <!-- Scripts -->
+    <script src="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js"></script>
+    <script> // --- Configuration ---
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const ACCESS_TOKEN = '{{ access_token }}';
+        const POLL_URL = "/gps_devices/api/markers/";
+        const POLL_INTERVAL_SEC = 5;
+        const NESHAN_KEY = 'web.67f5a720d42541cfae21115f05a637b5';
+        const MARKER_BASE_URL = '{% static "img/markers/" %}';
+        // --- State ---
+        let map;
+        let devices = {};
+        let reviewPolygon = null; // Store the review polygon
+
+        // Initialize from server data
+        const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
+        initialDevices.forEach(d => devices[d.id] = d);
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', function () {
+            initMap();
+            populateDeviceSelect();
+            initForm();
+        });
+
+        function initMap() {
+            map = new L.Map('mainMap', {
+                key: NESHAN_KEY,
+                maptype: 'neshan',
+                poi: true,
+                traffic: false,
+                center: [35.6892, 51.3890],
+                zoom: 11,
+                zoomControl: false,
+                inertia: false
+            });
+
+            window.addEventListener('resize', () => {
+                map.invalidateSize();
+            });
+        }
+
+        function populateDeviceSelect() {
+            const select = document.getElementById('deviceSelect');
+            Object.values(devices).forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.id;
+                option.textContent = device.name || device.device_id;
+                select.appendChild(option);
+            });
+        }
+
+        function initForm() {
+            const form = document.getElementById('reviewForm');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const deviceId = formData.get('device');
+                const startDate = formData.get('start_date');
+                const startTime = formData.get('start_time');
+                const endDate = formData.get('end_date');
+                const endTime = formData.get('end_time');
+
+                if (!deviceId || !startDate || !startTime || !endDate || !endTime) {
+                    alert('لطفا همه فیلدها را پر کنید');
+                    return;
+                }
+
+                const startDateTime = `${startDate}T${startTime}:00`;
+                const endDateTime = `${endDate}T${endTime}:00`;
+
+                fetchReviewData(deviceId, startDateTime, endDateTime);
+            });
+        }
+
+        function fetchReviewData(deviceId, startDateTime, endDateTime) {
+            // Assume an API endpoint for review data
+            const url = `/gps_devices/api/review-data/?device=${deviceId}&start=${encodeURIComponent(startDateTime)}&end=${encodeURIComponent(endDateTime)}`;
+
+            fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${ACCESS_TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                drawDevicePath(data.path);
+                updateStatusReport(data.stats);
+            })
+            .catch(error => {
+                console.error('Error fetching review data:', error);
+                alert('خطا در دریافت داده‌ها');
+            });
+        }
+
+        function drawDevicePath(path) {
+            // Remove existing polygon
+            if (reviewPolygon) {
+                map.removeLayer(reviewPolygon);
+            }
+
+            if (path && path.length > 0) {
+                // Draw as polygon (closed shape)
+                const polygon = L.polygon(path, {
+                    color: '#4361ee',
+                    weight: 4,
+                    opacity: 0.7,
+                    fillColor: '#4361ee',
+                    fillOpacity: 0.2
+                }).addTo(map);
+
+                reviewPolygon = polygon;
+
+                // Fit map to polygon bounds
+                map.fitBounds(polygon.getBounds(), { padding: [20, 20] });
+
+                console.log('Device path polygon drawn with', path.length, 'points');
+            }
+        }
+
+        function updateStatusReport(stats) {
+            const content = document.getElementById('statusContent');
+            content.innerHTML = '';
+
+            if (stats) {
+                const items = [
+                    { label: 'طول مسیر', value: stats.distance ? stats.distance + ' km' : '-' },
+                    { label: 'مدت زمان', value: stats.duration ? stats.duration + ' ساعت' : '-' },
+                    { label: 'سرعت متوسط', value: stats.avgSpeed ? stats.avgSpeed + ' km/h' : '-' },
+                    { label: 'حداکثر سرعت', value: stats.maxSpeed ? stats.maxSpeed + ' km/h' : '-' },
+                    { label: 'حداقل سرعت', value: stats.minSpeed ? stats.minSpeed + ' km/h' : '-' }
+                ];
+
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'status-item';
+                    div.innerHTML = `
+                        <span class="status-label">${item.label}:</span>
+                        <span class="status-value">${item.value}</span>
+                    `;
+                    content.appendChild(div);
+                });
+            } else {
+                content.innerHTML = '<p>داده‌ای برای نمایش وجود ندارد</p>';
+            }
+        }
+
+        function locateUser() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userCoords = [position.coords.latitude, position.coords.longitude];
+                    map.setView(userCoords, 13);
+                }, () => alert('دسترسی به موقعیت مکانی امکان‌پذیر نیست'));
+            } else {
+                alert('مرورگر شما پشتیبانی نمی‌کند');
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            const themeText = document.querySelector('.theme-switcher span');
+            const themeIcon = document.querySelector('.theme-icon');
+
+            if (isLight) {
+                themeText.textContent = 'تم روشن';
+                themeIcon.className = 'fas fa-sun theme-icon';
+            } else {
+                themeText.textContent = 'تم تیره';
+                themeIcon.className = 'fas fa-moon theme-icon';
+            }
+        }
+
+        function toggleLayers() {
+            alert('امکان تغییر لایه‌ها به زودی اضافه خواهد شد');
+        }
+    </script>
+</body>
+
+</html>
