@@ -223,6 +223,11 @@
             border-color: rgba(67, 97, 238, 0.3);
         }
 
+        .user-item.selected {
+            background: rgba(67, 97, 238, 0.2);
+            border-color: rgba(67, 97, 238, 0.5);
+        }
+
         .user-avatar {
             width: 28px;
             height: 28px;
@@ -1286,6 +1291,7 @@
         let pollInterval;
         let userLocation;
         let followingDeviceId = null;
+        let selectedDeviceId = null;
 
         // --- Helpers ---
         function formatGpsStrength(device) {
@@ -1791,8 +1797,11 @@
                 // Enable follow mode for this device
                 followingDeviceId = deviceId;
 
+                // Update selected device indication
+                updateSelectedDevice(deviceId);
+
                 // Smooth pan to device with animation
-                map.flyTo([device.lat, device.lng], 17, {
+                map.flyTo([device.lat, device.lng], 19, {
                     animate: true,
                     duration: 1.5, // 1.5 seconds smooth animation
                     easeLinearity: 0.25
@@ -1809,6 +1818,23 @@
                 // Show device info in bottom panel
                 showDeviceInfo(deviceId);
             }
+        }
+
+        function updateSelectedDevice(deviceId) {
+            // Remove selected class from all device items
+            const allDeviceItems = document.querySelectorAll('.user-item[id^="sidebar-device-"]');
+            allDeviceItems.forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Add selected class to the clicked device
+            const selectedItem = document.getElementById(`sidebar-device-${deviceId}`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+
+            // Update the selected device ID
+            selectedDeviceId = deviceId;
         }
 
 

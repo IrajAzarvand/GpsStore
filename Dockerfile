@@ -31,7 +31,7 @@ COPY templates/ ./templates/
 COPY static/ ./static/
 COPY *.py .
 COPY *.sh .
-COPY HQ_Decoder.py GT06_Decoder.py JT808_Decoder.py .
+COPY apps/gps_devices/decoders/HQ_Decoder.py apps/gps_devices/decoders/GT06_Decoder.py apps/gps_devices/decoders/JT808_Decoder.py ./
 
 # Create directories for static files and media
 RUN mkdir -p /app/staticfiles /app/media /app/logs

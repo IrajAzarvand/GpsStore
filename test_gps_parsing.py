@@ -9,7 +9,7 @@ import os
 # Add project root to path for importing HQ_Decoder
 sys.path.append(os.path.dirname(__file__))
 
-from HQ_Decoder import HQDecoder
+from apps.gps_devices.decoders.HQ_Decoder import HQDecoder
 
 def test_gps_parsing():
     # Sample GPS data

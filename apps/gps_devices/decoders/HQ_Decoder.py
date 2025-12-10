@@ -5,7 +5,7 @@ Comprehensive HQ protocol decoder + LBS->GPS using OpenCellID (user-provided key
 and Mozilla Location Service as fallback.
 
 Usage:
-    from hq_full_decoder_with_opencellid import HQFullDecoder
+    from HQ_Decoder import HQDecoder
     decoder = HQFullDecoder(lbs_providers={"opencellid": {"key": "YOUR_KEY"},
     "mozilla": {"key":"test"}})
     parsed = decoder.decode(raw_packet)
@@ -314,7 +314,7 @@ class LBSResolver:
 # -----------------------
 # HQFullDecoder (comprehensive)
 # -----------------------
-class HQFullDecoder:
+class HQDecoder:
     def __init__(self, lbs_providers: Optional[Dict[str, Dict[str, Any]]] = None):
         """
         Create decoder. Pass lbs_providers to configure which LBS services to use.

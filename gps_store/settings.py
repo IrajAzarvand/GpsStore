@@ -16,11 +16,10 @@ import os
 from dotenv import load_dotenv
 from django.contrib import admin
 
-# Load .env.local for development, fallback to .env
+# Load .env first, then .env.local can override it if needed
+load_dotenv()
 if Path('.env.local').exists():
     load_dotenv('.env.local')
-else:
-    load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

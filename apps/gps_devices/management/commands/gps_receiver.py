@@ -18,11 +18,9 @@ from apps.gps_devices.models import RawGpsData, Device, LocationData
 from django.db import connections, close_old_connections
 from django.contrib.auth import get_user_model
 User = get_user_model()
-# Add project root to path for importing Decoders
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
-from HQ_Decoder import HQFullDecoder
-from GT06_Decoder import GT06Decoder
-from JT808_Decoder import JT808Decoder
+from apps.gps_devices.decoders.HQ_Decoder import HQFullDecoder
+from apps.gps_devices.decoders.GT06_Decoder import GT06Decoder
+from apps.gps_devices.decoders.JT808_Decoder import JT808Decoder
 from apps.gps_devices.models import DeviceState, State
 from apps.gps_devices.models import MaliciousPattern
 
