@@ -274,15 +274,15 @@ class GPSReceiver:
                     heading=0,
                     accuracy=parsed_data.get('accuracy_m') or 0,
                     location_source='LBS',
+                    mcc=parsed_data.get('mcc'),
+                    mnc=parsed_data.get('mnc'),
+                    lac=parsed_data.get('lac'),
+                    cid=parsed_data.get('cid'),
                     raw_data={
                         'protocol': decoder_type,
                         'ip_address': ip_address,
                         'raw_hex': raw_data_hex,
                         'packet_type': 'V0',
-                        'mcc': parsed_data.get('mcc'),
-                        'mnc': parsed_data.get('mnc'),
-                        'lac': parsed_data.get('lac'),
-                        'cid': parsed_data.get('cid'),
                         'resolved_via': parsed_data.get('location_resolved_via')
                     }
                 )
@@ -326,6 +326,10 @@ class GPSReceiver:
                     accuracy=parsed_data.get('accuracy', 0),
                     is_alarm=True,
                     alarm_type='SOS',
+                    mcc=parsed_data.get('mcc'),
+                    mnc=parsed_data.get('mnc'),
+                    lac=parsed_data.get('lac'),
+                    cid=parsed_data.get('cid'),
                     raw_data={
                         'protocol': decoder_type,
                         'ip_address': ip_address,
@@ -380,6 +384,10 @@ class GPSReceiver:
                     location_source='LastKnown',
                     is_alarm=True,
                     alarm_type=alarm_type_str,
+                    mcc=parsed_data.get('mcc'),
+                    mnc=parsed_data.get('mnc'),
+                    lac=parsed_data.get('lac'),
+                    cid=parsed_data.get('cid'),
                     raw_data={
                         'protocol': decoder_type,
                         'ip_address': ip_address,
@@ -678,6 +686,10 @@ class GPSReceiver:
                         satellites=satellites_val,  # Can be None
                         signal_strength=signal_strength_val,  # Can be None
                         packet_type=packet_type,  # V1 or GT06
+                        mcc=parsed_data.get('mcc'),
+                        mnc=parsed_data.get('mnc'),
+                        lac=parsed_data.get('lac'),
+                        cid=parsed_data.get('cid'),
                         raw_data={
                             'protocol': decoder_type,
                             'ip_address': ip_address,
@@ -778,6 +790,10 @@ class GPSReceiver:
                     satellites=parsed_data.get('satellites', 0),
                     signal_strength=parsed_data.get('signal_strength', 0),
                     battery_level=parsed_data.get('battery_level'),
+                    mcc=parsed_data.get('mcc'),
+                    mnc=parsed_data.get('mnc'),
+                    lac=parsed_data.get('lac'),
+                    cid=parsed_data.get('cid'),
                     raw_data={
                         'protocol': decoder_type,
                         'ip_address': ip_address,

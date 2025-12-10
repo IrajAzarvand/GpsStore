@@ -67,6 +67,10 @@ def map_v2(request):
             'sim_card_number': device.sim_no,
             'model': device.model.model_name if device.model else None,
             'matched_geometry': latest_location.matched_geometry if latest_location else None,
+            'mcc': latest_location.mcc if latest_location else None,
+            'mnc': latest_location.mnc if latest_location else None,
+            'lac': latest_location.lac if latest_location else None,
+            'cid': latest_location.cid if latest_location else None,
         })
     
     context = {

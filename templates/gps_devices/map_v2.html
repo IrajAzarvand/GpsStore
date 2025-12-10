@@ -1240,6 +1240,20 @@
                         </span>
                         <span class="value" id="deviceVoltageDetail">-</span>
                     </div>
+                    <div class="info-item">
+                        <span class="label">
+                            <i class="fas fa-sim-card"></i>
+                            MCC-MNC:
+                        </span>
+                        <span class="value" id="deviceMccMncDetail">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">
+                            <i class="fas fa-sim-card"></i>
+                            LAC-CID:
+                        </span>
+                        <span class="value" id="deviceLacCidDetail">-</span>
+                    </div>
                 </div>
             </div>
             </div>
@@ -1850,6 +1864,14 @@
             document.getElementById('deviceGpsSignalDetail').textContent = formatGpsStrength(device);
             document.getElementById('deviceGsmSignalDetail').textContent = formatGsmStrength(device);
             document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
+            document.getElementById('deviceMccMncDetail').textContent = (() => {
+                if (device.mcc && device.mnc) return `${device.mcc}-${device.mnc}`;
+                return '-';
+            })();
+            document.getElementById('deviceLacCidDetail').textContent = (() => {
+                if (device.lac && device.cid) return `${device.lac}-${device.cid}`;
+                return '-';
+            })();
             document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
 
             // Update status badge
@@ -1973,6 +1995,7 @@
             if (gsmIcon) {
                 const gsmFresh = isSignalFresh(device.gsm_timestamp, 5);
                 const gsmHasData = (device.signal_strength !== undefined && device.signal_strength !== null) ||
+                    (device.gsm_signal !== undefined && device.gsm_signal !== null) ||
                     device.gsm_valid !== undefined || device.gsm_timestamp;
                 const gsmOk = gsmHasData && gsmFresh;
                 gsmIcon.classList.toggle('active', gsmOk);
