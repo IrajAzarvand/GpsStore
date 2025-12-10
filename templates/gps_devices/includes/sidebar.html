@@ -1,0 +1,16 @@
+<aside class="users-sidebar">
+    <div class="sidebar-header">
+        <h3>ساختار درختی کاربران</h3>
+        <div class="sidebar-actions"><button class="action-btn" title="افزودن کاربر"><i
+                    class="fas fa-plus"></i></button></div>
+    </div>
+
+
+    <div class="user-tree">
+        {% for item in hierarchy %}
+        {% include "gps_devices/includes/user_tree_node.html" with node=item %}
+        {% endfor %}
+    </div>
+    <div class="connection-status"><span id="wsStatus"><i class="fas fa-circle" style="color: orange;"></i>در
+            حال اتصال...</span><span id="lastUpdate">--:--</span></div>
+</aside>

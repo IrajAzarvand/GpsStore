@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<!-- head goes here -->
+{% include "gps_devices/includes/head.html" %}
+<body>
+    <!-- Sidebar -->
+    {% include "gps_devices/includes/sidebar.html" %}
+    <!-- Header -->
+    {% include "gps_devices/includes/top_menu.html" %}
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Bottom Device Info Panel -->
+    {% include "gps_devices/includes/bottom_panel.html" %}
+
+
+    <!-- Scripts -->
+    {% include "gps_devices/includes/scripts.html" %}
+</body>
+
+</html>

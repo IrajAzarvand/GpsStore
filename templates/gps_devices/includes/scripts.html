@@ -1,0 +1,839 @@
+{% load static %}
+    <script src="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js"></script>
+    <script> // --- Configuration ---
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const ACCESS_TOKEN = '{{ access_token }}';
+        const WS_URL = `${protocol}${window.location.host}/ws/device-updates/?token=${ACCESS_TOKEN}`;
+        const POLL_URL = "/gps_devices/api/markers/";
+        const POLL_INTERVAL_SEC = 5;
+        const NESHAN_KEY = 'web.67f5a720d42541cfae21115f05a637b5';
+        const MARKER_BASE_URL = '{% static "img/markers/" %}';
+        // --- State ---
+        let map;
+
+        let markers = {};
+        // Map Matching Polylines
+        let devicePolylines = {}; // ذخیره Polyline هر دستگاه
+        let debugCircles = {}; // ذخیره دایره‌های دیباگ برای هر دستگاه
+        let devices = {};
+        let ws;
+        let pollInterval;
+        let userLocation;
+        let followingDeviceId = null;
+        let selectedDeviceId = null;
+
+        // --- Helpers ---
+        function formatGpsStrength(device) {
+            const hasData = (device.gps_satellites !== undefined && device.gps_satellites !== null) ||
+                (device.satellites !== undefined && device.satellites !== null) ||
+                device.gps_valid !== undefined || device.gps_timestamp;
+            if (!hasData) return 'نامعتبر';
+
+            const time = formatTimeShort(device.gps_timestamp);
+            if (device.gps_satellites !== undefined && device.gps_satellites !== null) {
+                return `${device.gps_satellites} ماهواره${time ? ` (آخرین: ${time})` : ''}`;
+            }
+            if (device.satellites !== undefined && device.satellites !== null) {
+                return `${device.satellites} ماهواره${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            if (device.gps_valid !== undefined) {
+                return `${device.gps_valid ? 'معتبر' : '0 ماهواره'}${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            return `نامشخص${time ? ` (آخرین: ${time})` : ''}`;
+        }
+
+        function formatGsmStrength(device) {
+            const hasData = (device.gsm_signal !== undefined && device.gsm_signal !== null) ||
+                (device.signal_strength !== undefined && device.signal_strength !== null) ||
+                device.gsm_valid !== undefined || device.gsm_timestamp;
+            if (!hasData) return 'نامعتبر';
+
+            const time = formatTimeShort(device.gsm_timestamp);
+            if (device.gsm_signal !== undefined && device.gsm_signal !== null) {
+                return `${device.gsm_signal}%${time ? ` (آخرین: ${time})` : ''}`;
+            }
+            if (device.signal_strength !== undefined && device.signal_strength !== null) {
+                return `${device.signal_strength}%${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            if (device.gsm_valid !== undefined) {
+                return `${device.gsm_valid ? 'معتبر' : '0%'}${time ? ` (آخرین: ${time})` : ''}`;
+            }
+
+            return `نامشخص${time ? ` (آخرین: ${time})` : ''}`;
+        }
+
+        function formatTimeShort(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            const h = d.getHours().toString().padStart(2, '0');
+            const m = d.getMinutes().toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function isSignalFresh(ts, maxMinutes = 5) {
+            if (!ts) return false;
+            const diff = Date.now() - new Date(ts).getTime();
+            return diff <= maxMinutes * 60 * 1000;
+        }
+
+        // Initialize from server data
+        const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
+        initialDevices.forEach(d => devices[d.id] = d);
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', function () {
+            initMap();
+            initWebSocket();
+        });
+
+        // Fix map attribution z-index to stay below bottom panel
+        function fixMapAttributionZIndex() {
+            const applyZIndexFix = () => {
+                // Find all attribution elements
+                const attributionElements = document.querySelectorAll(
+                    '.leaflet-control-attribution, .leaflet-bottom, .leaflet-bottom.leaflet-right, .leaflet-bottom.leaflet-left'
+                );
+                
+                attributionElements.forEach(el => {
+                    // Set z-index on the element itself
+                    if (el) {
+                        el.style.setProperty('z-index', '100', 'important');
+                        
+                        // Also fix all child elements
+                        const children = el.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.style.setProperty('z-index', '100', 'important');
+                        });
+                    }
+                });
+            };
+
+            // Apply immediately
+            setTimeout(applyZIndexFix, 100);
+            setTimeout(applyZIndexFix, 500);
+            setTimeout(applyZIndexFix, 1000);
+
+            // Watch for changes using MutationObserver
+            const observer = new MutationObserver(() => {
+                applyZIndexFix();
+            });
+
+            // Observe the map container
+            const mapContainer = document.getElementById('mainMap');
+            if (mapContainer) {
+                observer.observe(mapContainer, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+            }
+
+            // Also check periodically to ensure z-index stays fixed
+            setInterval(applyZIndexFix, 2000);
+        }
+
+        function initMap() {
+            map = new L.Map('mainMap', {
+                key: NESHAN_KEY,
+                maptype: 'neshan',
+                poi: true,
+                traffic: false,
+                center: [35.6892, 51.3890],
+                zoom: 11,
+                zoomControl: false, // We use custom controls
+                inertia: false      // برای جلوگیری از کشیده‌شدن ناخواسته
+            });
+
+            // با تغییر اندازه، مرکز تصحیح شود
+            window.addEventListener('resize', () => {
+                map.invalidateSize();
+                if (followingDeviceId && devices[followingDeviceId]) {
+                    const d = devices[followingDeviceId];
+                    if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
+                }
+            });
+
+            // Fix map attribution z-index to stay below bottom panel
+            fixMapAttributionZIndex();
+
+            // Create markers for initial data
+            createMarkers();
+
+            // Fit bounds if devices exist
+            if (initialDevices.length > 0) {
+                const bounds = [];
+
+                initialDevices.forEach(d => {
+                    if (d.lat && d.lng) bounds.push([d.lat, d.lng]);
+                });
+
+                if (bounds.length > 0) map.fitBounds(bounds, {
+                    padding: [50, 50]
+                });
+            }
+        }
+
+        function createMarkers() {
+            console.log("Initial Devices Data:", devices);
+            Object.values(devices).forEach(device => {
+                updateDeviceMarker(device);
+                // Polyline اگر وجود داشت
+                if (device.matched_geometry) {
+                    updateDevicePolyline(device.id, device.matched_geometry);
+                }
+                // همیشه وضعیت آیکون را به‌روز کن
+                updateDeviceStatusIcons(device);
+            });
+        }
+
+        function updateDeviceMarker(device) {
+            if (!device.lat || !device.lng) return;
+
+            const lat = parseFloat(device.lat);
+            const lng = parseFloat(device.lng);
+            if (isNaN(lat) || isNaN(lng)) {
+                console.warn('Invalid coordinates for device', device.id, device.lat, device.lng);
+                return;
+            }
+
+            const coords = [lat, lng];
+            const markerHtml = createVehicleMarker(device);
+
+            const icon = L.divIcon({
+                className: 'vehicle-divicon',
+                html: markerHtml,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15], // مرکز باکس 30 در 30
+                popupAnchor: [0, -15]
+            });
+
+            let marker = markers[device.id];
+
+
+            if (marker) {
+                // Update existing marker
+                marker.setLatLng(coords);
+                marker.setIcon(icon);
+
+                if (marker.isPopupOpen()) {
+                    marker.setPopupContent(createPopupContent(device));
+                } else {
+                    marker.bindPopup(createPopupContent(device), { autoPan: false, closeOnClick: false, autoClose: false });
+                }
+            } else {
+                // Create new marker
+                marker = L.marker(coords, { icon }).addTo(map);
+                marker.bindPopup(createPopupContent(device), { autoPan: false, closeOnClick: false, autoClose: false });
+                marker.on('click', () => focusOnDevice(device.id));
+
+                markers[device.id] = marker;  // ذخیره
+            }
+
+            // آپدیت پنل پایین
+            if (followingDeviceId == device.id) {
+                updateBottomDevicePanelContent(device);
+            }
+
+            // اگر این دستگاه انتخاب شده، نقشه را نرم روی آن نگه دار
+            if (followingDeviceId === device.id) {
+                map.panTo([device.lat, device.lng], {
+                    animate: true,
+                    duration: 0.8,
+                    easeLinearity: 0.25
+                });
+            }
+
+
+        }
+
+        // رسم یا به‌روزرسانی Polyline برای یک دستگاه
+        function updateDevicePolyline(deviceId, geometry) {
+            // حذف Polyline قبلی اگر وجود داشت
+            if (devicePolylines[deviceId]) {
+                map.removeLayer(devicePolylines[deviceId]);
+                delete devicePolylines[deviceId];
+            }
+
+            // اگر geometry وجود نداشت، فقط حذف کن
+            if (!geometry) {
+                return;
+            }
+
+            try {
+                // Decode کردن Encoded Polyline
+                const points = decodePolyline(geometry);
+
+                if (points && points.length > 0) {
+                    // ایجاد Polyline جدید
+                    const polyline = L.polyline(points, {
+                        color: '#4361ee',        // رنگ آبی
+                        weight: 4,               // ضخامت خط
+                        opacity: 0.7,            // شفافیت
+                        smoothFactor: 1.0        // نرمی خط
+                    }).addTo(map);
+
+                    // ذخیره برای استفاده بعدی
+                    devicePolylines[deviceId] = polyline;
+
+                    console.log(`Polyline drawn for device ${deviceId} with ${points.length} points`);
+                }
+            } catch (error) {
+                console.error(`Error drawing polyline for device ${deviceId}:`, error);
+            }
+        }
+
+        function createVehicleMarker(device) {
+            const rotation = device.heading || 0;
+            let iconName = 'arrow.png';
+            const status = device.status ? device.status.toLowerCase() : '';
+            const type = device.vehicle_type ? device.vehicle_type.toLowerCase() : '';
+
+            if (status === 'idle') {
+                iconUrl = '/static/img/markers/arrow.png'; // یا idle.png اگر موجود باشد
+            }
+
+            if (status.includes('alarm') || status.includes('sos')) iconName = 'alarm - sos.png';
+            else if (status.includes('battery') || status.includes('power')) iconName = 'Battery-Power Fault.png';
+            else if (status.includes('geofence')) iconName = 'Geofence In-Out.png';
+            else if (status.includes('park')) iconName = 'park.png';
+            else if (status.includes('offline')) iconName = 'offline.png';
+            else if (status.includes('towing')) iconName = 'Towing - Movement while Engine Off.png';
+            else if (status.includes('stop')) iconName = 'stop.png';
+            else if (status.includes('idle')) iconName = 'arrow.png';
+            else if (type) {
+                const validTypes = ['405', '206', 'mazda3', 'trailer', 'pridewanet', 'samand', 'kamunet', 'landcruise'];
+                const matchedType = validTypes.find(t => type.includes(t));
+                if (matchedType) iconName = matchedType + '.png';
+            }
+
+            const iconUrl = `{% static 'img/markers/' %}${iconName}?v=1`;
+            return `<img src="${iconUrl}" class="vehicle-img" style="transform: rotate(${rotation}deg);" />`;
+        }
+
+        function createPopupContent(device) {
+            return `<div style="font-family: 'Vazirmatn'; text-align: right; min-width: 250px;">
+                        <h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid ${getStatusColor(device.status)}; padding-bottom: 6px; display: flex; justify-content: space-between;">
+                            <span>${device.name}</span>
+                            <span style="font-size: 0.8em; color: #666;">${device.device_id || ''}</span>
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9em;">
+                            <div style="color: #666;"><i class="fas fa-tachometer-alt" style="color: #4361ee; width: 20px;"></i>سرعت:</div>
+                            <div style="font-weight: bold;">${device.speed || 0}km/h</div>
+                            <div style="color: #666;"><i class="fas fa-battery-half" style="color: #f59e0b; width: 20px;"></i>باتری:</div>
+                            <div style="font-weight: bold;">${device.battery_level || '--'}%</div>
+                            <div style="color: #666;"><i class="fas fa-satellite-dish" style="color: #22c55e; width: 20px;"></i>GPS:</div>
+                            <div style="font-weight: bold;">${(() => {
+                    const acc = device.gps_accuracy || device.accuracy;
+                    if (acc !== undefined && acc !== null) return acc.toFixed(1) + 'm';
+                    if (device.hdop !== undefined && device.hdop !== null) return (device.hdop * 5).toFixed(1) + 'm'; // Rough estimate; adjust factor as needed
+                    return 'N/A';
+                })()}</div>
+                            <div style="color: #666;"><i class="fas fa-signal" style="color: #22c55e; width: 20px;"></i>GSM:</div>
+                            <div style="font-weight: bold;">${formatGsmStrength(device)}</div>
+                            <div style="color: #666;"><i class="fas fa-crosshairs" style="color: #8b5cf6; width: 20px;"></i>دقت GPS:</div>
+                            <div style="font-weight: bold;">${device.accuracy ? device.accuracy.toFixed(1) + 'm' : 'N/A'}</div>
+                            <div style="color: #666;"><i class="fas fa-compass" style="color: #8b5cf6; width: 20px;"></i>جهت:</div>
+                            <div style="font-weight: bold;">${device.heading || 0}°</div>
+                            <div style="color: #666;"><i class="fas fa-car" style="color: #10b981; width: 20px;"></i>نوع:</div>
+                            <div>${device.vehicle_type || device.device_type || '-'}</div>
+                            <div style="color: #666;"><i class="fas fa-microchip" style="color: #6366f1; width: 20px;"></i>مدل:</div>
+                            <div>${device.model || '-'}</div>
+                            <div style="color: #666;"><i class="fas fa-sim-card" style="color: #f43f5e; width: 20px;"></i>سیم‌کارت:</div>
+                            <div>${device.sim_card_number || '-'}</div>
+                            <div style="color: #666;"><i class="fas fa-user" style="color: #8b5cf6; width: 20px;"></i>راننده:</div>
+                            <div>${device.driver_name || '-'}</div>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #eee; font-size: 0.85em; color: #888;">
+                            <div style="margin-bottom: 4px;"><i class="far fa-clock"></i>آخرین بروزرسانی: <span dir="ltr">${formatTime(device.last_update)}</span></div>
+                            <div><i class="fas fa-map-marker-alt"></i><span dir="ltr">${device.lat ? device.lat.toFixed(5) : '-'},${device.lng ? device.lng.toFixed(5) : '-'}</span></div>
+                        </div>
+                        <div style="margin-top: 10px; text-align: center;">
+                            <span style="padding: 4px 12px; background: ${getStatusColor(device.status)};color: white;border-radius: 12px;font-size: 11px;font-weight: 600;">${getStatusText(device.status)}</span>
+                        </div>
+                    </div>`;
+        }
+
+
+
+        function formatTime(isoString) {
+            if (!isoString) return '-';
+            return new Date(isoString).toLocaleString('fa-IR');
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'moving': '#4361ee',
+                'online': '#22c55e',
+                'alert': '#ef4444',
+                'parked': '#f59e0b',
+                'offline': '#64748b',
+                'idle': '#f59e0b'
+            };
+            return colors[status] || colors['offline'];
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'moving': 'در حرکت',
+                'online': 'آنلاین',
+                'alert': 'هشدار',
+                'parked': 'توقف',
+                'offline': 'آفلاین',
+                'idle': 'بیکار'
+            };
+            return statusMap[status] || status || 'نامشخص';
+        }
+
+        function initWebSocket() {
+            updateConnectionStatus('connecting');
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = function () {
+                console.log('WebSocket Connected');
+                updateConnectionStatus('connected');
+
+                // Update timestamp on connection
+                const now = new Date();
+                document.getElementById('lastUpdate').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+            };
+
+            ws.onmessage = function (e) {
+                try {
+                    console.log('WebSocket Message:', e.data);
+                    const data = JSON.parse(e.data);
+
+                    if (data.type === 'device_update' && data.data) {
+                        const deviceData = data.data;
+
+                        // به‌روزرسانی state و UI
+                        handleDeviceUpdate(deviceData);
+
+                        // رسم Polyline اگر وجود داشت
+                        if (deviceData.matched_geometry) {
+                            updateDevicePolyline(deviceData.id, deviceData.matched_geometry);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error parsing WS message:', err);
+                }
+            };
+
+            ws.onclose = function () {
+                console.log('WebSocket Disconnected');
+                updateConnectionStatus('disconnected');
+                setTimeout(initWebSocket, 5000);
+            };
+
+            ws.onerror = function (err) {
+                console.error('WebSocket Error:', err);
+                ws.close();
+            };
+        }
+
+        function handleDeviceUpdate(data) {
+            // Normalize data
+            const id = data.id;
+            if (!id) return;
+
+            // Update local state
+            if (!devices[id]) devices[id] = {};
+            const prevStatus = devices[id].status; // وضعیت قبلی را نگه‌دار
+            Object.assign(devices[id], data);
+            // اگر پیام جدید status نداشت ولی قبلاً moving/parked/... داشتیم، همان را حفظ کن
+            if (!data.status && prevStatus) {
+                devices[id].status = prevStatus;
+            }
+
+            // >> این بلوک را اضافه کنید: <<
+            if (data.is_alarm) {
+                console.log('ALARM RECEIVED:', data.alarm_type);
+                // پخش صدای هشدار (مطمئن شوید فایل صدا وجود دارد یا از لینک خارجی استفاده کنید)
+                // const audio = new Audio('/static/audio/alert.mp3'); 
+                // audio.play().catch(e => console.log('Audio play failed:', e));
+
+                // تغییر وضعیت به alert برای قرمز شدن آیکون
+                devices[id].status = 'alert';
+            }
+
+            // Update Map Marker    
+            updateDeviceMarker(devices[id]);
+
+            // Update Sidebar UI
+            updateDeviceUI(devices[id]);
+            // Update status icons
+            updateDeviceStatusIcons(devices[id]);
+
+            // If we're following this device, smoothly pan to its new location
+            if (followingDeviceId === id && devices[id].lat && devices[id].lng) {
+                map.setView([devices[id].lat, devices[id].lng], map.getZoom(), {
+                    animate: true,
+                    duration: 0.6,
+                    easeLinearity: 0.15
+                });
+            }
+
+            // Update Timestamp
+            const now = new Date();
+
+            document.getElementById('lastUpdate').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function updateDeviceUI(device) {
+            // Update Sidebar Item
+            const sidebarItem = document.getElementById(`sidebar-device-${device.id}`);
+            if (sidebarItem) {
+                // Update icon background
+                const avatar = sidebarItem.querySelector('.user-avatar');
+                if (avatar) {
+                    // Remove old status classes
+                    avatar.classList.remove('status-bg-online', 'status-bg-moving', 'status-bg-offline', 'status-bg-alert', 'status-bg-parked');
+                    // Add new status class
+                    avatar.classList.add(`status-bg-${device.status || 'offline'}`);
+                }
+
+                // Update speed display
+                const speedElement = sidebarItem.querySelector('.device-speed .speed-value');
+                if (speedElement) {
+                    speedElement.textContent = device.speed || 0;
+                }
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            const el = document.getElementById('wsStatus');
+
+            if (status === 'connected') {
+                el.innerHTML = '<i class="fas fa-circle" style="color: #19be6b;"></i> متصل';
+            }
+
+            else if (status === 'connecting') {
+                el.innerHTML = '<i class="fas fa-circle" style="color: orange;"></i> در حال اتصال...';
+            }
+
+            else {
+                el.innerHTML = '<i class="fas fa-circle" style="color: #ed4014;"></i> قطع';
+            }
+        }
+
+        // --- Interaction ---
+        function focusOnDevice(deviceId) {
+            const device = devices[deviceId];
+            if (device && markers[deviceId]) {
+                // Enable follow mode for this device
+                followingDeviceId = deviceId;
+
+                // Update selected device indication
+                updateSelectedDevice(deviceId);
+
+                // Smooth pan to device with animation
+                map.flyTo([device.lat, device.lng], 19, {
+                    animate: true,
+                    duration: 1.5, // 1.5 seconds smooth animation
+                    easeLinearity: 0.25
+                });
+
+                // Close all open popups before opening the new one
+                Object.values(markers).forEach(marker => {
+                    if (marker.isPopupOpen()) {
+                        marker.closePopup();
+                    }
+                });
+
+                markers[deviceId].openPopup();
+                // Show device info in bottom panel
+                showDeviceInfo(deviceId);
+            }
+        }
+
+        function updateSelectedDevice(deviceId) {
+            // Remove selected class from all device items
+            const allDeviceItems = document.querySelectorAll('.user-item[id^="sidebar-device-"]');
+            allDeviceItems.forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Add selected class to the clicked device
+            const selectedItem = document.getElementById(`sidebar-device-${deviceId}`);
+            if (selectedItem) {
+                selectedItem.classList.add('selected');
+            }
+
+            // Update the selected device ID
+            selectedDeviceId = deviceId;
+        }
+
+
+        function showDeviceInfo(deviceId) {
+            const device = devices[deviceId];
+            if (!device) return;
+
+            // If the bottom panel is showing a different device, hide it first
+            const panel = document.getElementById('bottomDevicePanel');
+            if (followingDeviceId && followingDeviceId !== deviceId && panel.classList.contains('active')) {
+                closeBottomDevicePanel();
+            }
+
+            // ذخیره deviceId انتخاب شده
+            followingDeviceId = deviceId;
+
+            // به‌روزرسانی محتوای پنل
+            updateBottomDevicePanelContent(device);
+
+            // نمایش پنل پایین
+            panel.classList.add('active');
+
+            // اضافه کردن کلاس به main-content برای کوچک کردن نقشه
+            const mainContent = document.querySelector('.main-content');
+            mainContent.classList.add('with-bottom-panel');
+
+            // بعد از تغییر ارتفاع، اندازه نقشه و مرکز را اصلاح کن
+            setTimeout(() => {
+                map.invalidateSize();
+                if (followingDeviceId && devices[followingDeviceId]) {
+                    const d = devices[followingDeviceId];
+                    if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
+                }
+            }, 80);
+        }
+
+
+        function updateBottomDevicePanelContent(device) {
+            // Update bottom panel content
+            document.getElementById('deviceNameDetail').textContent = device.name || '-';
+            document.getElementById('deviceImeiDetail').textContent = device.imei || '-';
+            document.getElementById('deviceLatDetail').textContent = device.lat ? device.lat.toFixed(6) : '-';
+            document.getElementById('deviceLngDetail').textContent = device.lng ? device.lng.toFixed(6) : '-';
+            document.getElementById('deviceSpeedDetail').textContent = (device.speed || 0) + ' km/h';
+            document.getElementById('deviceHeadingDetail').textContent = (device.heading || 0) + '°';
+            document.getElementById('deviceBatteryDetail').textContent = (device.battery_level || '-') + (device.battery_level ? '%' : '');
+            document.getElementById('deviceAccuracyDetail').textContent = (() => {
+                const acc = device.gps_accuracy || device.accuracy;
+                if (acc !== undefined && acc !== null) return acc.toFixed(1) + ' m';
+                if (device.hdop !== undefined && device.hdop !== null) return (device.hdop * 5).toFixed(1) + ' m'; // Rough estimate; adjust factor as needed
+                return '-';
+            })();
+            document.getElementById('deviceGpsSignalDetail').textContent = formatGpsStrength(device);
+            document.getElementById('deviceGsmSignalDetail').textContent = formatGsmStrength(device);
+            document.getElementById('deviceVoltageDetail').textContent = device.voltage || '-';
+            document.getElementById('deviceMccMncDetail').textContent = (() => {
+                if (device.mcc && device.mnc) return `${device.mcc}-${device.mnc}`;
+                return '-';
+            })();
+            document.getElementById('deviceLacCidDetail').textContent = (() => {
+                if (device.lac && device.cid) return `${device.lac}-${device.cid}`;
+                return '-';
+            })();
+            document.getElementById('deviceAddressDetail').textContent = device.address || 'در حال دریافت...';
+
+            // Update status badge
+            const statusBadge = document.getElementById('deviceStatusDetail');
+            statusBadge.textContent = getStatusText(device.status);
+            statusBadge.style.backgroundColor = getStatusColor(device.status);
+        }
+
+        function toggleChildren(element) {
+            const parent = element.parentElement;
+            const children = parent.querySelector('.user-children');
+
+            if (children) {
+                const btn = element.querySelector('.toggle-btn i');
+
+                if (children.style.display === 'none') {
+                    children.style.display = 'block';
+
+                    if (btn) {
+                        btn.classList.remove('fa-chevron-left');
+                        btn.classList.add('fa-chevron-down');
+                    }
+                }
+
+                else {
+                    children.style.display = 'none';
+
+                    if (btn) {
+                        btn.classList.remove('fa-chevron-down');
+                        btn.classList.add('fa-chevron-left');
+                    }
+                }
+            }
+        }
+
+        function locateUser() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userCoords = [position.coords.latitude, position.coords.longitude];
+                    if (userLocation) map.removeLayer(userLocation);
+                    userLocation = L.marker(userCoords).addTo(map);
+                    userLocation.bindPopup('موقعیت شما').openPopup();
+                    map.setView(userCoords, 13);
+                }, () => alert('دسترسی به موقعیت مکانی امکان‌پذیر نیست'));
+            }
+
+            else {
+                alert('مرورگر شما پشتیبانی نمی‌کند');
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            const themeText = document.querySelector('.theme-switcher span');
+            const themeIcon = document.querySelector('.theme-icon');
+
+            if (isLight) {
+                themeText.textContent = 'تم روشن';
+                themeIcon.className = 'fas fa-sun theme-icon';
+            }
+
+            else {
+                themeText.textContent = 'تم تیره';
+                themeIcon.className = 'fas fa-moon theme-icon';
+            }
+        }
+
+        function closeBottomDevicePanel() {
+            const panel = document.getElementById('bottomDevicePanel');
+            panel.classList.remove('active');
+
+            // حذف کلاس از main-content برای بزرگ کردن نقشه
+            const mainContent = document.querySelector('.main-content');
+            mainContent.classList.remove('with-bottom-panel');
+
+            // پاک کردن deviceId انتخاب شده
+            followingDeviceId = null; // Stop following when panel closes
+
+            setTimeout(() => map.invalidateSize(), 80);
+        }
+
+        function toggleLayers() {
+            alert('امکان تغییر لایه‌ها به زودی اضافه خواهد شد');
+        }
+
+        function updateDeviceStatusIcons(device) {
+            const deviceId = device.id;
+
+            // مپ وضعیت‌ها به آیکون و رنگ
+            const statusMeta = {
+                'moving': { icon: 'fas fa-car', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.2)' },        // سبز – حرکت
+                'online': { icon: 'fas fa-circle', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.2)' },     // آنلاین عادی
+                'parked': { icon: 'fas fa-parking', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },   // پارک
+                'idle': { icon: 'fas fa-pause', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },        // بیکار
+                'stop': { icon: 'fas fa-stop', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },         // توقف
+                'offline': { icon: 'fas fa-power-off', color: '#64748b', bg: 'rgba(100, 116, 139, 0.2)' },// خاموش/آفلاین
+                'alert': { icon: 'fas fa-exclamation-triangle', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' }, // هشدار
+                'sos': { icon: 'fas fa-exclamation-triangle', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' },   // SOS
+                'alarm': { icon: 'fas fa-exclamation-triangle', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' }, // سایر هشدارها
+                'geofence': { icon: 'fas fa-draw-polygon', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },     // ورود/خروج حصار
+                'towing': { icon: 'fas fa-truck-moving', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.2)' },        // یدک/حرکت غیرمجاز
+                'battery': { icon: 'fas fa-battery-quarter', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },   // مشکل باتری
+                'power': { icon: 'fas fa-plug', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)' },                // مشکل برق
+                'default': { icon: 'fas fa-circle', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.2)' }              // پیش‌فرض
+            };
+
+            // GPS Icon
+            const gpsIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gps"]`);
+            if (gpsIcon) {
+                const gpsFresh = isSignalFresh(device.gps_timestamp, 5);
+                const gpsHasData = (device.satellites !== undefined && device.satellites !== null) ||
+                    device.gps_valid !== undefined || device.gps_timestamp;
+                const gpsOk = gpsHasData && gpsFresh;
+                gpsIcon.classList.toggle('active', gpsOk);
+                gpsIcon.classList.toggle('inactive', !gpsOk);
+            }
+
+            // GSM Icon
+            const gsmIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gsm"]`);
+            if (gsmIcon) {
+                const gsmFresh = isSignalFresh(device.gsm_timestamp, 5);
+                const gsmHasData = (device.signal_strength !== undefined && device.signal_strength !== null) ||
+                    (device.gsm_signal !== undefined && device.gsm_signal !== null) ||
+                    device.gsm_valid !== undefined || device.gsm_timestamp;
+                const gsmOk = gsmHasData && gsmFresh;
+                gsmIcon.classList.toggle('active', gsmOk);
+                gsmIcon.classList.toggle('inactive', !gsmOk);
+            }
+
+            // Status Icon
+            const statusIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="status"]`);
+            if (statusIcon) {
+                const rawStatus = (device.status || '').toLowerCase();
+                let effectiveStatus = rawStatus;
+
+                // اولویت: هشدار/SOS > یدک/مشکلات خاص > حرکت > سایر
+                const speedValue = Number(device.speed || 0);
+                const isAlarm = device.is_alarm || rawStatus.includes('sos') || rawStatus.includes('alert') || rawStatus.includes('alarm');
+
+                if (rawStatus.includes('offline')) {
+                    effectiveStatus = 'offline';
+                } else if (isAlarm) {
+                    effectiveStatus = rawStatus || 'alert';
+                } else if (speedValue > 1) {
+                    // اگر سرعت بالاست، حرکت را تحمیل کن حتی اگر سرور وضعیت نفرستاده
+                    effectiveStatus = 'moving';
+                }
+
+                const matchedKey = Object.keys(statusMeta).find(key => effectiveStatus.includes(key)) || 'default';
+                const meta = statusMeta[matchedKey] || statusMeta['default'];
+
+                statusIcon.innerHTML = `<i class="${meta.icon}"></i>`;
+                statusIcon.style.color = meta.color;
+                statusIcon.style.backgroundColor = meta.bg;
+
+                // وضعیت‌های آفلاین را غیرفعال نشان بده
+                if (matchedKey === 'offline') {
+                    statusIcon.classList.add('inactive');
+                    statusIcon.classList.remove('active');
+                } else {
+                    statusIcon.classList.add('active');
+                    statusIcon.classList.remove('inactive');
+                }
+
+                // افکت ویژه حرکت
+                if (matchedKey === 'moving') {
+                    statusIcon.classList.add('moving');
+                } else {
+                    statusIcon.classList.remove('moving');
+                }
+            }
+        }
+    </script>
+    <!-- Polyline Decoder for Map Matching -->
+    <script>
+        // تابع decode کردن Encoded Polyline
+        function decodePolyline(encoded) {
+            if (!encoded) return [];
+
+            let points = [];
+            let index = 0, len = encoded.length;
+            let lat = 0, lng = 0;
+
+            while (index < len) {
+                let b, shift = 0, result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+
+                points.push([lat / 1e5, lng / 1e5]);
+            }
+
+            return points;
+        }
+    </script>

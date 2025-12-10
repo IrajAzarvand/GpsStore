@@ -1,0 +1,157 @@
+<div class="bottom-device-panel" id="bottomDevicePanel">
+    <div class="panel-header">
+        <h3>اطلاعات دستگاه</h3>
+        <button class="close-btn" onclick="closeBottomDevicePanel()">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+    </div>
+    <div class="panel-content-wrapper">
+        <div class="panel-content" id="bottomDevicePanelContent">
+        <!-- Basic Information Card -->
+        <div class="info-card basic-card">
+            <div class="card-header">
+                <i class="fas fa-info-circle card-icon"></i>
+                <h3 class="card-title">اطلاعات اصلی</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-tag"></i>
+                        نام دستگاه:
+                    </span>
+                    <span class="value" id="deviceNameDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-sim-card"></i>
+                        IMEI:
+                    </span>
+                    <span class="value" id="deviceImeiDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-circle"></i>
+                        وضعیت:
+                    </span>
+                    <span class="value status-badge" id="deviceStatusDetail"
+                        style="background: gray; color: white;">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Information Card -->
+        <div class="info-card location-card">
+            <div class="card-header">
+                <i class="fas fa-map-marker-alt card-icon"></i>
+                <h3 class="card-title">موقعیت مکانی</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-globe"></i>
+                        عرض جغرافیایی:
+                    </span>
+                    <span class="value highlight" id="deviceLatDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-globe"></i>
+                        طول جغرافیایی:
+                    </span>
+                    <span class="value highlight" id="deviceLngDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-address-book"></i>
+                        آدرس:
+                    </span>
+                    <span class="value address-text" id="deviceAddressDetail">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motion Information Card -->
+        <div class="info-card motion-card">
+            <div class="card-header">
+                <i class="fas fa-tachometer-alt card-icon"></i>
+                <h3 class="card-title">اطلاعات حرکتی</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-gauge-high"></i>
+                        سرعت:
+                    </span>
+                    <span class="value highlight" id="deviceSpeedDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-compass"></i>
+                        جهت:
+                    </span>
+                    <span class="value" id="deviceHeadingDetail">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardware Information Card -->
+        <div class="info-card hardware-card">
+            <div class="card-header">
+                <i class="fas fa-microchip card-icon"></i>
+                <h3 class="card-title">اطلاعات سخت‌افزاری</h3>
+            </div>
+            <div class="card-content">
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-battery-half"></i>
+                        باتری:
+                    </span>
+                    <span class="value" id="deviceBatteryDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-crosshairs"></i>
+                        دقت GPS:
+                    </span>
+                    <span class="value" id="deviceAccuracyDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-satellite-dish"></i>
+                        سیگنال GPS:
+                    </span>
+                    <span class="value" id="deviceGpsSignalDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-signal"></i>
+                        سیگنال GSM:
+                    </span>
+                    <span class="value" id="deviceGsmSignalDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-bolt"></i>
+                        ولتاژ:
+                    </span>
+                    <span class="value" id="deviceVoltageDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-sim-card"></i>
+                        MCC-MNC:
+                    </span>
+                    <span class="value" id="deviceMccMncDetail">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">
+                        <i class="fas fa-sim-card"></i>
+                        LAC-CID:
+                    </span>
+                    <span class="value" id="deviceLacCidDetail">-</span>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
