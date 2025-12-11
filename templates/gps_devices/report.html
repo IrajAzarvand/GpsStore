@@ -1,3 +1,6 @@
+{% extends "gps_devices/template.html" %}
+
+{% block content %}
 <!-- map report section goes here -->
 <div class='report-form'>
 <form method="post">
@@ -47,8 +50,6 @@
 {% endif %}
 </div>
 
-{% extends "gps_devices/template.html" %}
-{% block content %}
 <div class="map-container">
     <div id="mainMap"></div>
     <div class="map-controls"><button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()"><i

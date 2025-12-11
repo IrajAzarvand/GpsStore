@@ -6,7 +6,7 @@
 {% include "gps_devices/includes/head.html" %}
 <body>
     <!-- Sidebar -->
-    {% include "gps_devices/includes/sidebar.html" %}
+    {% if show_sidebar %}{% include "gps_devices/includes/sidebar.html" %}{% endif %}
     <!-- Header -->
     {% include "gps_devices/includes/top_menu.html" %}
     <!-- Main Content -->

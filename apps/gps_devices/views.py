@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Device, LocationData
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.core import serializers
 from datetime import datetime, timedelta
 import json
 import jdatetime
@@ -81,6 +82,7 @@ def map_v2(request):
         'hierarchy': hierarchy,
         'device_data_json': json.dumps(device_data),
         'user': request.user,
+        'show_sidebar': True,
     }
 
     return render(request, 'gps_devices/map_v2.html', context)
@@ -205,9 +207,12 @@ def report(request):
         user_ids = get_all_subuser_ids(request.user)
         devices = Device.objects.filter(owner_id__in=user_ids, status='active').select_related('model')
 
+    devices_json = serializers.serialize('json', devices)
+
     context = {
         'user_tree': user_tree,
         'devices': devices,
+        'device_data_json': devices_json,
     }
 
     if request.method == 'POST':
