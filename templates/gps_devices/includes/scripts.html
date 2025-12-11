@@ -1,126 +1,160 @@
 {% load static %}
-    <script src="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js"></script>
-    <script>
-        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            const ACCESS_TOKEN = '{{ access_token }}';
-            const WS_URL = `${protocol}${window.location.host}/ws/device-updates/?token=${ACCESS_TOKEN}`;
-            const POLL_URL = "/gps_devices/api/markers/";
-            const POLL_INTERVAL_SEC = 5;
-            const NESHAN_KEY = '{{ NESHAN_MAP_API_KEY }}';
-            const MARKER_BASE_URL = '{% static "img/markers/" %}';
-            // --- State ---
-            let map;
-            let devices = {};
-            let followingDeviceId = null;
-        
+<script src="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js"></script>
+<script>
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const WS_URL = `${protocol}${window.location.host}/ws/device-updates/?token=${ACCESS_TOKEN}`;
+    const POLL_URL = "/gps_devices/api/markers/";
+    const POLL_INTERVAL_SEC = 5;
+    const NESHAN_KEY = '{{ NESHAN_MAP_API_KEY }}';
+    const MARKER_BASE_URL = '{% static "img/markers/" %}';
+    // --- State ---
+    let map;
+    let devices = {};
+    let followingDeviceId = null;
 
 
-        // --- Initialization ---
-        document.addEventListener('DOMContentLoaded', function () {
+
+    // --- Theme Toggle Function ---
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const themeIcon = document.querySelector('.theme-icon');
+        if (themeIcon) {
+            if (document.body.classList.contains('light-theme')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        }
+        // Save theme preference to localStorage
+        localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+    }
+
+    // --- Load saved theme on page load ---
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            const themeIcon = document.querySelector('.theme-icon');
+            if (themeIcon) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            }
+        }
+    });
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', function () {
+        // Only initialize map if the map container exists
+        const mapContainer = document.getElementById('mainMap');
+        if (mapContainer) {
             initMap();
+        }
+    });
+
+
+
+
+    function initMap() {
+        map = new L.Map('mainMap', {
+            key: NESHAN_KEY,
+            maptype: 'neshan',
+            poi: true,
+            traffic: false,
+            center: [35.6892, 51.3890],
+            zoom: 11,
+            zoomControl: false, // We use custom controls
+            inertia: false      // برای جلوگیری از کشیده‌شدن ناخواسته
+        });
+
+        // با تغییر اندازه، مرکز تصحیح شود
+        window.addEventListener('resize', () => {
+            map.invalidateSize();
+            if (followingDeviceId && devices[followingDeviceId]) {
+                const d = devices[followingDeviceId];
+                if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
+            }
         });
 
 
+        // Fix map attribution z-index to stay below bottom panel
+        function fixMapAttributionZIndex() {
+            const applyZIndexFix = () => {
+                // Find all attribution elements
+                const attributionElements = document.querySelectorAll(
+                    '.leaflet-control-attribution, .leaflet-bottom, .leaflet-bottom.leaflet-right, .leaflet-bottom.leaflet-left'
+                );
 
+                attributionElements.forEach(el => {
+                    // Set z-index on the element itself
+                    if (el) {
+                        el.style.setProperty('z-index', '100', 'important');
 
-        function initMap() {
-            map = new L.Map('mainMap', {
-                key: NESHAN_KEY,
-                maptype: 'neshan',
-                poi: true,
-                traffic: false,
-                center: [35.6892, 51.3890],
-                zoom: 11,
-                zoomControl: false, // We use custom controls
-                inertia: false      // برای جلوگیری از کشیده‌شدن ناخواسته
+                        // Also fix all child elements
+                        const children = el.querySelectorAll('*');
+                        children.forEach(child => {
+                            child.style.setProperty('z-index', '100', 'important');
+                        });
+                    }
+                });
+            };
+
+            // Apply immediately
+            setTimeout(applyZIndexFix, 100);
+            setTimeout(applyZIndexFix, 500);
+            setTimeout(applyZIndexFix, 1000);
+
+            // Watch for changes using MutationObserver
+            const observer = new MutationObserver(() => {
+                applyZIndexFix();
             });
 
-            // با تغییر اندازه، مرکز تصحیح شود
-            window.addEventListener('resize', () => {
-                map.invalidateSize();
-                if (followingDeviceId && devices[followingDeviceId]) {
-                    const d = devices[followingDeviceId];
-                    if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
-                }
-            });
-
-
-                // Fix map attribution z-index to stay below bottom panel
-            function fixMapAttributionZIndex() {
-                const applyZIndexFix = () => {
-                    // Find all attribution elements
-                    const attributionElements = document.querySelectorAll(
-                        '.leaflet-control-attribution, .leaflet-bottom, .leaflet-bottom.leaflet-right, .leaflet-bottom.leaflet-left'
-                    );
-                    
-                    attributionElements.forEach(el => {
-                        // Set z-index on the element itself
-                        if (el) {
-                            el.style.setProperty('z-index', '100', 'important');
-                            
-                            // Also fix all child elements
-                            const children = el.querySelectorAll('*');
-                            children.forEach(child => {
-                                child.style.setProperty('z-index', '100', 'important');
-                            });
-                        }
-                    });
-                };
-
-                // Apply immediately
-                setTimeout(applyZIndexFix, 100);
-                setTimeout(applyZIndexFix, 500);
-                setTimeout(applyZIndexFix, 1000);
-
-                // Watch for changes using MutationObserver
-                const observer = new MutationObserver(() => {
-                    applyZIndexFix();
-                });
-
-                // Observe the map container
-                const mapContainer = document.getElementById('mainMap');
-                if (mapContainer) {
-                    observer.observe(mapContainer, {
-                        childList: true,
-                        subtree: true,
-                        attributes: true,
-                        attributeFilter: ['style', 'class']
-                    });
-                }
-
-                // Also check periodically to ensure z-index stays fixed
-                setInterval(applyZIndexFix, 2000);
-            }
-
-
-                // Fix map attribution z-index to stay below bottom panel
-            fixMapAttributionZIndex();
-
-            // Create markers for initial data
-            createMarkers();
-
-
-                // Initialize from server data
-            const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
-            initialDevices.forEach(d => devices[d.id] = d);
-
-           
-
-
-
-            // Fit bounds if devices exist
-            if (initialDevices.length > 0) {
-                const bounds = [];
-
-                initialDevices.forEach(d => {
-                    if (d.lat && d.lng) bounds.push([d.lat, d.lng]);
-                });
-
-                if (bounds.length > 0) map.fitBounds(bounds, {
-                    padding: [50, 50]
+            // Observe the map container
+            const mapContainer = document.getElementById('mainMap');
+            if (mapContainer) {
+                observer.observe(mapContainer, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
                 });
             }
+
+            // Also check periodically to ensure z-index stays fixed
+            setInterval(applyZIndexFix, 2000);
         }
+
+
+        // Fix map attribution z-index to stay below bottom panel
+        fixMapAttributionZIndex();
+
+        // Create markers for initial data
+        createMarkers();
+
+
+        // Initialize from server data
+        const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
+        initialDevices.forEach(d => devices[d.id] = d);
+
+
+
+
+
+        // Fit bounds if devices exist
+        if (initialDevices.length > 0) {
+            const bounds = [];
+
+            initialDevices.forEach(d => {
+                if (d.lat && d.lng) bounds.push([d.lat, d.lng]);
+            });
+
+            if (bounds.length > 0) map.fitBounds(bounds, {
+                padding: [50, 50]
+            });
+        }
+    }
 </script>
 
 <script>
