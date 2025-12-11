@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import datetime, timedelta
 import json
+import jdatetime
 
 User = get_user_model()
 
@@ -189,6 +190,61 @@ def review(request):
             context['error'] = f'خطا در پردازش درخواست: {str(e)}'
 
     return render(request, 'gps_devices/review.html', context)
+@login_required
+def report(request):
+    """
+    نمایش صفحه گزارش دستگاه‌ها
+    """
+    # Build user tree
+    user_tree = build_user_tree(request.user)
+
+    # Get active devices
+    if request.user.is_staff or request.user.is_superuser:
+        devices = Device.objects.filter(status='active').select_related('model')
+    else:
+        user_ids = get_all_subuser_ids(request.user)
+        devices = Device.objects.filter(owner_id__in=user_ids, status='active').select_related('model')
+
+    context = {
+        'user_tree': user_tree,
+        'devices': devices,
+    }
+
+    if request.method == 'POST':
+        selected_devices = request.POST.getlist('devices')
+        start_date = request.POST.get('start_date')
+        start_time = request.POST.get('start_time')
+        end_date = request.POST.get('end_date')
+        end_time = request.POST.get('end_time')
+
+        # Parse Shamsi dates and times, convert to Gregorian
+        start_jdt = jdatetime.datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+        end_jdt = jdatetime.datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
+        start_datetime = timezone.make_aware(start_jdt.togregorian())
+        end_datetime = timezone.make_aware(end_jdt.togregorian())
+
+        # Query LocationData
+        report_data = LocationData.objects.filter(
+            device_id__in=selected_devices,
+            created_at__range=(start_datetime, end_datetime)
+        ).order_by('created_at')
+
+        # Prepare report data with Shamsi timestamps
+        report_list = []
+        for loc in report_data:
+            shamsi_dt = jdatetime.datetime.fromgregorian(datetime=loc.created_at)
+            report_list.append({
+                'shamsi_timestamp': shamsi_dt.strftime('%Y-%m-%d %H:%M:%S'),
+                'latitude': loc.latitude,
+                'longitude': loc.longitude,
+                'speed': loc.speed,
+                'direction': loc.heading,
+            })
+        context['report_data'] = report_list
+
+    return render(request, 'gps_devices/report.html', context)
+
+
 
 
 

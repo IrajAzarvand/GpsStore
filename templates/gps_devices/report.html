@@ -1,7 +1,62 @@
 <!-- map report section goes here -->
+<div class='report-form'>
+<form method="post">
+{% csrf_token %}
+<label for="devices">دستگاه‌ها:</label>
+<select name="devices" id="devices" multiple>
+{% for device in devices %}
+<option value="{{ device.id }}">{{ device.name }}</option>
+{% endfor %}
+</select><br>
+<label for="start_date">تاریخ شروع:</label>
+<input type="text" name="start_date" placeholder="تاریخ شروع"><br>
+<label for="start_time">زمان شروع:</label>
+<input type="text" name="start_time" placeholder="زمان شروع"><br>
+<label for="end_date">تاریخ پایان:</label>
+<input type="text" name="end_date" placeholder="تاریخ پایان"><br>
+<label for="end_time">زمان پایان:</label>
+<input type="text" name="end_time" placeholder="زمان پایان"><br>
+<button type="submit">تایید</button>
+</form>
+</div>
+
+<div class='report-results'>
+{% if report_data %}
+<table>
+<thead>
+<tr>
+<th>تاریخ و ساعت</th>
+<th>عرض جغرافیایی</th>
+<th>طول جغرافیایی</th>
+<th>سرعت</th>
+<th>جهت</th>
+</tr>
+</thead>
+<tbody>
+{% for item in report_data %}
+<tr>
+<td>{{ item.shamsi_timestamp }}</td>
+<td>{{ item.latitude }}</td>
+<td>{{ item.longitude }}</td>
+<td>{{ item.speed }}</td>
+<td>{{ item.direction }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+</div>
+
 {% extends "gps_devices/template.html" %}
 {% block content %}
-<div class="map-report">
-    <div id="mapReport"></div>
+<div class="map-container">
+    <div id="mainMap"></div>
+    <div class="map-controls"><button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()"><i
+                class="fas fa-plus"></i></button><button class="control-btn" title="کوچکنمایی"
+            onclick="map.zoomOut()"><i class="fas fa-minus"></i></button><button class="control-btn"
+            title="موقعیت من" onclick="locateUser()"><i class="fas fa-crosshairs"></i></button><button
+            class="control-btn" title="لایه‌ها" onclick="toggleLayers()"><i
+                class="fas fa-layer-group"></i></button>
+    </div>
 </div>
 {% endblock %}

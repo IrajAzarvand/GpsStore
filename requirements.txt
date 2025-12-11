@@ -27,3 +27,4 @@ urllib3==2.5.0
 Whoosh==2.7.4
 psutil==6.0.0
 paho-mqtt==1.6.1
+jdatetime==5.2.0
