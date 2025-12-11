@@ -122,3 +122,18 @@
             }
         }
 </script>
+
+<script>
+    //report page scripts
+    $(".datepicker").persianDatepicker({
+        format: 'YYYY/MM/DD',
+    });
+
+    $(".timepicker").persianDatepicker({
+        format: "HH:mm",
+        timePicker: {
+            enabled: true,
+            meridiem: { enabled: false }
+        }
+    });
+</script>

@@ -1,34 +1,52 @@
 {% extends "gps_devices/template.html" %}
 
 {% block form_section %}
-<div class="report-form" style="display: flex; justify-content: space-around; align-items: center; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc; width: 100%;">
-<form method="post">
-{% csrf_token %}
-<label for="devices">دستگاه‌ها:</label>
-<select name="devices" id="devices" multiple>
-{% for device in devices %}
-<option value="{{ device.id }}">{{ device.name }}</option>
-{% endfor %}
-</select>
-<label for="start_date">تاریخ شروع:</label>
-<input type="text" name="start_date" placeholder="تاریخ شروع">
-<label for="start_time">زمان شروع:</label>
-<input type="text" name="start_time" placeholder="زمان شروع">
-<label for="end_date">تاریخ پایان:</label>
-<input type="text" name="end_date" placeholder="تاریخ پایان">
-<label for="end_time">زمان پایان:</label>
-<input type="text" name="end_time" placeholder="زمان پایان">
-<button type="submit">تایید</button>
-</form>
+<div class="report-form-bar">
+    <form method="post" id="reportForm">
+        {% csrf_token %}
+
+        <div class="form-item">
+            <label>دستگاه‌ها:</label>
+            <select name="devices" id="devices" multiple>
+                {% for device in devices %}
+                <option value="{{ device.id }}">{{ device.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-item">
+            <label>تاریخ شروع:</label>
+            <input type="text" id="start_date" name="start_date" class="datepicker">
+        </div>
+
+        <div class="form-item">
+            <label>ساعت شروع:</label>
+            <input type="text" id="start_time" name="start_time" class="timepicker">
+        </div>
+
+        <div class="form-item">
+            <label>تاریخ پایان:</label>
+            <input type="text" id="end_date" name="end_date" class="datepicker">
+        </div>
+
+        <div class="form-item">
+            <label>ساعت پایان:</label>
+            <input type="text" id="end_time" name="end_time" class="timepicker">
+        </div>
+
+        <button class="btn-submit" type="submit">تأیید</button>
+    </form>
 </div>
 {% endblock %}
+
 
 
 
 {% block content %}
 
 
-<div class="map-container" style="width: 100%; height: 70vh;">
+<div class="map-container" style="width: 100%; height: calc(100vh - 140px);">
+
     <div id="mainMap"></div>
     <div class="map-controls"><button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()"><i
                 class="fas fa-plus"></i></button><button class="control-btn" title="کوچکنمایی"
@@ -130,5 +148,27 @@
         }
     }
     
+    
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const deviceSelect = document.getElementById("devices");
+
+        if (deviceSelect) {
+            deviceSelect.addEventListener("change", function () {
+
+                const deviceId = this.value;
+                if (!deviceId) return;
+
+                fetch(`/gps_devices/api/device/${deviceId}/`)
+                    .then(res => res.json())
+                    .then(data => {
+                        updateBottomPanel(data);  // همان تابع صفحه اصلی
+                        openBottomDevicePanel();
+                    })
+                    .catch(error => console.error("Device info error:", error));
+            });
+        }
+    });
 </script>
+    
 {% endblock %}
