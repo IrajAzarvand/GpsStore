@@ -5,6 +5,7 @@ from .models import Device, LocationData
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core import serializers
+from django.conf import settings
 from datetime import datetime, timedelta
 import json
 import jdatetime
@@ -83,115 +84,13 @@ def map_v2(request):
         'device_data_json': json.dumps(device_data),
         'user': request.user,
         'show_sidebar': True,
+        'NESHAN_MAP_API_KEY': settings.NESHAN_MAP_API_KEY,
+        'NESHAN_SERVICE_API_KEY': settings.NESHAN_SERVICE_API_KEY,
     }
 
     return render(request, 'gps_devices/map_v2.html', context)
 
 
-@login_required
-def review(request):
-    """
-    نمایش صفحه بازبینی مسیر دستگاه
-    """
-    # Generate JWT token for WebSocket authentication
-    refresh = RefreshToken.for_user(request.user)
-    access_token = str(refresh.access_token)
-
-    # Build hierarchical structure
-    hierarchy = []
-
-    if request.user.is_staff or request.user.is_superuser:
-        # Admin sees all users and their devices
-        root_users = User.objects.filter(is_subuser_of__isnull=True, is_active=True)
-
-        for user in root_users:
-            hierarchy.append(build_user_tree(user, is_admin=True))
-    else:
-        # Regular user sees only themselves and their subusers
-        hierarchy.append(build_user_tree(request.user, is_admin=False))
-
-    # Get available devices
-    if request.user.is_staff or request.user.is_superuser:
-        devices = Device.objects.filter(status='active').select_related('model')
-    else:
-        user_ids = get_all_subuser_ids(request.user)
-        devices = Device.objects.filter(
-            owner_id__in=user_ids,
-            status='active'
-        ).select_related('model')
-
-    context = {
-        'access_token': access_token,
-        'hierarchy': hierarchy,
-        'devices': devices,
-        'user': request.user,
-    }
-
-    # Handle POST request
-    if request.method == 'POST':
-        device_id = request.POST.get('device')
-        start_date = request.POST.get('start_date')
-        start_time = request.POST.get('start_time')
-        end_date = request.POST.get('end_date')
-        end_time = request.POST.get('end_time')
-
-        # Validate form data
-        if not all([device_id, start_date, start_time, end_date, end_time]):
-            context['error'] = 'لطفاً تمام فیلدها را پر کنید.'
-            return render(request, 'gps_devices/review.html', context)
-
-        try:
-            # Parse datetime
-            start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-            end_datetime = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
-
-            # Convert to timezone-aware
-            start_datetime = timezone.make_aware(start_datetime)
-            end_datetime = timezone.make_aware(end_datetime)
-
-            if start_datetime >= end_datetime:
-                context['error'] = 'تاریخ و زمان شروع باید قبل از تاریخ و زمان پایان باشد.'
-                return render(request, 'gps_devices/review.html', context)
-
-            # Check device access
-            try:
-                device = devices.get(id=device_id)
-            except Device.DoesNotExist:
-                context['error'] = 'دستگاه انتخاب شده یافت نشد.'
-                return render(request, 'gps_devices/review.html', context)
-
-            # Fetch location data
-            location_data = LocationData.objects.filter(
-                device=device,
-                created_at__range=(start_datetime, end_datetime)
-            ).order_by('created_at')
-
-            # Serialize location data for JavaScript
-            location_list = []
-            for loc in location_data:
-                location_list.append({
-                    'lat': float(loc.latitude) if loc.latitude else None,
-                    'lng': float(loc.longitude) if loc.longitude else None,
-                    'speed': loc.speed,
-                    'battery_level': loc.battery_level,
-                    'created_at': loc.created_at.isoformat(),
-                })
-
-            context.update({
-                'selected_device': device,
-                'start_date': start_date,
-                'start_time': start_time,
-                'end_date': end_date,
-                'end_time': end_time,
-                'location_data': json.dumps(location_list),
-            })
-
-        except ValueError as e:
-            context['error'] = 'فرمت تاریخ یا زمان نامعتبر است.'
-        except Exception as e:
-            context['error'] = f'خطا در پردازش درخواست: {str(e)}'
-
-    return render(request, 'gps_devices/review.html', context)
 @login_required
 def report(request):
     """
@@ -209,10 +108,15 @@ def report(request):
 
     devices_json = serializers.serialize('json', devices)
 
+    
     context = {
         'user_tree': user_tree,
         'devices': devices,
         'device_data_json': devices_json,
+        'user': request.user,
+        'show_sidebar': False,
+        'NESHAN_MAP_API_KEY': settings.NESHAN_MAP_API_KEY,
+        'NESHAN_SERVICE_API_KEY': settings.NESHAN_SERVICE_API_KEY,
     }
 
     if request.method == 'POST':

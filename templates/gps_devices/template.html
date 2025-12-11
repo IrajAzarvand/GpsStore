@@ -5,10 +5,10 @@
 <!-- head goes here -->
 {% include "gps_devices/includes/head.html" %}
 <body>
-    <!-- Sidebar -->
-    {% if show_sidebar %}{% include "gps_devices/includes/sidebar.html" %}{% endif %}
+    
     <!-- Header -->
     {% include "gps_devices/includes/top_menu.html" %}
+    {% block form_section %}{% endblock %}
     <!-- Main Content -->
     <main class="main-content">
         {% block content %}
@@ -19,8 +19,13 @@
     {% include "gps_devices/includes/bottom_panel.html" %}
 
 
-    <!-- Scripts -->
+    <!-- Base Scripts (مشترک بین همه صفحات) -->
     {% include "gps_devices/includes/scripts.html" %}
+
+    
+    <!-- Page-specific Scripts -->
+    {% block page_scripts %}{% endblock %}
+    
 </body>
 
 </html>
