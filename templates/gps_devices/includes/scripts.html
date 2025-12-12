@@ -57,17 +57,31 @@
 
 
 
+    let currentLayer = 'neshan';
+    let neshanLayer, osmLayer;
+
     function initMap() {
-        map = new L.Map('mainMap', {
-            key: NESHAN_KEY,
-            maptype: 'neshan',
-            poi: true,
-            traffic: false,
-            center: [35.6892, 51.3890],
-            zoom: 11,
-            zoomControl: false, // We use custom controls
-            inertia: false      // برای جلوگیری از کشیده‌شدن ناخواسته
+        console.log('Initializing map with NESHAN_KEY:', NESHAN_KEY);
+        map = L.map('mainMap').setView([35.6892, 51.3890], 11);
+        map.zoomControl = false; // We use custom controls
+        map.options.inertia = false; // برای جلوگیری از کشیده‌شدن ناخواسته
+
+        // Create Neshan layer
+        neshanLayer = L.tileLayer(
+            "https://api.neshan.org/v4/tiles/nezami/{z}/{x}/{y}",
+            {
+                attribution: "© Neshan",
+                apiKey: NESHAN_KEY
+            }
+        ).addTo(map);
+
+        // Create OSM layer
+        osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
         });
+
+        console.log('Map created:', map);
 
         // با تغییر اندازه، مرکز تصحیح شود
         window.addEventListener('resize', () => {
@@ -136,6 +150,7 @@
 
         // Initialize from server data
         const initialDevices = JSON.parse('{{ device_data_json|escapejs }}');
+        console.log('Initial devices from server:', initialDevices.length);
         initialDevices.forEach(d => devices[d.id] = d);
 
 
@@ -154,6 +169,26 @@
                 padding: [50, 50]
             });
         }
+    }
+
+    function switchMapLayer(layerType) {
+        if (layerType === currentLayer) return;
+
+        // Remove current layer
+        if (currentLayer === 'neshan') {
+            map.removeLayer(neshanLayer);
+        } else if (currentLayer === 'osm') {
+            map.removeLayer(osmLayer);
+        }
+
+        // Add new layer
+        if (layerType === 'neshan') {
+            map.addLayer(neshanLayer);
+        } else if (layerType === 'osm') {
+            map.addLayer(osmLayer);
+        }
+
+        currentLayer = layerType;
     }
 </script>
 

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>GPS Map</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <style>
+        #map { height: 600px; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+    const devices = ["device01", "device02"];
+
+    // ساخت نقشه
+    const map = L.map('map').setView([35.7, 51.4], 12);
+
+    // لایه OSM
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // لایه نَشان
+    const neshan = L.tileLayer(
+        "https://api.neshan.org/v4/tiles/nezami/{z}/{x}/{y}",
+        {
+            attribution: "© Neshan",
+            apiKey: "YOUR_NESHAN_API_KEY"
+        }
+    );
+
+    // سوییچ بین نقشه‌ها
+    L.control.layers({
+        "OpenStreetMap": osm,
+        "Neshan Map": neshan
+    }).addTo(map);
+
+    // مارکرهای دستگاه‌ها
+    let markers = {};
+
+    async function updateDevice(deviceId) {
+        const res = await fetch(`/api/last/${deviceId}/`);
+        if (!res.ok) return;
+
+        const p = await res.json();
+        const latlng = [p.lat, p.lng];
+
+        if (!markers[deviceId]) {
+            markers[deviceId] = L.marker(latlng)
+                .addTo(map)
+                .bindPopup(deviceId);
+        } else {
+            markers[deviceId].setLatLng(latlng);
+        }
+    }
+
+    // Polling هر ۵ ثانیه
+    setInterval(() => devices.forEach(updateDevice), 5000);
+
+    // رسم history
+    async function loadHistory(deviceId) {
+        const res = await fetch(`/api/history/${deviceId}/`);
+        const data = await res.json();
+
+        const coords = data.map(x => [x.lat, x.lng]);
+        if (coords.length > 1) {
+            const poly = L.polyline(coords, {color: "blue"}).addTo(map);
+            map.fitBounds(poly.getBounds());
+        }
+    }
+
+    loadHistory("device01");
+
+
+    // اتصال WebSocket برای Live Tracking
+    const socket = new WebSocket("ws://" + window.location.host + "/ws/live/");
+
+    socket.onmessage = function(e) {
+        const obj = JSON.parse(e.data);
+        const latlng = [obj.lat, obj.lng];
+        const id = obj.device_id;
+
+        if (!markers[id]) {
+            markers[id] = L.marker(latlng).addTo(map).bindPopup(id);
+        } else {
+            markers[id].setLatLng(latlng);
+        }
+    };
+
+</script>
+
+</body>
+</html>

@@ -8,10 +8,14 @@
     <div class="map-controls"><button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()"><i
                 class="fas fa-plus"></i></button><button class="control-btn" title="کوچکنمایی"
             onclick="map.zoomOut()"><i class="fas fa-minus"></i></button><button class="control-btn"
-            title="موقعیت من" onclick="locateUser()"><i class="fas fa-crosshairs"></i></button><button
-            class="control-btn" title="لایه‌ها" onclick="toggleLayers()"><i
-                class="fas fa-layer-group"></i></button>
+            title="موقعیت من" onclick="locateUser()"><i class="fas fa-crosshairs"></i></button>
+        <select id="mapSelect" onchange="switchMapLayer(this.value)">
+            <option value="neshan" selected>Neshan</option>
+            <option value="osm">OpenStreetMap</option>
+        </select>
     </div>
+    
+    
 </div>
 
 {% endblock %}
@@ -19,20 +23,7 @@
 {% block page_scripts %}
 <!-- فقط اسکریپت‌های مخصوص نقشه -->
 <script> // --- Configuration ---
-        {% comment %} const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-        const ACCESS_TOKEN = '{{ access_token }}';
-        const WS_URL = `${protocol}${window.location.host}/ws/device-updates/?token=${ACCESS_TOKEN}`;
-        const POLL_URL = "/gps_devices/api/markers/";
-        const POLL_INTERVAL_SEC = 5;
-        const NESHAN_KEY = '{{ NESHAN_MAP_API_KEY }}';
-        const MARKER_BASE_URL = '{% static "img/markers/" %}';
-        // --- State ---
-        let map; {% endcomment %}
-
         let markers = {};
-        // Map Matching Polylines
-        {% comment %} let devicePolylines = {}; // ذخیره Polyline هر دستگاه {% endcomment %}
-        {% comment %} let devices = {}; {% endcomment %}
         let ws;
         let pollInterval;
         let userLocation;
@@ -95,55 +86,6 @@
             const diff = Date.now() - new Date(ts).getTime();
             return diff <= maxMinutes * 60 * 1000;
         }
-
-        
-
-
-       
-
-
-        
-
-        {% comment %} function initMap() {
-            map = new L.Map('mainMap', {
-                key: NESHAN_KEY,
-                maptype: 'neshan',
-                poi: true,
-                traffic: false,
-                center: [35.6892, 51.3890],
-                zoom: 11,
-                zoomControl: false, // We use custom controls
-                inertia: false      // برای جلوگیری از کشیده‌شدن ناخواسته
-            });
-
-            // با تغییر اندازه، مرکز تصحیح شود
-            window.addEventListener('resize', () => {
-                map.invalidateSize();
-                if (followingDeviceId && devices[followingDeviceId]) {
-                    const d = devices[followingDeviceId];
-                    if (d.lat && d.lng) map.setView([d.lat, d.lng], map.getZoom(), { animate: false });
-                }
-            });
-
-            // Fix map attribution z-index to stay below bottom panel
-            fixMapAttributionZIndex();
-
-            // Create markers for initial data
-            createMarkers();
-
-            // Fit bounds if devices exist
-            if (initialDevices.length > 0) {
-                const bounds = [];
-
-                initialDevices.forEach(d => {
-                    if (d.lat && d.lng) bounds.push([d.lat, d.lng]);
-                });
-
-                if (bounds.length > 0) map.fitBounds(bounds, {
-                    padding: [50, 50]
-                });
-            }
-        } {% endcomment %}
 
         function createMarkers() {
             Object.values(devices).forEach(device => {
@@ -638,10 +580,6 @@
             followingDeviceId = null; // Stop following when panel closes
 
             setTimeout(() => map.invalidateSize(), 80);
-        }
-
-        function toggleLayers() {
-            alert('امکان تغییر لایه‌ها به زودی اضافه خواهد شد');
         }
 
         function updateDeviceStatusIcons(device) {
