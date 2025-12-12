@@ -1,21 +1,13 @@
 {% extends "gps_devices/template.html" %}
 {% load static %}
 {% block content %}
-<!-- Sidebar -->
-{% if show_sidebar %}{% include "gps_devices/includes/sidebar.html" %}{% endif %}
 <div class="map-container">
-    <div id="mainMap"></div>
-    <div class="map-controls"><button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()"><i
-                class="fas fa-plus"></i></button><button class="control-btn" title="کوچکنمایی"
-            onclick="map.zoomOut()"><i class="fas fa-minus"></i></button><button class="control-btn"
-            title="موقعیت من" onclick="locateUser()"><i class="fas fa-crosshairs"></i></button>
-        <select id="mapSelect" onchange="switchMapLayer(this.value)">
-            <option value="neshan" selected>Neshan</option>
-            <option value="osm">OpenStreetMap</option>
-        </select>
-    </div>
-    
-    
+    {% include "gps_devices/includes/map_container.html" %}
+    {% include "gps_devices/includes/map_controls.html" with show_map_select=True %}
+    <!-- Sidebar Overlay -->
+    {% include "gps_devices/includes/sidebar.html" %}
+    <!-- Show Sidebar Button -->
+    <button class="show-sidebar-btn control-btn" id="showSidebarBtn" title="نمایش سایدبار" style="display: none;"><i class="fas fa-chevron-left"></i></button>
 </div>
 
 {% endblock %}
@@ -97,6 +89,12 @@
 
         function updateDeviceMarker(device) {
             if (!device.lat || !device.lng) return;
+            
+            // Ensure map is available
+            if (!map) {
+                console.warn('Map not available, cannot update marker for device', device.id);
+                return;
+            }
 
             const lat = parseFloat(device.lat);
             const lng = parseFloat(device.lng);
@@ -260,6 +258,13 @@
 
         
         function initWebSocket() {
+            // Ensure map is initialized before starting WebSocket
+            if (!map) {
+                console.warn('Map not yet initialized, waiting...');
+                setTimeout(initWebSocket, 100);
+                return;
+            }
+            
             updateConnectionStatus('connecting');
             ws = new WebSocket(WS_URL);
     
@@ -303,9 +308,10 @@
 
 
          // --- Initialization ---
-         document.addEventListener('DOMContentLoaded', function () {
-            initWebSocket();
-        });
+         // Wait for the map to be fully initialized before starting WebSocket
+         function onMapReady() {
+             initWebSocket();
+         }
 
         function handleDeviceUpdate(data) {
             // Normalize data
@@ -581,6 +587,31 @@
 
             setTimeout(() => map.invalidateSize(), 80);
         }
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.users-sidebar');
+            const showBtn = document.getElementById('showSidebarBtn');
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            const icon = toggleBtn.querySelector('i');
+
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                showBtn.style.display = 'none';
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                sidebar.classList.add('hidden');
+                showBtn.style.display = 'flex';
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-left');
+            }
+
+            // Invalidate map size
+            setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        // Initialize show button click
+        document.getElementById('showSidebarBtn').onclick = toggleSidebar;
 
         function updateDeviceStatusIcons(device) {
             const deviceId = device.id;

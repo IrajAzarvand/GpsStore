@@ -989,3 +989,15 @@ img.lazy.loaded {
         scroll-behavior: auto !important;
     }
 }
+
+/* Report form styles */
+.report-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.submit-btn {
+    font-size: 14px;
+    padding: 8px 16px;
+}

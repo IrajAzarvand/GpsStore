@@ -51,35 +51,39 @@
         const mapContainer = document.getElementById('mainMap');
         if (mapContainer) {
             initMap();
+            // Call onMapReady if defined (for WebSocket initialization)
+            if (typeof onMapReady === 'function') {
+                onMapReady();
+            }
         }
     });
 
 
 
 
-    let currentLayer = 'neshan';
+    let currentLayer = 'osm';
     let neshanLayer, osmLayer;
 
     function initMap() {
-        console.log('Initializing map with NESHAN_KEY:', NESHAN_KEY);
+        console.log('Initializing map with OSM as default layer');
         map = L.map('mainMap').setView([35.6892, 51.3890], 11);
         map.zoomControl = false; // We use custom controls
         map.options.inertia = false; // برای جلوگیری از کشیده‌شدن ناخواسته
 
-        // Create Neshan layer
+        // Create OSM layer and add it as default
+        osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Create Neshan layer (not added by default)
         neshanLayer = L.tileLayer(
             "https://api.neshan.org/v4/tiles/nezami/{z}/{x}/{y}",
             {
                 attribution: "© Neshan",
                 apiKey: NESHAN_KEY
             }
-        ).addTo(map);
-
-        // Create OSM layer
-        osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
-        });
+        );
 
         console.log('Map created:', map);
 

@@ -1,83 +1,14 @@
 {% extends "gps_devices/template.html" %}
-
+{% load static %}
 {% block content %}
-
-گزارش مسیر دستگاه
-<form id="reportForm" class="report-form">
-    {% csrf_token %}
-
-    <div class="form-group">
-        <label for="device_select">
-            <i class="fas fa-mobile-alt"></i>
-            انتخاب دستگاه
-        </label>
-        <select name="device_id" id="device_select" required>
-            <option value="">-- انتخاب کنید --</option>
-            {% for device in devices %}
-            <option value="{{ device.id }}">{{ device.name }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="form-row">
-        <div class="form-group">
-            <label for="start_date">
-                <i class="fas fa-calendar"></i>
-                تاریخ شروع
-            </label>
-            <input type="text" id="start_date" name="start_date" class="datepicker" required readonly>
-        </div>
-        <div class="form-group">
-            <label for="start_time">
-                <i class="fas fa-clock"></i>
-                ساعت شروع
-            </label>
-            <input type="text" id="start_time" name="start_time" class="timepicker" required readonly>
-        </div>
-    </div>
-    <div class="form-row">
-        <div class="form-group">
-            <label for="end_date">
-                <i class="fas fa-calendar"></i>
-                تاریخ پایان
-            </label>
-            <input type="text" id="end_date" name="end_date" class="datepicker" required readonly>
-        </div>
-        <div class="form-group">
-            <label for="end_time">
-                <i class="fas fa-clock"></i>
-                ساعت پایان
-            </label>
-            <input type="text" id="end_time" name="end_time" class="timepicker" required readonly>
-        </div>
-    </div>
-    <button type="submit" class="submit-btn">
-        <i class="fas fa-search"></i>
-        نمایش گزارش
-    </button>
-</form>
-<!-- کنترل‌های نقشه -->
-<div class="map-controls">
-    <button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()">
-        <i class="fas fa-plus"></i>
-    </button>
-    <button class="control-btn" title="کوچکنمایی" onclick="map.zoomOut()">
-        <i class="fas fa-minus"></i>
-    </button>
-    <button class="control-btn" title="موقعیت من" onclick="locateUser()">
-        <i class="fas fa-crosshairs"></i>
-    </button>
+<div class="map-container">
+    {% include "gps_devices/includes/map_container.html" %}
+    {% include "gps_devices/includes/map_controls.html" with show_map_select=True %}
 </div>
-آماده دریافت گزارش
-<div class="panel-content-wrapper">
-    <div class="panel-content" id="reportContent">
-        <div class="info-message">
-            <i class="fas fa-hand-pointer"></i>
-            لطفاً دستگاه و بازه زمانی را انتخاب کنید
-        </div>
-    </div>
-</div>
+
 {% endblock %}
 
-{% block page_scripts %}
 
-{% endblock %}
+
+
+

@@ -169,16 +169,20 @@
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(20px);
             border-left: 1px solid rgba(255, 255, 255, 0.1);
-            height: 100vh;
-            position: fixed;
+            height: 100%;
+            position: absolute;
             top: 0;
             right: 0;
             padding: 20px 12px 0 12px;
             overflow-y: hidden;
             z-index: 1001;
-            padding-top: calc(var(--header-height) + 20px);
             display: flex;
             flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .users-sidebar.hidden {
+            transform: translateX(100%);
         }
 
         .sidebar-header {
@@ -325,7 +329,6 @@
         /* Main Content */
         .main-content {
             margin-top: var(--header-height);
-            margin-right: var(--sidebar-width);
             height: calc(100vh - var(--header-height));
             display: flex;
             transition: height 0.3s ease;
@@ -426,6 +429,32 @@
         .control-btn:hover {
             background: rgba(67, 97, 238, 0.3);
             transform: scale(1.05);
+        }
+
+        /* Show Sidebar Button */
+        .show-sidebar-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .show-sidebar-btn:hover {
+            background: rgba(67, 97, 238, 0.3);
+            transform: translateY(-50%) scale(1.05);
         }
 
         /* Vehicle Marker Container */
@@ -566,7 +595,7 @@
             position: fixed;
             bottom: 0;
             left: 0;
-            right: var(--sidebar-width);
+            right: 0;
             background: rgba(15, 23, 42, 0.98);
             backdrop-filter: blur(20px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -660,7 +689,8 @@
             padding: 15px;
             flex-shrink: 0;
             min-width: max-content;
-            height: 100%;
+            max-height: calc(100vh - 60px);
+            overflow: hidden;
         }
 
         /* Info Card Styles */
@@ -1077,17 +1107,28 @@
 
         .report-form-bar {
             width: 100%;
+            height: var(--header-height);
             padding: 10px 20px;
             background: var(--header-bg);
             display: flex;
             justify-content: center;
             border-bottom: 1px solid #444;
+            overflow-y: auto;
         }
 
         #reportForm {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
             display: flex;
             gap: 15px;
             align-items: center;
+            z-index: 1000;
         }
 
         .form-item {
@@ -1250,8 +1291,7 @@
         }
 
         .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
             gap: 15px;
         }
 

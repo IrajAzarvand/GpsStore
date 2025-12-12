@@ -58,42 +58,39 @@ class RawGpsDataAdmin(admin.ModelAdmin):
         from apps.gps_devices.models import MaliciousPattern
 
         added_count = 0
-        skipped_count = 0
         deleted_count = 0
 
         for raw_data in queryset:
             ip = raw_data.ip_address
-            # Delete all RawGpsData records with this IP
-            deleted, _ = RawGpsData.objects.filter(ip_address=ip).delete()
-            deleted_count += deleted
+            pattern_text = raw_data.raw_data
 
-            # Add pattern if not exists
-            pattern, created = MaliciousPattern.objects.get_or_create(
-                pattern=raw_data.raw_data,
-                ip_address=ip,
-                defaults={
-                    'pattern_type': 'contains',
-                    'description': f'Added from RawGpsData - IP: {ip}',
-                    'is_active': True
-                }
-            )
-
-            if created:
-                added_count += 1
+            # Check if pattern already exists
+            if MaliciousPattern.objects.filter(pattern=pattern_text).exists():
+                # Delete all RawGpsData records with this IP
+                deleted, _ = RawGpsData.objects.filter(ip_address=ip).delete()
+                deleted_count += deleted
             else:
-                skipped_count += 1
+                # Add the pattern
+                MaliciousPattern.objects.create(
+                    pattern=pattern_text,
+                    ip_address=ip,
+                    pattern_type='contains',
+                    description=f'Added from RawGpsData - IP: {ip}',
+                    is_active=True
+                )
+                added_count += 1
 
         # نمایش پیام به کاربر
         if added_count > 0:
             self.message_user(
                 request,
-                f'{added_count} الگوی مخرب اضافه شد و {deleted_count} رکورد مشابه حذف شد.'
+                f'{added_count} الگوی مخرب اضافه شد.'
             )
-        if skipped_count > 0:
+        if deleted_count > 0:
             self.message_user(
                 request,
-                f'{skipped_count} الگو قبلاً وجود داشت.',
-                level='WARNING'
+                f'{deleted_count} رکورد مشابه حذف شد زیرا الگو وجود داشت.',
+                level='INFO'
             )
 
 
