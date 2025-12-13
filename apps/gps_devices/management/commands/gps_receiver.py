@@ -1059,14 +1059,14 @@ class GPSReceiver:
             active_patterns = MaliciousPattern.objects.filter(is_active=True)
             for pattern in active_patterns:
                 matched = False
+                ip_matched = False
+                content_matched = False
 
                 # بررسی IP (اگر در الگو تعریف شده باشد)
-                ip_matched = True  # به صورت پیش‌فرض فرض می‌کنیم IP مطابقت دارد
                 if pattern.ip_address:
                     ip_matched = (ip_address == pattern.ip_address)
                 
                 # بررسی محتوا (اگر الگو تعریف شده باشد)
-                content_matched = False
                 if pattern.pattern:
                     if pattern.pattern_type == 'exact':
                         content_matched = data_str == pattern.pattern or data.hex() == pattern.pattern
@@ -1079,11 +1079,23 @@ class GPSReceiver:
                             content_matched = re.search(pattern.pattern, data_str) is not None or re.search(pattern.pattern, data.hex()) is not None
                         except:
                             pass
-                else:
-                    content_matched = True  # اگر الگو خالی باشد، فقط IP چک می‌شود
                 
-                # اگر هم IP و هم محتوا مطابقت داشت
-                matched = ip_matched and content_matched
+                # تعیین نتیجه نهایی بر اساس سناریوهای مختلف
+                # Scenario 1: هم pattern و هم IP تعریف شده → بلاک اگر یکی مطابقت داشت (OR logic)
+                # Scenario 2: فقط pattern تعریف شده → بلاک اگر pattern مطابقت داشت
+                # Scenario 3: فقط IP تعریف شده → بلاک اگر IP مطابقت داشت
+                if pattern.pattern and pattern.ip_address:
+                    # هر دو تعریف شده: OR logic
+                    matched = ip_matched or content_matched
+                elif pattern.pattern:
+                    # فقط pattern: بررسی محتوا
+                    matched = content_matched
+                elif pattern.ip_address:
+                    # فقط IP: بررسی IP
+                    matched = ip_matched
+                else:
+                    # هیچکدام تعریف نشده: الگوی نامعتبر
+                    matched = False
                 
 
                 if matched:
