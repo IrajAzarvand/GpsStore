@@ -92,16 +92,12 @@
         max-height: calc(100vh - 200px);
         overflow-y: auto;
         transition: all 0.3s ease;
-        opacity: 1;
-        visibility: visible;
     }
 
     .floating-form-overlay.collapsed .overlay-form-content {
         max-height: 0;
-        padding: 0;
+        padding: 0 20px;
         overflow: hidden;
-        opacity: 0;
-        visibility: hidden;
     }
 
     .overlay-form-content::-webkit-scrollbar {
@@ -763,118 +759,139 @@
     
         // Initialize Persian Date Pickers
         $('#startDate').persianDatepicker({
-            format: 'YYYY/MM/DD',
+            format: 'YYYY-MM-DD',
             initialValue: false,
             autoClose: true,
-            onSelect: function(unix) {
-               $('#startDate').attr('data-date', unix); 
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            },
+            navigator: {
+                enabled: true
+            },
+            toolbox: {
+                enabled: true
+            },
+            timePicker: {
+                enabled: false
             }
         });
 
         $('#endDate').persianDatepicker({
-            format: 'YYYY/MM/DD',
+            format: 'YYYY-MM-DD',
             initialValue: false,
             autoClose: true,
-            onSelect: function(unix) {
-               $('#endDate').attr('data-date', unix); 
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            },
+            navigator: {
+                enabled: true
+            },
+            toolbox: {
+                enabled: true
+            },
+            timePicker: {
+                enabled: false
             }
         });
 
-        // 2. Set default time values
+        // Set default time values
         const now = new Date();
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         $('#startTime').val('00:00');
         $('#endTime').val(hours + ':' + minutes);
 
-        // 3. Custom Select Dropdown Functionality
+        // Custom Select Dropdown Functionality
         const customSelect = document.getElementById('customDeviceSelect');
-        if (customSelect) {
-            const selectTrigger = customSelect.querySelector('.select-trigger');
-            const selectDropdown = customSelect.querySelector('.select-dropdown');
-            const selectedText = customSelect.querySelector('.selected-text');
-            const hiddenInput = document.getElementById('deviceSelect');
-            const searchInput = document.getElementById('deviceSearch');
-            const options = customSelect.querySelectorAll('.select-option');
+        const selectTrigger = customSelect.querySelector('.select-trigger');
+        const selectDropdown = customSelect.querySelector('.select-dropdown');
+        const selectedText = customSelect.querySelector('.selected-text');
+        const hiddenInput = document.getElementById('deviceSelect');
+        const searchInput = document.getElementById('deviceSearch');
+        const options = customSelect.querySelectorAll('.select-option');
 
-            // Toggle dropdown
-            selectTrigger.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                selectTrigger.classList.toggle('active');
-                selectDropdown.classList.toggle('active');
-                
-                if (selectDropdown.classList.contains('active')) {
-                    searchInput.focus();
-                }
+        // Toggle dropdown
+        selectTrigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            selectTrigger.classList.toggle('active');
+            selectDropdown.classList.toggle('active');
+
+            if (selectDropdown.classList.contains('active')) {
+                searchInput.focus();
+            }
+        });
+
+        // Select option
+        options.forEach(option => {
+            option.addEventListener('click', function () {
+                const value = this.getAttribute('data-value');
+                const text = this.querySelector('span').textContent;
+
+                // Update hidden input
+                hiddenInput.value = value;
+
+                // Update display text
+                selectedText.textContent = text;
+                selectedText.classList.remove('placeholder');
+
+                // Update selected state
+                options.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+
+                // Close dropdown
+                selectTrigger.classList.remove('active');
+                selectDropdown.classList.remove('active');
+
+                // Clear search
+                searchInput.value = '';
+                options.forEach(opt => opt.classList.remove('hidden'));
             });
+        });
 
-            // Select option
+        // Search functionality
+        searchInput.addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase().trim();
+
             options.forEach(option => {
-                option.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    const value = this.getAttribute('data-value');
-                    const text = this.querySelector('span').textContent;
-
-                    // Update hidden input
-                    hiddenInput.value = value;
-
-                    // Update display text
-                    selectedText.textContent = text;
-                    selectedText.classList.remove('placeholder');
-
-                    // Update selected state
-                    options.forEach(opt => opt.classList.remove('selected'));
-                    this.classList.add('selected');
-
-                    // Close dropdown
-                    selectTrigger.classList.remove('active');
-                    selectDropdown.classList.remove('active');
-
-                    // Clear search
-                    searchInput.value = '';
-                    options.forEach(opt => opt.classList.remove('hidden'));
-                });
-            });
-
-            // Search functionality
-            searchInput.addEventListener('input', function () {
-                const searchTerm = this.value.toLowerCase().trim();
-                options.forEach(option => {
-                    const text = option.querySelector('span').textContent.toLowerCase();
-                    if (text.includes(searchTerm)) {
-                        option.classList.remove('hidden');
-                    } else {
-                        option.classList.add('hidden');
-                    }
-                });
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function (e) {
-                if (!customSelect.contains(e.target)) {
-                    selectTrigger.classList.remove('active');
-                    selectDropdown.classList.remove('active');
+                const text = option.querySelector('span').textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    option.classList.remove('hidden');
+                } else {
+                    option.classList.add('hidden');
                 }
             });
-            
-            // Prevent close on dropdown click
-            selectDropdown.addEventListener('click', function(e) { e.stopPropagation(); });
-        }
+        });
 
-        // 4. Toggle form collapse
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!customSelect.contains(e.target)) {
+                selectTrigger.classList.remove('active');
+                selectDropdown.classList.remove('active');
+            }
+        });
+
+        // Prevent dropdown close when clicking inside
+        selectDropdown.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+
+        // Toggle form collapse
         const toggleFormBtn = document.getElementById('toggleFormBtn');
         const floatingFormOverlay = document.querySelector('.floating-form-overlay');
 
-        if (toggleFormBtn && floatingFormOverlay) {
+        if (toggleFormBtn) {
             toggleFormBtn.addEventListener('click', function (e) {
-                e.preventDefault();
                 e.stopPropagation();
                 floatingFormOverlay.classList.toggle('collapsed');
             });
         }
 
-        // 5. Close sidebar
+
+        // Close sidebar
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
         const resultsSidebar = document.getElementById('resultsSidebar');
 
@@ -884,95 +901,79 @@
             });
         }
 
-        // 6. Display route on map if report data exists
+        // Display route on map if report data exists
         {% if report_data %}
         const routePoints = [
             {% for record in report_data %}
             {
             lat: {{ record.latitude }},
-            lng: {{ record.longitude }},
-            time: '{{ record.shamsi_timestamp }}',
-            speed: {{ record.speed }},
-            direction: {{ record.direction }}
+        lng: {{ record.longitude }},
+        time: '{{ record.shamsi_timestamp }}',
+        speed: {{ record.speed }},
+        direction: {{ record.direction }}
             }{% if not forloop.last %}, {% endif %}
-            {% endfor %}
+    {% endfor %}
         ];
 
-        if (routePoints.length > 0 && typeof L !== 'undefined' && window.map) {
-            // Create polyline for route
-            const latlngs = routePoints.map(p => [p.lat, p.lng]);
-            const polyline = L.polyline(latlngs, {
-                color: '#4361ee',
-                weight: 4,
-                opacity: 0.7,
-                smoothFactor: 1
-            }).addTo(window.map);
+    if (routePoints.length > 0) {
+        // Create polyline for route
+        const latlngs = routePoints.map(p => [p.lat, p.lng]);
+        const polyline = L.polyline(latlngs, {
+            color: '#4361ee',
+            weight: 4,
+            opacity: 0.7,
+            smoothFactor: 1
+        }).addTo(map);
 
-            // Add markers
-            const startIcon = L.divIcon({
-                className: 'custom-marker',
-                html: '<div style="background: #22c55e; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-play"></i></div>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-            
-             const endIcon = L.divIcon({
-                className: 'custom-marker',
-                html: '<div style="background: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-stop"></i></div>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
+        // Add markers for start and end points
+        const startIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background: #22c55e; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-play"></i></div>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
 
-            L.marker([routePoints[0].lat, routePoints[0].lng], { icon: startIcon })
-                .addTo(window.map)
-                .bindPopup('<b>شروع مسیر</b><br>' + routePoints[0].time);
+        const endIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-stop"></i></div>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
 
-            L.marker([routePoints[routePoints.length - 1].lat, routePoints[routePoints.length - 1].lng], { icon: endIcon })
-                .addTo(window.map)
-                .bindPopup('<b>پایان مسیر</b><br>' + routePoints[routePoints.length - 1].time);
+        L.marker([routePoints[0].lat, routePoints[0].lng], { icon: startIcon })
+            .addTo(map)
+            .bindPopup('<b>شروع مسیر</b><br>' + routePoints[0].time);
 
-            // Fit map
-            window.map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
-            
-            // Point click handlers
-            const pointItems = document.querySelectorAll('.point-item');
-            pointItems.forEach(item => {
-                item.addEventListener('click', function () {
-                    const lat = parseFloat(this.getAttribute('data-lat'));
-                    const lng = parseFloat(this.getAttribute('data-lng'));
-                    window.map.setView([lat, lng], 16);
+        L.marker([routePoints[routePoints.length - 1].lat, routePoints[routePoints.length - 1].lng], { icon: endIcon })
+            .addTo(map)
+            .bindPopup('<b>پایان مسیر</b><br>' + routePoints[routePoints.length - 1].time);
 
-                    pointItems.forEach(p => p.style.background = 'rgba(255, 255, 255, 0.05)');
-                    this.style.background = 'rgba(72, 149, 239, 0.2)';
-                });
-            });
-        }
-        {% endif %}
+        // Fit map to route bounds
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+    }
 
-        // 7. Form submission with validation
-        $('#reportForm').on('submit', function (e) {
-            const deviceValue = $('#deviceSelect').val();
-            if (!deviceValue) { e.preventDefault(); alert('لطفاً یک دستگاه انتخاب کنید'); return false; }
+    // Point item click to center map
+    const pointItems = document.querySelectorAll('.point-item');
+    pointItems.forEach(item => {
+        item.addEventListener('click', function () {
+            const lat = parseFloat(this.getAttribute('data-lat'));
+            const lng = parseFloat(this.getAttribute('data-lng'));
+            map.setView([lat, lng], 16);
 
-            const startDate = $('#startDate').val();
-            if (!startDate) { e.preventDefault(); alert('لطفاً تاریخ شروع را انتخاب کنید'); return false; }
-
-            const startTime = $('#startTime').val();
-            if (!startTime) { e.preventDefault(); alert('لطفاً ساعت شروع را وارد کنید'); return false; }
-
-            const endDate = $('#endDate').val();
-            if (!endDate) { e.preventDefault(); alert('لطفاً تاریخ پایان را انتخاب کنید'); return false; }
-
-            const endTime = $('#endTime').val();
-            if (!endTime) { e.preventDefault(); alert('لطفاً ساعت پایان را وارد کنید'); return false; }
-
-            // Show loading
-            const btn = $('.submit-btn-overlay');
-            btn.html('<i class="fas fa-spinner fa-spin"></i> <span>در حال بارگذاری...</span>');
-            btn.css('pointer-events', 'none');
+            // Highlight this point
+            pointItems.forEach(p => p.style.background = 'rgba(255, 255, 255, 0.05)');
+            this.style.background = 'rgba(72, 149, 239, 0.2)';
         });
     });
+    {% endif %}
 
+    // Form submission
+    $('#reportForm').on('submit', function () {
+        const btn = $('.submit-btn-overlay');
+        btn.html('<i class="fas fa-spinner fa-spin"></i> <span>در حال بارگذاری...</span>');
+        btn.css('pointer-events', 'none');
+    });
+    });
 </script>
 
 {% endblock %}
