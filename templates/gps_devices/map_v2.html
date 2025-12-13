@@ -560,22 +560,7 @@
             }
         }
 
-        function toggleTheme() {
-            document.body.classList.toggle('light-theme');
-            const isLight = document.body.classList.contains('light-theme');
-            const themeText = document.querySelector('.theme-switcher span');
-            const themeIcon = document.querySelector('.theme-icon');
 
-            if (isLight) {
-                themeText.textContent = 'تم روشن';
-                themeIcon.className = 'fas fa-sun theme-icon';
-            }
-
-            else {
-                themeText.textContent = 'تم تیره';
-                themeIcon.className = 'fas fa-moon theme-icon';
-            }
-        }
 
         function closeBottomDevicePanel() {
             const panel = document.getElementById('bottomDevicePanel');

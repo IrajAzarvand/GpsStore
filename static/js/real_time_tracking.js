@@ -222,7 +222,9 @@ function toggleFullscreen() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function () {
-    initMap();
+    if (document.getElementById('map')) {
+        initMap();
+    }
 
     // Control buttons
     document.getElementById('btn-start').addEventListener('click', function (e) {

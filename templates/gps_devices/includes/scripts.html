@@ -1,5 +1,6 @@
 {% load static %}
-<script src="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js"></script>
+<!-- <script src="https://static.neshan.org/sdk/leaflet/v1.9.4/neshan-sdk/v1.0.8/index.js"></script> -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
     const ACCESS_TOKEN = '{{ access_token }}';
@@ -65,12 +66,26 @@
     let neshanLayer, osmLayer;
 
     function initMap() {
+        if (map) return; // Prevent re-initialization
+
+        const mapContainer = document.getElementById('mainMap');
+        if (!mapContainer) {
+            console.error("Map container 'mainMap' not found.");
+            return;
+        }
+
         console.log('Initializing map with OSM as default layer');
-        map = L.map('mainMap').setView([35.6892, 51.3890], 11);
+        try {
+            map = L.map(mapContainer).setView([35.6892, 51.3890], 11);
+        } catch (e) {
+            console.error("Error initializing map:", e);
+            return;
+        }
+
         map.zoomControl = false; // We use custom controls
         map.options.inertia = false; // برای جلوگیری از کشیده‌شدن ناخواسته
 
-        // Create OSM layer and add it as default
+        // OSM layer ENABLED for test
         osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
@@ -195,17 +210,3 @@
     }
 </script>
 
-<script>
-    //report page scripts
-    $(".datepicker").persianDatepicker({
-        format: 'YYYY/MM/DD',
-    });
-
-    $(".timepicker").persianDatepicker({
-        format: "HH:mm",
-        timePicker: {
-            enabled: true,
-            meridiem: { enabled: false }
-        }
-    });
-</script>
