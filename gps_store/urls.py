@@ -19,6 +19,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Set custom admin index template
+admin.site.index_template = 'admin_panel/index.html'
+
 urlpatterns = [
     path('admin/backups/', include('apps.admin_panel.urls')),
     path('admin/', admin.site.urls),

@@ -1,0 +1,18 @@
+{% extends "admin/index.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div class="module" style="margin-bottom: 20px; background: #fff; padding: 15px; border: 1px solid #eaeaea; border-radius: 4px;">
+    <h2 style="margin-top: 0; color: #666; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px;">{% trans "System Management" %}</h2>
+    <ul class="actionlist">
+        <li style="list-style: none; margin-bottom: 5px;">
+            <a href="{% url 'backup_restore' %}" style="display: flex; align-items: center; text-decoration: none; color: #444;">
+                <span style="font-size: 18px; margin-right: 10px; color: #79aec8;">📂</span>
+                <span style="font-weight: bold;">{% trans "Database Backups & Restore" %}</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+{{ block.super }}
+{% endblock %}
