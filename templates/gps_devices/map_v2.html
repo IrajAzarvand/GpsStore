@@ -3,7 +3,7 @@
 {% block content %}
 <div class="map-container">
     {% include "gps_devices/includes/map_container.html" %}
-    {% include "gps_devices/includes/map_controls.html" with show_map_select=True %}
+    {% include "gps_devices/includes/map_controls.html" %}
     <!-- Sidebar Overlay -->
     {% include "gps_devices/includes/sidebar.html" %}
     <!-- Show Sidebar Button -->
@@ -312,6 +312,9 @@
          function onMapReady() {
              initWebSocket();
          }
+
+          // Create markers for initial data
+        createMarkers();
 
         function handleDeviceUpdate(data) {
             // Normalize data
@@ -701,10 +704,5 @@
             }
         }
 </script>
-<!-- اگر کد decodePolyline هم مخصوص نقشه هست، اون رو هم بیار اینجا -->
-<script>
-    function decodePolyline(encoded) {
-        // ...
-    }
-</script>
+
 {% endblock %}

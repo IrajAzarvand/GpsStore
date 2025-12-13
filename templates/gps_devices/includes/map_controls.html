@@ -2,10 +2,10 @@
     <button class="control-btn" title="بزرگنمایی" onclick="map.zoomIn()"><i class="fas fa-plus"></i></button>
     <button class="control-btn" title="کوچکنمایی" onclick="map.zoomOut()"><i class="fas fa-minus"></i></button>
     <button class="control-btn" title="موقعیت من" onclick="locateUser()"><i class="fas fa-crosshairs"></i></button>
-    {% if show_map_select %}
+    
     <select id="mapSelect" onchange="switchMapLayer(this.value)">
         <option value="osm" selected>OpenStreetMap</option>
         <option value="neshan">Neshan</option>
     </select>
-    {% endif %}
+   
 </div>
