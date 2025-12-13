@@ -1,0 +1,109 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .backup-container { padding: 20px; }
+    .section { margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .section h2 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; color: #666; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; font-weight: 600; color: #444; }
+    .btn { display: inline-block; padding: 8px 16px; border-radius: 4px; text-decoration: none; cursor: pointer; border: none; font-size: 14px; transition: background 0.2s; }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #218838; }
+    .actions { display: flex; gap: 10px; }
+    .upload-box { border: 2px dashed #ddd; padding: 30px; text-align: center; border-radius: 4px; background: #fafafa; }
+    .empty-state { padding: 30px; text-align: center; color: #888; background: #f9f9f9; border-radius: 4px; }
+    /* RTL Support */
+    body[dir="rtl"] th, body[dir="rtl"] td { text-align: right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="backup-container">
+    <h1>{% trans "Database Backup & Restore" %}</h1>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div style="padding: 15px; margin-bottom: 20px; border-radius: 4px; color: white; background: {% if message.tags == 'success' %}#28a745{% else %}#dc3545{% endif %};">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Upload Section -->
+    <div class="section">
+        <h2>{% trans "Upload Backup" %}</h2>
+        <form method="post" enctype="multipart/form-data" class="upload-box">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="upload_restore">
+            <p style="margin-bottom: 15px;">{% trans "Upload a .sql or .sqlite3 file to restore immediately:" %}</p>
+            <input type="file" name="backup_file" accept=".sql,.sqlite3" required style="margin-bottom: 15px;">
+            <br>
+            <button type="submit" class="btn btn-primary" onclick="return confirm('{% trans "WARNING: This will overwrite the current database. Are you sure?" %}')">
+                <i class="fas fa-upload"></i> {% trans "Upload & Restore" %}
+            </button>
+        </form>
+    </div>
+
+    <!-- Create Backup Section -->
+    <div class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; border: none; padding: 0;">{% trans "Server Backups" %}</h2>
+            <form method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_backup">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-plus"></i> {% trans "Create New Backup" %}
+                </button>
+            </form>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            {% if backups %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% trans "Filename" %}</th>
+                        <th>{% trans "Size" %}</th>
+                        <th>{% trans "Created At" %}</th>
+                        <th>{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for backup in backups %}
+                    <tr>
+                        <td dir="ltr">{{ backup.name }}</td>
+                        <td dir="ltr">{{ backup.size }}</td>
+                        <td dir="ltr">{{ backup.created|date:"Y-m-d H:i:s" }}</td>
+                        <td>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="restore_backup">
+                                <input type="hidden" name="filename" value="{{ backup.name }}">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('{% trans "WARNING: This will overwrite the current database with version" %} {{ backup.name }}. {% trans "Are you sure?" %}')">
+                                    {% trans "Restore" %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                {% trans "No backups found on server." %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
