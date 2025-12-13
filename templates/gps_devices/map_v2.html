@@ -216,8 +216,9 @@
                             <div>${device.driver_name || '-'}</div>
                         </div>
                         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #eee; font-size: 0.85em; color: #888;">
-                            <div style="margin-bottom: 4px;"><i class="far fa-clock"></i>آخرین بروزرسانی: <span dir="ltr">${formatTime(device.last_update)}</span></div>
-                            <div><i class="fas fa-map-marker-alt"></i><span dir="ltr">${device.lat ? device.lat.toFixed(5) : '-'},${device.lng ? device.lng.toFixed(5) : '-'}</span></div>
+                            <div style="margin-bottom: 4px;"><i class="fas fa-map-marker-alt" style="color: #666; margin-left: 5px;"></i>${device.address || 'در حال دریافت آدرس...'}</div>
+                            <div style="margin-bottom: 4px;"><i class="far fa-clock"></i> آخرین بروزرسانی: <span dir="ltr">${formatTime(device.last_update)}</span></div>
+                            <div><i class="fas fa-crosshairs"></i> <span dir="ltr">${device.lat ? device.lat.toFixed(5) : '-'},${device.lng ? device.lng.toFixed(5) : '-'}</span></div>
                         </div>
                         <div style="margin-top: 10px; text-align: center;">
                             <span style="padding: 4px 12px; background: ${getStatusColor(device.status)};color: white;border-radius: 12px;font-size: 11px;font-weight: 600;">${getStatusText(device.status)}</span>

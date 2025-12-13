@@ -142,6 +142,10 @@ ENVIRONMENT=production
 NESHAN_MAP_API_KEY=web.67f5a720d42541cfae21115f05a637b5
 NESHAN_SERVICE_API_KEY=service.eb5fc1ef015e49d187f7abc8a208ce09
 
+# Reverse Geocoding
+NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org/reverse
+OPENCAGE_API_KEY=701355a7d3d84c66a6dec0e8817804b8
+
 # Superuser Configuration
 DJANGO_SUPERUSER_USERNAME=root
 DJANGO_SUPERUSER_PASSWORD=iraj66100

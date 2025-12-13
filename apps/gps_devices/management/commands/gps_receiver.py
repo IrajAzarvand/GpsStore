@@ -23,6 +23,7 @@ from apps.gps_devices.decoders.GT06_Decoder import GT06Decoder
 from apps.gps_devices.decoders.JT808_Decoder import JT808Decoder
 from apps.gps_devices.models import DeviceState, State
 from apps.gps_devices.models import MaliciousPattern
+from apps.gps_devices.services.reverse_geocoding import ReverseGeocodingService
 
 try:
     import paho.mqtt.client as mqtt
@@ -741,7 +742,28 @@ class GPSReceiver:
                         device.save()
                 
                 # Broadcast update if we saved location data
-                if should_save_location:
+                if should_save_location and location_data:
+                    # Async Reverse Geocoding
+                    def fetch_address_and_update(loc_id, lat, lon):
+                        try:
+                            # Re-fetch to ensure we have the latest object (though unnecessary if we just update fields)
+                            service = ReverseGeocodingService()
+                            address = service.get_address(lat, lon)
+                            if address:
+                                # Use filter().update() for atomic update or just save
+                                LocationData.objects.filter(id=loc_id).update(address=address)
+                                logger.info(f"Updated address for LocationData {loc_id}: {address[:30]}...")
+                                
+                                # Re-broadcast to show address on map immediately
+                                # We need to get the fresh location_data object
+                                updated_loc = LocationData.objects.get(id=loc_id)
+                                self.broadcast_device_update(device, speed=current_speed, heading=parsed_data.get('course'), location_data=updated_loc)
+                        except Exception as e:
+                            logger.error(f"Error in async reverse geocoding for {loc_id}: {e}")
+
+                    # Submit to thread pool
+                    self.thread_pool.submit(fetch_address_and_update, location_data.id, matched_lat, matched_lon)
+
                     self.broadcast_device_update(device, speed=current_speed, heading=parsed_data.get('course'), location_data=location_data)
 
                 # فقط اگر LocationData ذخیره شد، RawGpsData را حذف کن
@@ -1259,6 +1281,7 @@ class GPSReceiver:
                 'gsm_timestamp': gsm_ts.isoformat() if gsm_ts else None,
                 'gps_from_cache': gps_from_cache,
                 'gsm_from_cache': gsm_from_cache,
+                'address': getattr(location_data, 'address', '') if location_data else '', # Add address
             }
 
             # Send to admins group (they see all devices)

@@ -473,7 +473,11 @@ if not DEBUG and sentry_dsn and not sentry_dsn.startswith('your-'):
 NESHAN_MAP_API_KEY = os.getenv('NESHAN_MAP_API_KEY', '')
 NESHAN_SERVICE_API_KEY = os.getenv('NESHAN_SERVICE_API_KEY', '')
 
+# Reverse Geocoding Configuration
+NOMINATIM_BASE_URL = os.getenv('NOMINATIM_BASE_URL', 'https://nominatim.openstreetmap.org/reverse')
+OPENCAGE_API_KEY = os.getenv('OPENCAGE_API_KEY', '701355a7d3d84c66a6dec0e8817804b8')
+
 import logging
-logging.info("Test log from settings.py")
+logger.info("Test log from settings.py")
 print("Settings file loaded. LOGGING is configured:", bool(LOGGING))
 

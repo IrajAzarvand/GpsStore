@@ -84,9 +84,33 @@ services:
     networks:
       - GpsStore
 
+  # Nominatim (Self-hosted Reverse Geocoding)
+  # To enable local hosting for Iran maps:
+  # 1. Uncomment the service below
+  # 2. Setup requires initial import (takes time/resources)
+  # 3. Update settings.py: NOMINATIM_BASE_URL=http://nominatim:8080/reverse
+  # nominatim:
+  #   image: mediagis/nominatim:4.4
+  #   container_name: nominatim
+  #   restart: always
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     # Download Iran map data automatically on first start
+  #     - PBF_URL=https://download.geofabrik.de/asia/iran-latest.osm.pbf
+  #     - REPLICATION_URL=https://download.geofabrik.de/asia/iran-updates
+  #     - IMPORT_STYLE=address
+  #     - THREADS=4
+  #   volumes:
+  #     - nominatim_data:/var/lib/postgresql/14/main
+  #   networks:
+  #     - GpsStore
+  #   shm_size: 1gb
+
 volumes:
   postgres_data:
   redis_data:
+  nominatim_data:
 
 
 networks:
