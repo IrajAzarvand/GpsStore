@@ -126,11 +126,28 @@ def report(request):
         end_date = request.POST.get('end_date')
         end_time = request.POST.get('end_time')
 
-        # Parse Shamsi dates and times, convert to Gregorian
-        start_jdt = jdatetime.datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-        end_jdt = jdatetime.datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
-        start_datetime = timezone.make_aware(start_jdt.togregorian())
-        end_datetime = timezone.make_aware(end_jdt.togregorian())
+        # Validate all required fields
+        if not selected_devices:
+            context['error'] = 'لطفاً یک دستگاه انتخاب کنید'
+            return render(request, 'gps_devices/report.html', context)
+        
+        if not start_date or not start_time:
+            context['error'] = 'لطفاً تاریخ و ساعت شروع را وارد کنید'
+            return render(request, 'gps_devices/report.html', context)
+        
+        if not end_date or not end_time:
+            context['error'] = 'لطفاً تاریخ و ساعت پایان را وارد کنید'
+            return render(request, 'gps_devices/report.html', context)
+
+        try:
+            # Parse Shamsi dates and times, convert to Gregorian
+            start_jdt = jdatetime.datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+            end_jdt = jdatetime.datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
+            start_datetime = timezone.make_aware(start_jdt.togregorian())
+            end_datetime = timezone.make_aware(end_jdt.togregorian())
+        except ValueError as e:
+            context['error'] = f'فرمت تاریخ یا زمان نامعتبر است: {str(e)}'
+            return render(request, 'gps_devices/report.html', context)
 
         # Query LocationData
         report_data = LocationData.objects.filter(
