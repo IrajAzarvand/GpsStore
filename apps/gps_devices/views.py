@@ -182,23 +182,100 @@ def report(request):
             return render(request, 'gps_devices/report.html', context)
 
         # Query LocationData
-        report_data = LocationData.objects.filter(
+        report_qs = LocationData.objects.filter(
             device_id__in=selected_devices,
             created_at__range=(start_datetime, end_datetime)
         ).order_by('created_at')
 
-        # Prepare report data with Shamsi timestamps
-        report_list = []
-        for loc in report_data:
+        # Process data into daily groups with stats
+        from collections import defaultdict
+        from geopy.distance import geodesic
+
+        daily_groups = defaultdict(lambda: {
+            'points': [],
+            'stats': {
+                'max_speed': 0,
+                'total_speed': 0,
+                'count': 0,
+                'distance': 0.0,
+                'move_count': 0,
+                'stop_count': 0
+            }
+        })
+
+        last_point = None
+        
+        for loc in report_qs:
             shamsi_dt = jdatetime.datetime.fromgregorian(datetime=loc.created_at)
-            report_list.append({
+            date_str = shamsi_dt.strftime('%Y-%m-%d')
+            time_str = shamsi_dt.strftime('%H:%M:%S')
+            
+            # Status
+            status = determine_device_status(loc)
+            
+            # Point Data
+            point_data = {
                 'shamsi_timestamp': shamsi_dt.strftime('%Y-%m-%d %H:%M:%S'),
+                'shamsi_date': date_str,
+                'shamsi_time': time_str,
                 'latitude': loc.latitude,
                 'longitude': loc.longitude,
                 'speed': loc.speed,
                 'direction': loc.heading,
+                'altitude': loc.altitude,
+                'satellites': loc.satellites,
+                'battery': loc.battery_level,
+                'signal': loc.signal_strength,
+                'status': status,
+                'address': clean_and_format_address(loc.address) if loc.address else 'آدرس نامشخص',
+                'raw_timestamp': loc.created_at.timestamp()
+            }
+            
+            group = daily_groups[date_str]
+            group['points'].append(point_data)
+            
+            # Update Stats
+            group['stats']['max_speed'] = max(group['stats']['max_speed'], loc.speed)
+            group['stats']['total_speed'] += loc.speed
+            group['stats']['count'] += 1
+            if status == 'moving':
+                group['stats']['move_count'] += 1
+            else:
+                group['stats']['stop_count'] += 1
+                
+            # Distance Calculation
+            if last_point:
+                # Only add distance if same day (optional, but usually sequential)
+                dist = geodesic((last_point.latitude, last_point.longitude), (loc.latitude, loc.longitude)).kilometers
+                # Filter noise: ignore very small movements if speed is 0
+                if dist > 0.005: # > 5 meters
+                    group['stats']['distance'] += dist
+            
+            last_point = loc
+
+        # Finalize Groups
+        final_report_data = []
+        # Sort by date
+        sorted_dates = sorted(daily_groups.keys())
+        
+        for date in sorted_dates:
+            group = daily_groups[date]
+            count = group['stats']['count']
+            avg_speed = group['stats']['total_speed'] / count if count > 0 else 0
+            
+            final_report_data.append({
+                'date': date,
+                'stats': {
+                    'max_speed': round(group['stats']['max_speed'], 1),
+                    'avg_speed': round(avg_speed, 1),
+                    'distance': round(group['stats']['distance'], 2),
+                    'total_points': count,
+                    'move_percent': round((group['stats']['move_count'] / count * 100), 0) if count > 0 else 0
+                },
+                'points': group['points']
             })
-        context['report_data'] = report_list
+
+        context['report_data'] = final_report_data # This is now a list of daily objects
 
     return render(request, 'gps_devices/report.html', context)
 
