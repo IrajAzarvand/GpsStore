@@ -190,19 +190,19 @@
     }
 
     .select-trigger {
-        padding: 10px 12px;
+        padding: 14px 40px; /* Increased padding */
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
+        border-radius: 12px; /* Slightly more rounded */
         color: white;
-        font-size: 0.85rem;
+        font-size: 1rem; /* Larger font */
         font-family: 'Vazirmatn', sans-serif;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: space-between;
         transition: all 0.3s ease;
-        min-height: 38px;
+        min-height: 50px; /* Larger height */
     }
 
     .select-trigger:hover {
@@ -219,6 +219,7 @@
     .selected-text {
         flex: 1;
         color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
     }
 
     .selected-text.placeholder {
@@ -228,7 +229,7 @@
     .select-trigger i {
         color: #4895ef;
         transition: transform 0.3s ease;
-        font-size: 0.75rem;
+        font-size: 0.9rem;
     }
 
     .select-trigger.active i {
@@ -239,7 +240,9 @@
         position: absolute;
         top: calc(100% + 8px);
         left: 0;
-        right: 0;
+        width: 100%; /* Ensure full width matches parent */
+        min-width: 100%; /* Prevent shrinking */
+        box-sizing: border-box; /* Include padding/border in width */
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -760,7 +763,7 @@
         // Initialize Persian Date Pickers
         $('#startDate').persianDatepicker({
             format: 'YYYY-MM-DD',
-            initialValue: false,
+            initialValue: true,
             autoClose: true,
             calendar: {
                 persian: {
@@ -780,7 +783,7 @@
 
         $('#endDate').persianDatepicker({
             format: 'YYYY-MM-DD',
-            initialValue: false,
+            initialValue: true,
             autoClose: true,
             calendar: {
                 persian: {
