@@ -658,15 +658,13 @@
     .chart-card.overview-card .card-badge { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 
     /* Timeline Card Special Styling */
-    /* Timeline Redesign */
-    /* Timeline Redesign - High Visibility Fix */
+    /* Timeline Redesign - Proportional Timeline */
     .timeline-container {
         position: relative;
-        padding-right: 20px; /* Safe distance */
-        padding-left: 10px;
-        height: 100%;
+        padding: 20px 0;
+        height: 400px;
         overflow-y: auto;
-        overflow-x: hidden; /* Prevent horizontal scrollbars */
+        overflow-x: hidden;
     }
 
     .timeline-container::-webkit-scrollbar {
@@ -678,77 +676,199 @@
         border-radius: 2px;
     }
 
-    /* The Vertical Line */
+    /* Time Axis (Right Column) */
+    .timeline-axis {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 50px;
+        z-index: 1;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .timeline-hour-marker {
+        position: absolute;
+        right: 0;
+        width: 100%;
+        height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .timeline-hour-label {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.5);
+        background: rgba(15, 23, 42, 0.9);
+        padding: 2px 5px;
+        border-radius: 4px;
+        transform: translateY(-50%);
+    }
+
+    /* The Main Vertical Line */
     .timeline-line {
         position: absolute;
         top: 0;
         bottom: 0;
-        right: 8px; /* Fixed position from right */
+        right: 50px; /* Aligned with axis border */
         width: 2px;
-        background: rgba(139, 92, 246, 0.6); /* Visible purple */
-        z-index: 5;
-        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 2;
     }
 
+    /* Connecting Lines (Active segments) */
+    .timeline-connector {
+        position: absolute;
+        right: 50px; /* Aligned with main line */
+        width: 2px;
+        background: #4895ef;
+        z-index: 3;
+        opacity: 0.8;
+    }
+
+    /* Timeline Event Items */
     .timeline-item {
-        position: relative;
-        margin-bottom: 24px;
-        padding-right: 20px; /* Space between dot and text */
-        cursor: pointer;
-        transition: transform 0.2s;
-        z-index: 6; /* Above line */
+        position: absolute;
+        right: 70px; /* Start after the line */
+        width: calc(100% - 80px);
+        padding-right: 0;
+        z-index: 10;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateX(10px);
+    }
+
+    .timeline-item.visible {
+        opacity: 1;
+        transform: translateX(0);
     }
 
     .timeline-item:hover {
-        transform: translateX(-4px);
+        transform: translateX(-5px);
+        z-index: 20;
     }
 
-    /* The Dot */
+    /* Dots */
     .timeline-dot {
         position: absolute;
-        top: 5px;
-        right: -17px; /* (Padding 20) - (DotWidth 12 / 2) - (LineRight 8) ?? No.
-                         Relative to ITEM. Item right edge is 20px from container.
-                         Line is 8px from container.
-                         So Line is 12px from Item right edge.
-                         Dot center should be at 12px.
-                         right: -18px places it roughly there.
-                      */
-        right: -16px;
-        width: 10px;
-        height: 10px;
-        background: #0f172a;
-        border: 2px solid #8b5cf6;
+        top: 12px; /* Fixed top offset */
+        right: -26px; /* (70 - 50 = 20), plus center adjust. Width 12. Center 6. 
+                         Target is 20px right of item edge. 
+                         right: -20px - 6px = -26px */
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        z-index: 10;
-        box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+        background: #0f172a;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 0 4px rgba(30, 41, 59, 0.8); /* Gap effect */
+        z-index: 15;
+        transition: all 0.2s ease;
+    }
+
+    .timeline-dot.moving { background: #10b981; border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+    .timeline-dot.parked { background: #f59e0b; border-color: #f59e0b; }
+    .timeline-dot.idle { background: #06b6d4; border-color: #06b6d4; }
+    .timeline-dot.alert { background: #ef4444; border-color: #ef4444; animation: pulse 1.5s infinite; }
+    .timeline-dot.offline { background: #64748b; border-color: #64748b; }
+
+    .timeline-item:hover .timeline-dot {
+        transform: scale(1.2);
+        box-shadow: 0 0 15px currentColor;
+    }
+        background: #64748b;
+        color: #64748b;
+        width: 8px;
+        height: 8px;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
     }
 
     .timeline-item:hover .timeline-dot {
-        background: #8b5cf6;
-        box-shadow: 0 0 12px rgba(139, 92, 246, 0.8);
+        transform: translateY(-50%) scale(1.3);
+        box-shadow: 0 0 15px currentColor;
+    }
+
+    .timeline-content {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 8px 12px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .timeline-item:hover .timeline-content {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
 
     .timeline-time {
         font-family: 'Vazirmatn', sans-serif;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         font-weight: 700;
         color: #e2e8f0;
-        margin-bottom: 2px;
-    }
-
-    .timeline-details {
-        font-family: 'Vazirmatn', sans-serif;
-        font-size: 0.75rem;
-        color: #94a3b8;
+        margin-bottom: 4px;
         display: flex;
         align-items: center;
         gap: 6px;
     }
 
-    .timeline-details i {
+    .timeline-time i {
         font-size: 0.7rem;
         opacity: 0.7;
+    }
+
+    .timeline-details {
+        font-family: 'Vazirmatn', sans-serif;
+        font-size: 0.7rem;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .timeline-details i {
+        font-size: 0.65rem;
+        opacity: 0.7;
+    }
+
+    .status-badge {
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-badge.moving {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+    }
+
+    .status-badge.parked {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+    }
+
+    .status-badge.idle {
+        background: rgba(6, 182, 212, 0.2);
+        color: #06b6d4;
+    }
+
+    .status-badge.alert {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+
+    .status-badge.offline {
+        background: rgba(100, 116, 139, 0.2);
+        color: #64748b;
     }
 
     /* Responsive */
@@ -1107,27 +1227,51 @@
                     <div class="card-badge">{{ day.points|length }} رویداد</div>
                 </div>
                 <div class="card-body">
-                    <div class="timeline-container">
+                    <div class="timeline-container" id="timeline-{{ day.date }}">
+                        <div class="timeline-axis"></div>
                         <div class="timeline-line"></div>
                         {% for record in day.points %}
                         <div class="timeline-item" onclick="focusOnPoint(this, {{ record.latitude }}, {{ record.longitude }})"
-                            data-lat="{{ record.latitude }}" data-lng="{{ record.longitude }}">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-time">{{ record.shamsi_time }}</div>
-                            <div class="timeline-details">
-                                <span dir="ltr" style="display:inline-flex; align-items:center; gap:4px;">
-                                    {{ record.speed|floatformat:0 }} km/h <i class="fas fa-tachometer-alt"></i>
-                                </span>
-                                <span style="margin: 0 6px; color: rgba(255,255,255,0.3);">|</span>
-                                <span class="status-text {{ record.status }}">
+                            data-lat="{{ record.latitude }}" data-lng="{{ record.longitude }}"
+                            data-timestamp="{{ record.raw_timestamp }}" data-status="{{ record.status }}">
+                            <div class="timeline-dot {{ record.status }}"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-time">
                                     {% if record.status == 'moving' %}
-                                    درحال حرکت
+                                    <i class="fas fa-running"></i>
                                     {% elif record.status == 'parked' %}
-                                    پارک شده
+                                    <i class="fas fa-parking"></i>
+                                    {% elif record.status == 'idle' %}
+                                    <i class="fas fa-pause-circle"></i>
+                                    {% elif record.status == 'alert' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
                                     {% else %}
-                                    {{ record.status }}
+                                    <i class="fas fa-question-circle"></i>
                                     {% endif %}
-                                </span>
+                                    {{ record.shamsi_time }}
+                                </div>
+                                <div class="timeline-details">
+                                    <span class="status-badge {{ record.status }}">
+                                        {% if record.status == 'moving' %}
+                                        حرکت
+                                        {% elif record.status == 'parked' %}
+                                        پارک
+                                        {% elif record.status == 'idle' %}
+                                        بی‌کار
+                                        {% elif record.status == 'alert' %}
+                                        هشدار
+                                        {% else %}
+                                        {{ record.status }}
+                                        {% endif %}
+                                    </span>
+                                    <span dir="ltr" style="display:inline-flex; align-items:center; gap:4px;">
+                                        {{ record.speed|floatformat:0 }} km/h <i class="fas fa-tachometer-alt"></i>
+                                    </span>
+                                    {% if record.address and record.address != 'آدرس نامشخص' %}
+                                    <span style="margin: 0 6px; color: rgba(255,255,255,0.3);">|</span>
+                                    <span class="addr-preview">{{ record.address }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
@@ -1359,6 +1503,96 @@
     {% endif %}
 
 
+    // Initialize Timeline Function
+    function initializeTimeline(dayDate) {
+        const container = document.getElementById('timeline-' + dayDate);
+        if (!container) return;
+
+        const items = container.querySelectorAll('.timeline-item');
+        if (items.length === 0) return;
+
+        // Get timestamps
+        const timestamps = Array.from(items).map(item => parseFloat(item.dataset.timestamp));
+        const minTs = Math.min(...timestamps);
+        const maxTs = Math.max(...timestamps);
+        const timeRange = maxTs - minTs;
+
+        const containerHeight = container.clientHeight || 400; // Fallback height
+        const paddedHeight = containerHeight - 60; // Padding top/bottom
+
+        // Clear existing connectors
+        container.querySelectorAll('.timeline-connector').forEach(el => el.remove());
+
+        // Position items
+        items.forEach((item, index) => {
+            let position = 0;
+            if (timeRange > 0) {
+                 const ts = parseFloat(item.dataset.timestamp);
+                 position = ((ts - minTs) / timeRange) * paddedHeight + 20; // +20 top padding
+            } else {
+                position = index * 60 + 20; // Fallback spread if all same time
+            }
+
+            item.style.top = position + 'px';
+            item.classList.add('visible');
+
+            // Add connector to next item
+            if (index < items.length - 1) {
+                const nextItem = items[index + 1];
+                let nextPosition = 0;
+                
+                if (timeRange > 0) {
+                    const nextTs = parseFloat(nextItem.dataset.timestamp);
+                    nextPosition = ((nextTs - minTs) / timeRange) * paddedHeight + 20;
+                } else {
+                    nextPosition = (index + 1) * 60 + 20;
+                }
+
+                const connector = document.createElement('div');
+                connector.className = 'timeline-connector';
+                
+                // Dot is at top: 12px (CSS). Height 12px. Center at 18px relative to item.
+                // Connector starts at item.top + 18px.
+                // Connector ends at nextItem.top + 18px.
+                const dotCenterOffset = 18; 
+                
+                connector.style.top = (position + dotCenterOffset) + 'px';
+                connector.style.height = (nextPosition - position) + 'px';
+                container.appendChild(connector);
+            }
+        });
+
+        // Add hour markers
+        const axis = container.querySelector('.timeline-axis');
+        axis.innerHTML = '';
+        
+        if (timeRange > 0) {
+            const startDate = new Date(minTs * 1000);
+            const endDate = new Date(maxTs * 1000);
+            const startHour = startDate.getHours();
+            const endHour = endDate.getHours();
+            
+            // Limit markers if range is too large
+            const step = (endHour - startHour) > 12 ? 2 : 1;
+
+            for (let hour = startHour; hour <= endHour; hour += step) {
+                const hourDate = new Date(startDate);
+                hourDate.setHours(hour, 0, 0, 0);
+                const hourTs = hourDate.getTime() / 1000;
+
+                if (hourTs >= minTs && hourTs <= maxTs) {
+                    const position = ((hourTs - minTs) / timeRange) * paddedHeight + 20;
+                    
+                    const marker = document.createElement('div');
+                    marker.className = 'timeline-hour-marker';
+                    marker.style.top = position + 'px';
+                    marker.innerHTML = `<span class="timeline-hour-label">${hour.toString().padStart(2, '0')}:00</span>`;
+                    axis.appendChild(marker);
+                }
+            }
+        }
+    }
+
     // Helper functions need to be global for onclick handlers
     window.scrollCharts = function(direction) {
         const container = document.getElementById('chartsContainer');
@@ -1560,6 +1794,24 @@
                 }
             })();
             {% endfor %}
+        {% endif %}
+
+        // Initialize Timelines after charts
+        {% if report_data %}
+        setTimeout(() => {
+            {% for day in report_data %}
+            initializeTimeline('{{ day.date }}');
+            {% endfor %}
+        }, 100); // Small delay to ensure DOM is ready
+
+        // Reinitialize on window resize
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                {% for day in report_data %}
+                initializeTimeline('{{ day.date }}');
+                {% endfor %}
+            }, 100);
+        });
         {% endif %}
 
         // Form submission
