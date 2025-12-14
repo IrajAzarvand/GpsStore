@@ -190,19 +190,23 @@
     }
 
     .select-trigger {
-        padding: 14px 40px; /* Increased padding */
+        padding: 14px 40px;
+        /* Increased padding */
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px; /* Slightly more rounded */
+        border-radius: 12px;
+        /* Slightly more rounded */
         color: white;
-        font-size: 1rem; /* Larger font */
+        font-size: 1rem;
+        /* Larger font */
         font-family: 'Vazirmatn', sans-serif;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: space-between;
         transition: all 0.3s ease;
-        min-height: 50px; /* Larger height */
+        min-height: 50px;
+        /* Larger height */
     }
 
     .select-trigger:hover {
@@ -240,9 +244,12 @@
         position: absolute;
         top: calc(100% + 8px);
         left: 0;
-        width: 100%; /* Ensure full width matches parent */
-        min-width: 100%; /* Prevent shrinking */
-        box-sizing: border-box; /* Include padding/border in width */
+        width: 100%;
+        /* Ensure full width matches parent */
+        min-width: 100%;
+        /* Prevent shrinking */
+        box-sizing: border-box;
+        /* Include padding/border in width */
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -386,17 +393,17 @@
         transform: translateY(0);
     }
 
-    /* Report Bottom Panel (Dashboard Design) */
+    /* Report Bottom Panel - Horizontal Scroll Dashboard */
     .report-bottom-panel {
         position: fixed;
         bottom: 20px;
         left: 20px;
         right: 20px;
-        height: 480px; /* Increased height for dashboard */
+        height: 270px;
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
+        border-radius: 16px;
         box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
         z-index: 900;
         display: flex;
@@ -410,56 +417,54 @@
         to { transform: translateY(0); opacity: 1; }
     }
 
-    /* Date Tabs Header */
-    .date-tabs-header {
-        height: 55px;
+    /* Panel Header */
+    .panel-header {
+        height: 50px;
         background: rgba(255, 255, 255, 0.05);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
-        padding: 0 10px;
-        gap: 10px;
+        justify-content: space-between;
+        padding: 0 20px;
         flex-shrink: 0;
     }
 
-    .date-tabs-scroll {
-        flex: 1;
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-        padding: 8px 0;
-        scrollbar-width: none;
-    }
-    .date-tabs-scroll::-webkit-scrollbar { display: none; }
-
-    .date-tab-btn {
-        padding: 6px 14px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        color: rgba(255, 255, 255, 0.6);
-        font-family: 'Vazirmatn', sans-serif;
-        cursor: pointer;
-        white-space: nowrap;
+    .panel-title {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 0.85rem;
-        transition: all 0.2s ease;
-    }
-
-    .date-tab-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; }
-    .date-tab-btn.active {
-        background: linear-gradient(135deg, #4361ee, #4895ef);
-        border-color: #4361ee;
+        gap: 12px;
         color: white;
+        font-size: 1rem;
+        font-weight: 600;
     }
 
-    .date-tab-btn .badge {
-        background: rgba(255, 255, 255, 0.2);
-        padding: 1px 5px;
-        border-radius: 4px;
-        font-size: 0.7rem;
+    .panel-title i {
+        color: #4895ef;
+        font-size: 1.1rem;
+    }
+
+    .panel-controls {
+        display: flex;
+        gap: 8px;
+    }
+
+    .panel-nav-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .panel-nav-btn:hover {
+        background: rgba(72, 149, 239, 0.2);
+        border-color: #4895ef;
     }
 
     .close-panel-btn {
@@ -473,142 +478,427 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.3s ease;
     }
-    .close-panel-btn:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; }
 
-    /* Content Area */
-    .date-content-area {
+    .close-panel-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+
+    /* Horizontal Scroll Container */
+    .charts-scroll-container {
         flex: 1;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .day-tab-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        height: 100%;
-    }
-
-    /* Daily Summary Summary */
-    .daily-summary-bar {
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 20px;
         display: flex;
         gap: 20px;
-        padding: 12px 20px;
-        background: rgba(0, 0, 0, 0.2);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        scroll-behavior: smooth;
+        scroll-snap-type: x proximity;
     }
 
-    .summary-item {
+    .charts-scroll-container::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .charts-scroll-container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+
+    .charts-scroll-container::-webkit-scrollbar-thumb {
+        background: rgba(72, 149, 239, 0.5);
+        border-radius: 4px;
+    }
+
+    .charts-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(72, 149, 239, 0.7);
+    }
+
+    /* Chart Card Base */
+    .chart-card {
+        min-width: 280px;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 12px;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        scroll-snap-align: start;
+        transition: all 0.3s ease;
     }
 
-    .summary-item .label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); }
-    .summary-item .value { font-size: 1rem; font-weight: 700; color: white; }
-    .summary-item .value small { font-size: 0.7rem; font-weight: 400; opacity: 0.7; }
+    .chart-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
 
-    /* Split View Container */
-    .split-view-container {
+    /* Wide cards for certain charts */
+    .chart-card.wide {
+        min-width: 400px;
+    }
+
+    .chart-card.extra-wide {
+        min-width: 550px;
+    }
+
+    /* Card Header */
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .card-title i {
+        font-size: 0.85rem;
+    }
+
+    .card-badge {
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Card Body */
+    .card-body {
         flex: 1;
         display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        min-height: 0; /* Crucial for scrolling inside flex */
         overflow: hidden;
     }
 
-    /* Left Column: Points List */
-    .points-list-scroll {
-        width: 300px;
-        overflow-y: auto;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(0, 0, 0, 0.1);
+    /* Canvas Container */
+    .chart-canvas-wrapper {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    /* Stats Grid for Overview Card */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+    }
+
+    .stat-item {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    .stat-item {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 8px;
         display: flex;
         flex-direction: column;
+        gap: 6px;
     }
-    .points-list-scroll::-webkit-scrollbar { width: 4px; }
-    .points-list-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
 
-    .compact-point-item {
-        padding: 10px 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        cursor: pointer;
+    .stat-label {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.6);
         display: flex;
         align-items: center;
-        gap: 12px;
-        transition: background 0.2s;
+        gap: 6px;
     }
-    .compact-point-item:hover { background: rgba(255, 255, 255, 0.05); }
-    .compact-point-item.active { background: rgba(72, 149, 239, 0.15); border-right: 3px solid #4895ef; }
 
-    .point-time { width: 60px; font-size: 0.85rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
-    .point-status-icon { font-size: 0.6rem; opacity: 0.8; }
-    .status-moving { color: #10b981; }
-    .status-stopped, .status-parked, .status-idle { color: #f59e0b; }
-    .status-alert { color: #ef4444; }
-    .status-offline { color: #64748b; }
+    .stat-label i {
+        font-size: 0.65rem;
+    }
 
-    .point-summary { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .point-summary .speed { font-size: 0.8rem; color: #4895ef; font-weight: 600; }
-    .point-summary .addr-preview { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+    }
 
-    /* Right Column: Detail Dashboard */
+    .stat-value small {
+        font-size: 0.7rem;
+        font-weight: 400;
+        opacity: 0.7;
+        margin-left: 4px;
+    }
+
+    /* Color variants for different card types */
+    .chart-card.speed-card .card-title i { color: #4895ef; }
+    .chart-card.speed-card .card-badge { background: rgba(72, 149, 239, 0.2); color: #4895ef; }
+
+    .chart-card.status-card .card-title i { color: #10b981; }
+    .chart-card.status-card .card-badge { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+    .chart-card.sensor-card .card-title i { color: #06b6d4; }
+    .chart-card.sensor-card .card-badge { background: rgba(6, 182, 212, 0.2); color: #06b6d4; }
+
+    .chart-card.vehicle-card .card-title i { color: #8b5cf6; }
+    .chart-card.vehicle-card .card-badge { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+
+    .chart-card.overview-card .card-title i { color: #f59e0b; }
+    .chart-card.overview-card .card-badge { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+    /* Timeline Card Special Styling */
+    /* Timeline Redesign */
+    /* Timeline Redesign - High Visibility Fix */
+    .timeline-container {
+        position: relative;
+        padding-right: 20px; /* Safe distance */
+        padding-left: 10px;
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden; /* Prevent horizontal scrollbars */
+    }
+
+    .timeline-container::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .timeline-container::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+    }
+
+    /* The Vertical Line */
+    .timeline-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 8px; /* Fixed position from right */
+        width: 2px;
+        background: rgba(139, 92, 246, 0.6); /* Visible purple */
+        z-index: 5;
+        border-radius: 2px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 24px;
+        padding-right: 20px; /* Space between dot and text */
+        cursor: pointer;
+        transition: transform 0.2s;
+        z-index: 6; /* Above line */
+    }
+
+    .timeline-item:hover {
+        transform: translateX(-4px);
+    }
+
+    /* The Dot */
+    .timeline-dot {
+        position: absolute;
+        top: 5px;
+        right: -17px; /* (Padding 20) - (DotWidth 12 / 2) - (LineRight 8) ?? No.
+                         Relative to ITEM. Item right edge is 20px from container.
+                         Line is 8px from container.
+                         So Line is 12px from Item right edge.
+                         Dot center should be at 12px.
+                         right: -18px places it roughly there.
+                      */
+        right: -16px;
+        width: 10px;
+        height: 10px;
+        background: #0f172a;
+        border: 2px solid #8b5cf6;
+        border-radius: 50%;
+        z-index: 10;
+        box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+    }
+
+    .timeline-item:hover .timeline-dot {
+        background: #8b5cf6;
+        box-shadow: 0 0 12px rgba(139, 92, 246, 0.8);
+    }
+
+    .timeline-time {
+        font-family: 'Vazirmatn', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 2px;
+    }
+
+    .timeline-details {
+        font-family: 'Vazirmatn', sans-serif;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .timeline-details i {
+        font-size: 0.7rem;
+        opacity: 0.7;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .report-bottom-panel {
+            height: 60vh;
+            border-radius: 16px 16px 0 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        
+        .chart-card {
+            min-width: 280px;
+        }
+        
+        .chart-card.wide {
+            min-width: 350px;
+        }
+        
+        .chart-card.extra-wide {
+            min-width: 500px;
+        }
+    }
+
+    .point-summary .addr-preview {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.5);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.2;
+    }
+
+    /* Right Column: Detail Dashboard - 2 Rows */
     .detail-dashboard {
         flex: 1;
         display: flex;
         flex-direction: column;
-        padding: 20px;
-        overflow-y: auto;
-        gap: 20px;
+        padding: 10px;
+        gap: 8px;
+        overflow: hidden;
+        /* Prevent scroll if possible */
     }
 
     .detail-header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding-bottom: 15px;
+        gap: 8px;
+        padding-bottom: 8px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        font-size: 1rem;
+        font-size: 0.9rem;
         color: white;
         font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 0;
     }
-    .detail-header i { color: #4895ef; }
+
+    .detail-header i {
+        color: #4895ef;
+        font-size: 0.9rem;
+    }
 
     .detail-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(4, 1fr);
+        /* 4 columns */
+        grid-template-rows: repeat(2, 1fr);
+        /* 2 rows */
+        gap: 8px;
+        flex: 1;
     }
 
     .detail-card {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 15px;
+        border-radius: 8px;
+        padding: 6px 10px;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        /* Horizontal layout */
         align-items: center;
-        justify-content: center;
-        gap: 8px;
+        justify-content: flex-start;
+        gap: 10px;
         transition: transform 0.2s;
     }
-    .detail-card:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.06); }
 
-    .detail-card.speed-card { grid-row: span 2; background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(72, 149, 239, 0.05)); border-color: rgba(72, 149, 239, 0.3); }
-    .speed-card .card-value { font-size: 2rem !important; color: #4895ef !important; }
+    .detail-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
 
-    .card-icon { font-size: 1.2rem; color: rgba(255, 255, 255, 0.4); margin-bottom: 4px; }
-    .card-value { font-size: 1.1rem; font-weight: 700; color: white; }
-    .card-label { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); }
-    .status-text { font-size: 0.9rem; }
+    /* Special Styling for Speed Card - Remove massive size */
+    .detail-card.speed-card {
+        grid-row: span 1;
+        background: rgba(67, 97, 238, 0.1);
+        border-color: rgba(72, 149, 239, 0.3);
+    }
+
+    .card-icon {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.4);
+        width: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .card-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-value {
+        font-size: 0.9rem !important;
+        font-weight: 700;
+        color: white !important;
+        line-height: 1.1;
+    }
+
+    .card-label {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
 
     @media (max-width: 768px) {
-        .report-bottom-panel { height: 80vh; border-radius: 20px 20px 0 0; bottom: 0; left: 0; right: 0; }
-        .split-view-container { flex-direction: column; }
-        .points-list-scroll { width: 100%; height: 150px; border-left: none; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        .daily-summary-bar { overflow-x: auto; }
-        .summary-item { min-width: 80px; }
+        .report-bottom-panel {
+            height: 60vh;
+            border-radius: 16px 16px 0 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .split-view-container {
+            flex-direction: column;
+        }
+
+        .points-list-scroll {
+            width: 100%;
+            height: 120px;
+            border-left: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-grid {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            overflow-y: auto;
+        }
     }
 </style>
 {% endblock %}
@@ -704,199 +994,153 @@
 <!-- New Bottom Panel for Report Results -->
 {% if report_data %}
 <div class="report-bottom-panel" id="reportBottomPanel">
-    
-    <!-- Date Tabs -->
-    <div class="date-tabs-header">
-        <div class="date-tabs-scroll">
-            {% for day in report_data %}
-            <button class="date-tab-btn {% if forloop.first %}active{% endif %}" onclick="switchReportTab('{{ day.date }}', this)">
-                <i class="far fa-calendar-alt"></i>
-                {{ day.date }}
-                <span class="badge">{{ day.stats.total_points }}</span>
-            </button>
-            {% endfor %}
+    <!-- Panel Header -->
+    <div class="panel-header">
+        <div class="panel-title">
+            <i class="fas fa-chart-line"></i>
+            <span>داشبورد گزارشات</span>
         </div>
-        <button class="close-panel-btn" onclick="document.getElementById('reportBottomPanel').style.display='none'">
-            <i class="fas fa-times"></i>
-        </button>
+        <div class="panel-controls">
+            <button class="panel-nav-btn" onclick="scrollCharts(-1)" title="قبلی">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <button class="panel-nav-btn" onclick="scrollCharts(1)" title="بعدی">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="close-panel-btn" onclick="document.getElementById('reportBottomPanel').style.display='none'">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </div>
 
-    <!-- Content Area -->
-    <div class="date-content-area">
+    <!-- Horizontal Scroll Container with Charts -->
+    <div class="charts-scroll-container" id="chartsContainer">
         {% for day in report_data %}
-        <div id="tab-{{ day.date }}" class="day-tab-content" style="display: {% if forloop.first %}flex{% else %}none{% endif %};">
+        <div class="day-charts-wrapper" id="charts-{{ day.date }}" style="display: {% if forloop.first %}contents{% else %}none{% endif %};">
             
-            <!-- Daily Summary Board -->
-            <div class="daily-summary-bar">
-                <div class="summary-item">
-                    <span class="label">مسافت کل</span>
-                    <span class="value">{{ day.stats.distance }} <small>km</small></span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">حداکثر سرعت</span>
-                    <span class="value">{{ day.stats.max_speed }} <small>km/h</small></span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">میانگین سرعت</span>
-                    <span class="value">{{ day.stats.avg_speed }} <small>km/h</small></span>
-                </div>
-                <div class="summary-item">
-                    <span class="label">حرکت</span>
-                    <span class="value">{{ day.stats.move_percent }}%</span>
-                </div>
-            </div>
-
-            <!-- Split View: List + Details -->
-            <div class="split-view-container">
-                
-                <!-- Left: Compact List -->
-                <div class="points-list-scroll">
-                    {% for record in day.points %}
-                    <div class="compact-point-item" 
-                         onclick="focusOnPoint(this, {{ record.latitude }}, {{ record.longitude }})"
-                         data-time="{{ record.shamsi_time }}"
-                         data-speed="{{ record.speed|floatformat:0 }}"
-                         data-status="{{ record.status }}"
-                         data-address="{{ record.address }}"
-                         data-altitude="{{ record.altitude }}"
-                         data-satellites="{{ record.satellites }}"
-                         data-battery="{{ record.battery }}"
-                         data-signal="{{ record.signal }}"
-                         data-direction="{{ record.direction }}"
-                         data-lat="{{ record.latitude }}"
-                         data-lng="{{ record.longitude }}">
-                        
-                        <div class="point-time">
-                            <span>{{ record.shamsi_time }}</span>
-                        </div>
-                        <div class="point-status-icon status-{{ record.status }}">
-                            <i class="fas fa-circle"></i>
-                        </div>
-                        <div class="point-summary">
-                            <span class="speed">{{ record.speed|floatformat:0 }} km/h</span>
-                            <span class="addr-preview">{{ record.address|truncatechars:30 }}</span>
-                        </div>
+            <!-- Card 1: Overview Stats -->
+            <div class="chart-card overview-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-info-circle"></i>
+                        <span>خلاصه روز</span>
                     </div>
-                    {% endfor %}
+                    <div class="card-badge">{{ day.date }}</div>
                 </div>
-
-                <!-- Right: Detailed Dashboard -->
-                <div class="detail-dashboard">
-                    <div class="detail-header">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span id="detail-address-{{ day.date }}">برای مشاهده جزئیات یک نقطه را انتخاب کنید</span>
-                    </div>
-
-                    <div class="detail-grid">
-                        <!-- Speed Gauge -->
-                        <div class="detail-card speed-card">
-                            <div class="card-icon"><i class="fas fa-tachometer-alt"></i></div>
-                            <div class="card-value" id="detail-speed-{{ day.date }}">-</div>
-                            <div class="card-label">سرعت (km/h)</div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-road"></i> مسافت کل</div>
+                            <div class="stat-value">{{ day.stats.distance }}<small>km</small></div>
                         </div>
-
-                        <!-- Time -->
-                        <div class="detail-card">
-                            <div class="card-icon"><i class="fas fa-clock"></i></div>
-                            <div class="card-value" id="detail-time-{{ day.date }}">-</div>
-                            <div class="card-label">زمان</div>
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-tachometer-alt"></i> حداکثر سرعت</div>
+                            <div class="stat-value">{{ day.stats.max_speed }}<small>km/h</small></div>
                         </div>
-
-                        <!-- Status -->
-                        <div class="detail-card">
-                            <div class="card-icon"><i class="fas fa-info-circle"></i></div>
-                            <div class="card-value status-text" id="detail-status-{{ day.date }}">-</div>
-                            <div class="card-label">وضعیت</div>
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-chart-line"></i> میانگین سرعت</div>
+                            <div class="stat-value">{{ day.stats.avg_speed }}<small>km/h</small></div>
                         </div>
-
-                        <!-- Sensors -->
-                        <div class="detail-card">
-                            <div class="card-icon"><i class="fas fa-mountain"></i></div>
-                            <div class="card-value" id="detail-altitude-{{ day.date }}">-</div>
-                            <div class="card-label">ارتفاع</div>
-                        </div>
-
-                        <div class="detail-card">
-                            <div class="card-icon"><i class="fas fa-satellite"></i></div>
-                            <div class="card-value" id="detail-satellite-{{ day.date }}">-</div>
-                            <div class="card-label">ماهواره</div>
-                        </div>
-
-                        <div class="detail-card">
-                            <div class="card-icon"><i class="fas fa-car-battery"></i></div>
-                            <div class="card-value" id="detail-battery-{{ day.date }}">-</div>
-                            <div class="card-label">باتری</div>
-                        </div>
-
-                        <div class="detail-card">
-                            <div class="card-icon"><i class="fas fa-signal"></i></div>
-                            <div class="card-value" id="detail-signal-{{ day.date }}">-</div>
-                            <div class="card-label">سیگنال</div>
-                        </div>
-
-                        <div class="detail-card">
-                            <div class="card-icon"><i class="fas fa-compass"></i></div>
-                            <div class="card-value" id="detail-direction-{{ day.date }}">-</div>
-                            <div class="card-label">جهت</div>
+                        <div class="stat-item">
+                            <div class="stat-label"><i class="fas fa-percentage"></i> درصد حرکت</div>
+                            <div class="stat-value">{{ day.stats.move_percent }}<small>%</small></div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Card 2: Speed Chart -->
+            <div class="chart-card speed-card extra-wide">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>نمودار سرعت</span>
+                    </div>
+                    <div class="card-badge">{{ day.points|length }} نقطه</div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="speedChart-{{ day.date }}"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Status Distribution -->
+            <div class="chart-card status-card wide">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>توزیع وضعیت</span>
+                    </div>
+                    <div class="card-badge">{{ day.stats.total_points }} نقطه</div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="statusChart-{{ day.date }}"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Sensor Metrics -->
+            <div class="chart-card sensor-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-satellite-dish"></i>
+                        <span>سنسورها</span>
+                    </div>
+                    <div class="card-badge">میانگین</div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-canvas-wrapper">
+                        <canvas id="sensorChart-{{ day.date }}"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Timeline -->
+            <div class="chart-card vehicle-card wide">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-clock"></i>
+                        <span>خط زمان</span>
+                    </div>
+                    <div class="card-badge">{{ day.points|length }} رویداد</div>
+                </div>
+                <div class="card-body">
+                    <div class="timeline-container">
+                        <div class="timeline-line"></div>
+                        {% for record in day.points %}
+                        <div class="timeline-item" onclick="focusOnPoint(this, {{ record.latitude }}, {{ record.longitude }})"
+                            data-lat="{{ record.latitude }}" data-lng="{{ record.longitude }}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-time">{{ record.shamsi_time }}</div>
+                            <div class="timeline-details">
+                                <span dir="ltr" style="display:inline-flex; align-items:center; gap:4px;">
+                                    {{ record.speed|floatformat:0 }} km/h <i class="fas fa-tachometer-alt"></i>
+                                </span>
+                                <span style="margin: 0 6px; color: rgba(255,255,255,0.3);">|</span>
+                                <span class="status-text {{ record.status }}">
+                                    {% if record.status == 'moving' %}
+                                    درحال حرکت
+                                    {% elif record.status == 'parked' %}
+                                    پارک شده
+                                    {% else %}
+                                    {{ record.status }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
         </div>
         {% endfor %}
     </div>
 </div>
 
-<script>
-    let currentTab = '{{ report_data.0.date }}';
 
-    function switchReportTab(date, btn) {
-        // Hide all tabs
-        document.querySelectorAll('.day-tab-content').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.date-tab-btn').forEach(el => el.classList.remove('active'));
-        
-        // Show selected
-        const tab = document.getElementById('tab-' + date);
-        tab.style.display = 'flex';
-        btn.classList.add('active');
-        currentTab = date;
-    }
-
-    function focusOnPoint(el, lat, lng) {
-        // 1. Center Map
-        if(window.map) {
-            window.map.setView([lat, lng], 17);
-            L.marker([lat, lng]).addTo(window.map)
-             .bindPopup('نقطه انتخاب شده').openPopup();
-        }
-
-        // 2. Highlight List Item
-        // Remove active class from all items in this tab
-        const container = el.closest('.points-list-scroll');
-        container.querySelectorAll('.compact-point-item').forEach(item => item.classList.remove('active'));
-        el.classList.add('active');
-
-        // 3. Update Dashboard
-        const data = el.dataset;
-        const date = currentTab; 
-        
-        // Helper to set text
-        const setText = (id, val) => {
-            const el = document.getElementById(id + '-' + date);
-            if(el) el.innerText = val || '-';
-        };
-
-        setText('detail-address', data.address);
-        setText('detail-speed', data.speed);
-        setText('detail-time', data.time);
-        setText('detail-status', data.status);
-        setText('detail-altitude', data.altitude);
-        setText('detail-satellite', data.satellites);
-        setText('detail-battery', data.battery + '%');
-        setText('detail-signal', data.signal + '%');
-        setText('detail-direction', data.direction + '°');
-    }
-</script>
 {% endif %}
 {% endblock %}
 
@@ -905,7 +1149,7 @@
 {% block page_scripts %}
 <script>
     $(document).ready(function () {
-    
+
         // Initialize Persian Date Pickers
         $('#startDate').persianDatepicker({
             format: 'YYYY-MM-DD',
@@ -966,10 +1210,21 @@
         // Toggle dropdown
         selectTrigger.addEventListener('click', function (e) {
             e.stopPropagation();
-            selectTrigger.classList.toggle('active');
-            selectDropdown.classList.toggle('active');
 
-            if (selectDropdown.classList.contains('active')) {
+            const isActive = selectDropdown.classList.contains('active');
+
+            // Close all other dropdowns first (if any)
+            document.querySelectorAll('.select-dropdown.active').forEach(dropdown => {
+                dropdown.classList.remove('active');
+            });
+            document.querySelectorAll('.select-trigger.active').forEach(trigger => {
+                trigger.classList.remove('active');
+            });
+
+            // Toggle current dropdown
+            if (!isActive) {
+                selectTrigger.classList.add('active');
+                selectDropdown.classList.add('active');
                 searchInput.focus();
             }
         });
@@ -1036,6 +1291,12 @@
             toggleFormBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 floatingFormOverlay.classList.toggle('collapsed');
+
+                // Close dropdown when collapsing form
+                if (floatingFormOverlay.classList.contains('collapsed')) {
+                    selectTrigger.classList.remove('active');
+                    selectDropdown.classList.remove('active');
+                }
             });
         }
 
@@ -1043,60 +1304,288 @@
         // Display route on map if report data exists
         {% if report_data %}
         const routePoints = [
-            {% for record in report_data %}
-            {
-            lat: {{ record.latitude }},
-            lng: {{ record.longitude }},
-            time: '{{ record.shamsi_timestamp }}',
-            speed: {{ record.speed }},
-            direction: {{ record.direction }}
-            }{% if not forloop.last %}, {% endif %}
+            {% for day in report_data %}
+                {% for record in day.points %}
+                {
+                    lat: {{ record.latitude|default:0 }},
+                    lng: {{ record.longitude|default:0 }},
+                    time: '{{ record.shamsi_time }}',
+                    speed: {{ record.speed|default:0 }},
+                    direction: {{ record.direction|default:0 }}
+                },
+                {% endfor %}
             {% endfor %}
         ];
 
-        if (routePoints.length > 0) {
-            // Create polyline for route
-            const latlngs = routePoints.map(p => [p.lat, p.lng]);
-            const polyline = L.polyline(latlngs, {
-                color: '#4361ee',
-                weight: 4,
-                opacity: 0.7,
-                smoothFactor: 1
-            }).addTo(map);
+    if (routePoints.length > 0) {
+        // Create polyline for route
+        const latlngs = routePoints.map(p => [p.lat, p.lng]);
+        const polyline = L.polyline(latlngs, {
+            color: '#4361ee',
+            weight: 4,
+            opacity: 0.7,
+            smoothFactor: 1
+        }).addTo(map);
 
-            // Add markers for start and end points
-            const startIcon = L.divIcon({
-                className: 'custom-marker',
-                html: '<div style="background: #22c55e; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-play"></i></div>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
+        // Add markers for start and end points
+        const startIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background: #22c55e; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-play"></i></div>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        const endIcon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-stop"></i></div>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        L.marker([routePoints[0].lat, routePoints[0].lng], { icon: startIcon })
+            .addTo(map)
+            .bindPopup('<b>شروع مسیر</b><br>' + routePoints[0].time);
+
+        L.marker([routePoints[routePoints.length - 1].lat, routePoints[routePoints.length - 1].lng], { icon: endIcon })
+            .addTo(map)
+            .bindPopup('<b>پایان مسیر</b><br>' + routePoints[routePoints.length - 1].time);
+
+        // Fit map to route bounds
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+        // Expose map to window for external access
+        window.map = map;
+    }
+    {% endif %}
+
+
+    // Helper functions need to be global for onclick handlers
+    window.scrollCharts = function(direction) {
+        const container = document.getElementById('chartsContainer');
+        const scrollAmount = 400;
+        if (container) {
+            container.scrollBy({
+                left: direction * scrollAmount,
+                behavior: 'smooth'
             });
-
-            const endIcon = L.divIcon({
-                className: 'custom-marker',
-                html: '<div style="background: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-stop"></i></div>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-
-            L.marker([routePoints[0].lat, routePoints[0].lng], { icon: startIcon })
-                .addTo(map)
-                .bindPopup('<b>شروع مسیر</b><br>' + routePoints[0].time);
-
-            L.marker([routePoints[routePoints.length - 1].lat, routePoints[routePoints.length - 1].lng], { icon: endIcon })
-                .addTo(map)
-                .bindPopup('<b>پایان مسیر</b><br>' + routePoints[routePoints.length - 1].time);
-
-            // Fit map to route bounds
-            map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
-            
-            // Expose map to window for external access
-            window.map = map;
         }
+    };
+
+    window.focusOnPoint = function(el, lat, lng) {
+        if (window.map) {
+            window.map.setView([lat, lng], 17);
+            L.marker([lat, lng]).addTo(window.map)
+                .bindPopup('نقطه انتخاب شده').openPopup();
+        }
+    };
+
+    // Initialize Charts if report data exists
+        {% if report_data %}
+            {% for day in report_data %}
+            (function() {
+                const dayDate = '{{ day.date }}';
+                
+                // Prepare data
+                const points = [
+                    {% for record in day.points %}
+                    {
+                        time: '{{ record.shamsi_time }}',
+                        speed: {{ record.speed|floatformat:2 }},
+                        status: '{{ record.status }}',
+                        satellites: {{ record.satellites|default:0 }},
+                        battery: {{ record.battery|default:0 }},
+                        signal: {{ record.signal|default:0 }}
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ];
+        
+                // Chart.js default config for RTL
+                const defaultOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                font: { family: 'Vazirmatn', size: 11 },
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        }
+                    }
+                };
+        
+                // 1. Speed Line Chart
+                const speedCtx = document.getElementById('speedChart-' + dayDate);
+                if (speedCtx) {
+                    new Chart(speedCtx, {
+                        type: 'line',
+                        data: {
+                            labels: points.map(p => p.time),
+                            datasets: [{
+                                label: 'سرعت (km/h)',
+                                data: points.map(p => p.speed),
+                                borderColor: '#4895ef',
+                                backgroundColor: 'rgba(72, 149, 239, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 2,
+                                pointHoverRadius: 5,
+                                pointBackgroundColor: '#4895ef'
+                            }]
+                        },
+                        options: {
+                            ...defaultOptions,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        color: 'rgba(255, 255, 255, 0.6)',
+                                        font: { family: 'Vazirmatn', size: 10 }
+                                    },
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: 'rgba(255, 255, 255, 0.6)',
+                                        font: { family: 'Vazirmatn', size: 9 },
+                                        maxRotation: 45,
+                                        minRotation: 45
+                                    },
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+        
+                // 2. Status Doughnut Chart
+                const statusCounts = points.reduce((acc, p) => {
+                    acc[p.status] = (acc[p.status] || 0) + 1;
+                    return acc;
+                }, {});
+        
+                const statusCtx = document.getElementById('statusChart-' + dayDate);
+                if (statusCtx) {
+                    new Chart(statusCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(statusCounts),
+                            datasets: [{
+                                data: Object.values(statusCounts),
+                                backgroundColor: [
+                                    '#10b981', // moving - green
+                                    '#f59e0b', // stopped - orange
+                                    '#ef4444', // alert - red
+                                    '#64748b'  // offline - gray
+                                ],
+                                borderWidth: 2,
+                                borderColor: 'rgba(15, 23, 42, 1)'
+                            }]
+                        },
+                        options: {
+                            ...defaultOptions,
+                            cutout: '60%',
+                            plugins: {
+                                ...defaultOptions.plugins,
+                                legend: {
+                                    ...defaultOptions.plugins.legend,
+                                    position: 'right',
+                                    checkOrientation: false
+                                }
+                            }
+                        }
+                    });
+                }
+        
+                // 3. Sensor Bar Chart
+                const avgSatellites = points.reduce((sum, p) => sum + p.satellites, 0) / points.length;
+                const avgBattery = points.reduce((sum, p) => sum + p.battery, 0) / points.length;
+                const avgSignal = points.reduce((sum, p) => sum + p.signal, 0) / points.length;
+        
+                const sensorCtx = document.getElementById('sensorChart-' + dayDate);
+                if (sensorCtx) {
+                    new Chart(sensorCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['ماهواره', 'باتری (%)', 'سیگنال (%)'],
+                            datasets: [{
+                                label: 'میانگین',
+                                data: [avgSatellites, avgBattery, avgSignal],
+                                backgroundColor: [
+                                    'rgba(6, 182, 212, 0.7)',
+                                    'rgba(139, 92, 246, 0.7)',
+                                    'rgba(245, 158, 11, 0.7)'
+                                ],
+                                borderColor: [
+                                    '#06b6d4',
+                                    '#8b5cf6',
+                                    '#f59e0b'
+                                ],
+                                borderWidth: 2,
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            ...defaultOptions,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    ticks: {
+                                        color: 'rgba(255, 255, 255, 0.6)',
+                                        font: { family: 'Vazirmatn', size: 10 }
+                                    },
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.1)'
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        color: 'rgba(255, 255, 255, 0.6)',
+                                        font: { family: 'Vazirmatn', size: 10 }
+                                    },
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            })();
+            {% endfor %}
         {% endif %}
 
         // Form submission
-        $('#reportForm').on('submit', function () {
+        $('#reportForm').on('submit', function (e) {
+            const device = $('#deviceSelect').val();
+            const startDate = $('#startDate').val();
+            const startTime = $('#startTime').val();
+            const endDate = $('#endDate').val();
+            const endTime = $('#endTime').val();
+
+            if (!device) {
+                e.preventDefault();
+                alert('لطفاً یک دستگاه انتخاب کنید');
+                return false;
+            }
+            if (!startDate || !startTime) {
+                e.preventDefault();
+                alert('لطفاً تاریخ و ساعت شروع را وارد کنید');
+                return false;
+            }
+            if (!endDate || !endTime) {
+                e.preventDefault();
+                alert('لطفاً تاریخ و ساعت پایان را وارد کنید');
+                return false;
+            }
+
             const btn = $('.submit-btn-overlay');
             btn.html('<i class="fas fa-spinner fa-spin"></i> <span>در حال بارگذاری...</span>');
             btn.css('pointer-events', 'none');

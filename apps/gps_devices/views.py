@@ -163,6 +163,17 @@ def report(request):
             context['error'] = 'لطفاً یک دستگاه انتخاب کنید'
             return render(request, 'gps_devices/report.html', context)
         
+        # Security Check: Ensure user has access to these devices
+        allowed_device_ids = set(d.id for d in devices)
+        # Filter out any device IDs not in the allowed list (Anti-hack)
+        valid_selected_devices = [d_id for d_id in selected_devices if int(d_id) in allowed_device_ids]
+        
+        if not valid_selected_devices:
+            context['error'] = 'شما دسترسی به دستگاه انتخاب شده را ندارید'
+            return render(request, 'gps_devices/report.html', context)
+            
+        selected_devices = valid_selected_devices
+        
         if not start_date or not start_time:
             context['error'] = 'لطفاً تاریخ و ساعت شروع را وارد کنید'
             return render(request, 'gps_devices/report.html', context)
