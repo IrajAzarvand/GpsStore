@@ -9,8 +9,39 @@ from django.conf import settings
 from datetime import datetime, timedelta
 import json
 import jdatetime
+import re
 
 User = get_user_model()
+
+def clean_and_format_address(addr):
+    """
+    Cleans and reformats an existing address string.
+    Assumes original format is: Specific -> General (Nominatim default)
+    Target format: General -> Specific (Province - City - Road)
+    """
+    if not addr: return None
+    
+    # Remove 'Iran' variants
+    addr = addr.replace('ایران', '').replace('Iran', '')
+    
+    # Split by comma or Persian comma
+    parts = re.split(r'[,،]', addr)
+    
+    cleaned_parts = []
+    for p in parts:
+        p = p.strip()
+        if not p: continue
+        
+        # Filter postal codes (digits and dashes, length > 4)
+        if re.match(r'^[\d\-]+$', p) and len(p) > 4:
+            continue
+            
+        cleaned_parts.append(p)
+    
+    # Reverse to get Province first (General -> Specific)
+    cleaned_parts.reverse()
+    
+    return " - ".join(cleaned_parts)
 
 @login_required
 def map_v2(request):
@@ -76,6 +107,7 @@ def map_v2(request):
             'mnc': latest_location.mnc if latest_location else None,
             'lac': latest_location.lac if latest_location else None,
             'cid': latest_location.cid if latest_location else None,
+            'address': clean_and_format_address(latest_location.address) if latest_location else None,
         })
 
     context = {

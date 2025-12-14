@@ -734,6 +734,34 @@
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
         }
 
+        /* Card Content - Global 2-Row Layout */
+        .card-content {
+            display: flex;
+            flex-flow: column wrap; /* Stack vertically, then wrap to next column */
+            gap: 4px;
+            height: 100px; /* Fixed height for exactly 2 rows */
+            align-content: flex-start;
+            padding-bottom: 2px;
+        }
+
+        /* Info Item - Generic (2 items per column) */
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-bottom: none;
+            width: auto;
+            min-width: 100px; /* Slight adjustment */
+            flex-shrink: 0;
+            height: calc(50% - 2px); /* Strictly 50% for 2-row stacking */
+            margin: 0;
+        }
+
+        /* Location Card specific tweaks removed as they are now global */
+
         /* Card Header */
         .card-header {
             display: flex;
@@ -747,7 +775,6 @@
             font-size: 0.9rem;
             color: var(--primary-light);
             width: 18px;
-            text-align: center;
         }
 
         .card-title {
@@ -757,27 +784,25 @@
             margin: 0;
         }
 
-        /* Card Content */
-        .card-content {
-            display: flex;
-            flex-direction: column;
-            flex-wrap: wrap;
-            gap: 8px;
-            height: 100%;
-            max-height: calc(240px - 80px);
-            align-content: flex-start;
+        /* Address Item - Spans full column */
+        .address-item {
+            height: 100% !important; /* Force full height */
+            order: 10;
+            min-width: 250px;
+            max-width: 400px;
+            white-space: normal;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            margin-right: 8px;
+            padding-right: 8px;
         }
 
-        /* Info Item */
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-            padding: 6px 12px;
-            border-bottom: none;
-            width: 180px;
-            flex-shrink: 0;
+        .address-item .value {
+            white-space: normal;
+            line-height: 1.5;
+            max-height: 100%;
+            overflow-y: auto;
+            text-align: right;
+            width: 100%;
         }
 
         .label {

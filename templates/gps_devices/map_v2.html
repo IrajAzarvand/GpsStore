@@ -188,40 +188,39 @@
                             <span>${device.name}</span>
                             <span style="font-size: 0.8em; color: #666;">${device.device_id || ''}</span>
                         </h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9em;">
-                            <div style="color: #666;"><i class="fas fa-tachometer-alt" style="color: #4361ee; width: 20px;"></i>سرعت:</div>
-                            <div style="font-weight: bold;">${device.speed || 0}km/h</div>
-                            <div style="color: #666;"><i class="fas fa-battery-half" style="color: #f59e0b; width: 20px;"></i>باتری:</div>
-                            <div style="font-weight: bold;">${device.battery_level || '--'}%</div>
-                            <div style="color: #666;"><i class="fas fa-satellite-dish" style="color: #22c55e; width: 20px;"></i>GPS:</div>
+                        <div style="display: grid; grid-template-columns: max-content auto max-content auto; gap: 4px 12px; font-size: 0.85em; align-items: center;">
+                            <!-- Row 1 -->
+                            <div style="color: #666;"><i class="fas fa-tachometer-alt" style="color: #4361ee; width: 16px;"></i>سرعت:</div>
+                            <div style="font-weight: bold;">${device.speed || 0} km/h</div>
+                            
+                            <div style="color: #666;"><i class="fas fa-satellite-dish" style="color: #22c55e; width: 16px;"></i>GPS:</div>
                             <div style="font-weight: bold;">${(() => {
-                    const acc = device.gps_accuracy || device.accuracy;
-                    if (acc !== undefined && acc !== null) return acc.toFixed(1) + 'm';
-                    if (device.hdop !== undefined && device.hdop !== null) return (device.hdop * 5).toFixed(1) + 'm'; // Rough estimate; adjust factor as needed
-                    return 'N/A';
-                })()}</div>
-                            <div style="color: #666;"><i class="fas fa-signal" style="color: #22c55e; width: 20px;"></i>GSM:</div>
+                                const acc = device.gps_accuracy || device.accuracy;
+                                if (acc !== undefined && acc !== null) return acc.toFixed(1) + 'm';
+                                if (device.hdop !== undefined && device.hdop !== null) return (device.hdop * 5).toFixed(1) + 'm';
+                                return 'N/A';
+                            })()}</div>
+
+                            <!-- Row 2 -->
+                            <div style="color: #666;"><i class="fas fa-signal" style="color: #22c55e; width: 16px;"></i>GSM:</div>
                             <div style="font-weight: bold;">${formatGsmStrength(device)}</div>
-                            <div style="color: #666;"><i class="fas fa-crosshairs" style="color: #8b5cf6; width: 20px;"></i>دقت GPS:</div>
-                            <div style="font-weight: bold;">${device.accuracy ? device.accuracy.toFixed(1) + 'm' : 'N/A'}</div>
-                            <div style="color: #666;"><i class="fas fa-compass" style="color: #8b5cf6; width: 20px;"></i>جهت:</div>
+
+                            <div style="color: #666;"><i class="fas fa-compass" style="color: #8b5cf6; width: 16px;"></i>جهت:</div>
                             <div style="font-weight: bold;">${device.heading || 0}°</div>
-                            <div style="color: #666;"><i class="fas fa-car" style="color: #10b981; width: 20px;"></i>نوع:</div>
+
+                            <!-- Row 3 -->
+                            <div style="color: #666;"><i class="fas fa-car" style="color: #10b981; width: 16px;"></i>نوع:</div>
                             <div>${device.vehicle_type || device.device_type || '-'}</div>
-                            <div style="color: #666;"><i class="fas fa-microchip" style="color: #6366f1; width: 20px;"></i>مدل:</div>
-                            <div>${device.model || '-'}</div>
-                            <div style="color: #666;"><i class="fas fa-sim-card" style="color: #f43f5e; width: 20px;"></i>سیم‌کارت:</div>
+
+                            <div style="color: #666;"><i class="fas fa-sim-card" style="color: #f43f5e; width: 16px;"></i>سیم:</div>
                             <div>${device.sim_card_number || '-'}</div>
-                            <div style="color: #666;"><i class="fas fa-user" style="color: #8b5cf6; width: 20px;"></i>راننده:</div>
+
+                            <!-- Row 4 -->
+                            <div style="color: #666;"><i class="fas fa-user" style="color: #8b5cf6; width: 16px;"></i>راننده:</div>
                             <div>${device.driver_name || '-'}</div>
                         </div>
                         <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #eee; font-size: 0.85em; color: #888;">
                             <div style="margin-bottom: 4px;"><i class="fas fa-map-marker-alt" style="color: #666; margin-left: 5px;"></i>${device.address || 'در حال دریافت آدرس...'}</div>
-                            <div style="margin-bottom: 4px;"><i class="far fa-clock"></i> آخرین بروزرسانی: <span dir="ltr">${formatTime(device.last_update)}</span></div>
-                            <div><i class="fas fa-crosshairs"></i> <span dir="ltr">${device.lat ? device.lat.toFixed(5) : '-'},${device.lng ? device.lng.toFixed(5) : '-'}</span></div>
-                        </div>
-                        <div style="margin-top: 10px; text-align: center;">
-                            <span style="padding: 4px 12px; background: ${getStatusColor(device.status)};color: white;border-radius: 12px;font-size: 11px;font-weight: 600;">${getStatusText(device.status)}</span>
                         </div>
                     </div>`;
         }
@@ -311,11 +310,11 @@
          // --- Initialization ---
          // Wait for the map to be fully initialized before starting WebSocket
          function onMapReady() {
+             // Create markers for initial data (now that devices are populated)
+             createMarkers();
+             
              initWebSocket();
          }
-
-          // Create markers for initial data
-        createMarkers();
 
         function handleDeviceUpdate(data) {
             // Normalize data
