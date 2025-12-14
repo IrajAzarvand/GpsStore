@@ -63,6 +63,28 @@ def format_address_components(details):
 
     return " - ".join(parts)
 
+def is_address_quality_low(address):
+    """
+    Check if the address is of low quality (e.g. 'unnamed road').
+    Returns True if it contains generic terms.
+    """
+    if not address:
+        return True
+    
+    low_quality_terms = [
+        "unnamed road", 
+        "جاده بی نام", 
+        "خیابان بی نام",
+        "کوچه بی نام"
+    ]
+    
+    addr_lower = address.lower()
+    for term in low_quality_terms:
+        if term in addr_lower:
+            return True
+            
+    return False
+
 class GeocodingProvider(ABC):
     @abstractmethod
     def get_address(self, lat, lon):
@@ -93,13 +115,12 @@ class NominatimProvider(GeocodingProvider):
                 'lon': lon,
                 'format': 'json',
                 'accept-language': 'fa',
-                'addressdetails': 1 # Request detailed components
+                'addressdetails': 1
             }
             response = requests.get(self.base_url, params=params, headers=headers, timeout=5)
             response.raise_for_status()
             data = response.json()
             
-            # Use custom formatter if address details exist
             if 'address' in data:
                 return format_address_components(data['address'])
             
@@ -130,7 +151,6 @@ class OpenCageProvider(GeocodingProvider):
             
             if data['results']:
                 result = data['results'][0]
-                # OpenCage returns 'components'
                 if 'components' in result:
                     return format_address_components(result['components'])
                 return result['formatted']
@@ -167,9 +187,11 @@ class ReverseGeocodingService:
             logger.debug(f"Geocoding cache hit for {key}")
             return val
 
-        # 2. Round Robin Selection
+        # 2. Round Robin Selection with Quality Check fallback
         start_index = self.current_provider_index
         self.current_provider_index = (self.current_provider_index + 1) % len(self.providers)
+        
+        best_fallback_address = None
         
         for i in range(len(self.providers)):
             idx = (start_index + i) % len(self.providers)
@@ -180,12 +202,29 @@ class ReverseGeocodingService:
             address = provider.get_address(lat, lon)
             
             if address:
+                # Check quality
+                if is_address_quality_low(address):
+                    logger.warning(f"Provider {provider_name} returned low quality address: '{address}'. Trying next provider...")
+                    if best_fallback_address is None:
+                        best_fallback_address = address
+                    continue # Try next provider
+                
+                # Good quality address
                 if len(self.cache) >= self.cache_size:
                     self.cache.pop(next(iter(self.cache)))
                 self.cache[key] = address
                 return address
             
             logger.warning(f"Provider {provider_name} failed, trying next...")
+
+        # If all providers failed or returned low quality
+        if best_fallback_address:
+            logger.info("All providers failed/low-quality. Using fallback address.")
+            # Cache it anyway to avoid repeated bad requests
+            if len(self.cache) >= self.cache_size:
+                self.cache.pop(next(iter(self.cache)))
+            self.cache[key] = best_fallback_address
+            return best_fallback_address
 
         logger.error("All reverse geocoding providers failed.")
         return None
