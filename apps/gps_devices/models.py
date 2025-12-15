@@ -59,6 +59,10 @@ class LocationData(models.Model):
     latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
     longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
     
+    # زمان اعلام شده توسط دستگاه (Device Time)
+    timestamp = models.DateTimeField(null=True, blank=True, db_index=True, help_text='زمان واقعی گزارش شده توسط دستگاه')
+
+    
     # فیلدهای Map Matching
     original_latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text='مختصات اصلی دریافتی از GPS')
     original_longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text='مختصات اصلی دریافتی از GPS')

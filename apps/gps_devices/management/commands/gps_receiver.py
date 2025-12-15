@@ -252,6 +252,20 @@ class GPSReceiver:
     def process_parsed_packet(self, device, parsed_data, ip_address, decoder_type, raw_data_hex, reply_callback=None):
         """Process a single parsed packet (V1, V0, SOS, V2, HB, JT808)"""
         packet_type = parsed_data.get('packet_type') or parsed_data.get('type')
+
+        # Extract Timestamp
+        packet_timestamp = parsed_data.get('timestamp')
+        if isinstance(packet_timestamp, str):
+            try:
+                # Handle ISO string, replace Z for compatibility
+                packet_timestamp = datetime.fromisoformat(packet_timestamp.replace('Z', '+00:00'))
+            except ValueError:
+                packet_timestamp = django_timezone.now()
+        elif not packet_timestamp:
+             packet_timestamp = django_timezone.now()
+        # Ensure timezone awareness
+        if django_timezone.is_naive(packet_timestamp):
+            packet_timestamp = django_timezone.make_aware(packet_timestamp)
         
         if packet_type == 'V0':
             # V0 (LBS Only) Packet
@@ -265,6 +279,7 @@ class GPSReceiver:
                 # Create LocationData with source='LBS'
                 location_data = LocationData.objects.create(
                     device=device,
+                    timestamp=packet_timestamp,
                     latitude=current_lat,
                     longitude=current_lon,
                     original_latitude=current_lat,
@@ -316,6 +331,7 @@ class GPSReceiver:
                 
                 location_data = LocationData.objects.create(
                     device=device,
+                    timestamp=packet_timestamp,
                     latitude=current_lat,
                     longitude=current_lon,
                     original_latitude=current_lat,
@@ -375,6 +391,7 @@ class GPSReceiver:
                 # 3. Create new LocationData with previous coordinates
                 location_data = LocationData.objects.create(
                     device=device,
+                    timestamp=packet_timestamp,
                     latitude=last_location.latitude,
                     longitude=last_location.longitude,
                     speed=last_location.speed,
@@ -426,6 +443,7 @@ class GPSReceiver:
             # Save new HB without coordinates
             LocationData.objects.create(
                 device=device,
+                timestamp=packet_timestamp,
                 latitude=None,
                 longitude=None,
                 packet_type='HB',
@@ -672,6 +690,7 @@ class GPSReceiver:
                     # Create LocationData with extracted signal values
                     location_data = LocationData.objects.create(
                         device=device,
+                        timestamp=packet_timestamp,
                         latitude=matched_lat,  # مختصات تصحیح شده
                         longitude=matched_lon,  # مختصات تصحیح شده
                         original_latitude=original_lat,  # مختصات اصلی
@@ -799,6 +818,7 @@ class GPSReceiver:
                 # ذخیره LocationData
                 location_data = LocationData.objects.create(
                     device=device,
+                    timestamp=packet_timestamp,
                     latitude=current_lat,
                     longitude=current_lon,
                     original_latitude=current_lat,

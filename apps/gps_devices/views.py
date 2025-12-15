@@ -195,8 +195,8 @@ def report(request):
         # Query LocationData
         report_qs = LocationData.objects.filter(
             device_id__in=selected_devices,
-            created_at__range=(start_datetime, end_datetime)
-        ).order_by('created_at')
+            timestamp__range=(start_datetime, end_datetime)
+        ).order_by('timestamp')
 
         # Process data into daily groups with stats
         from collections import defaultdict
@@ -217,7 +217,10 @@ def report(request):
         last_point = None
         
         for loc in report_qs:
-            shamsi_dt = jdatetime.datetime.fromgregorian(datetime=loc.created_at)
+            # convert to local time first to ensure Iran time
+            event_time = loc.timestamp or loc.created_at
+            local_event_time = timezone.localtime(event_time)
+            shamsi_dt = jdatetime.datetime.fromgregorian(datetime=local_event_time)
             date_str = shamsi_dt.strftime('%Y-%m-%d')
             time_str = shamsi_dt.strftime('%H:%M:%S')
             
@@ -418,9 +421,9 @@ def get_device_report(request):
         # دریافت داده‌های موقعیت
         locations = LocationData.objects.filter(
             device_id=device_id,
-            created_at__range=(start_datetime, end_datetime),
+            timestamp__range=(start_datetime, end_datetime),
             is_valid=True
-        ).order_by('created_at')
+        ).order_by('timestamp')
         
         # آماده‌سازی داده‌ها برای پاسخ
         report_data = []
@@ -430,7 +433,9 @@ def get_device_report(request):
         prev_loc = None
         for loc in locations:
             # تبدیل تاریخ به شمسی
-            shamsi_dt = jdatetime.datetime.fromgregorian(datetime=loc.created_at)
+            event_time = loc.timestamp or loc.created_at
+            local_event_time = timezone.localtime(event_time)
+            shamsi_dt = jdatetime.datetime.fromgregorian(datetime=local_event_time)            
             
             # محاسبه فاصله از نقطه قبلی (تقریبی)
             if prev_loc and loc.latitude and loc.longitude and prev_loc.latitude and prev_loc.longitude:
