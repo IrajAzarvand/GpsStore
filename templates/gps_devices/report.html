@@ -1325,67 +1325,120 @@
             marker.closePopup();
             marker.bindPopup('در حال بارگذاری...', { autoClose: false, closeOnClick: false }).openPopup();
             
-            let index = 0;
             const points = window.currentRoutePoints;
             const totalPoints = points.length;
             
-            // Speed control: 100ms per point is reasonably slow (~10 points/sec)
-            // Adjust delay to change speed.
-            const animationDelay = 200; 
+            if (totalPoints < 2) {
+                window.isAnimating = false;
+                return;
+            }
+
+            // Interpolation settings
+            // Duration between points in milliseconds
+            const durationPerSegment = 1000; 
+            
+            let index = 0;
+            let segmentStartTime = null;
             
             // Get current chart for sync
             const currentDayDate = document.querySelector('.compact-date-select').value;
             const speedChart = window.speedCharts[currentDayDate];
 
-            function animate() {
-                if (index >= points.length || !window.isAnimating) {
-                    marker.setIcon(originalIcon);
-                    marker.closePopup();
-                    // Restore original popup content
-                    marker.bindPopup('<b>شروع مسیر</b><br>' + points[0].time);
-                    
-                    window.isAnimating = false;
-                    
-                    // Clear chart highlight
-                    if (speedChart && speedChart.tooltip) {
-                        speedChart.tooltip.setActiveElements([], {x: 0, y: 0});
-                        speedChart.update();
-                    }
-                    return;
-                }
-                
-                const point = points[index];
-                marker.setLatLng([point.lat, point.lng]);
-                
-                // Update Popup Content
-                let popupContent = `
-                    <div style="font-family: 'Vazirmatn'; text-align: right; min-width: 150px;">
-                        <div style="font-weight: bold; margin-bottom: 4px; color: #4361ee;">${point.time}</div>
-                        <div>سرعت: <b>${point.speed}</b> km/h</div>
-                        <div>باتری: ${point.battery}% | ماهواره: ${point.satellites}</div>
+            // Helper to update popup/UI
+            function updateUI(point, idx) {
+                 // Update Popup Content
+                 let popupContent = `
+                    <div style="font-family: 'Vazirmatn'; text-align: right; min-width: 250px;">
+                        <h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid ${point.speed > 0 ? '#4361ee' : '#f59e0b'}; padding-bottom: 6px; display: flex; justify-content: space-between;">
+                            <span>${point.time}</span>
+                            <span style="font-size: 0.8em; color: #666;">${point.speed > 0 ? 'در حرکت' : 'توقف'}</span>
+                        </h4>
+                        <div style="display: grid; grid-template-columns: max-content auto max-content auto; gap: 4px 12px; font-size: 0.85em; align-items: center;">
+                            <!-- Row 1 -->
+                            <div style="color: #666;"><i class="fas fa-tachometer-alt" style="color: #4361ee; width: 16px;"></i>سرعت:</div>
+                            <div style="font-weight: bold;">${point.speed} km/h</div>
+                            
+                            <div style="color: #666;"><i class="fas fa-satellite-dish" style="color: #22c55e; width: 16px;"></i>GPS:</div>
+                            <div style="font-weight: bold;">${point.satellites} ماهواره</div>
+
+                            <!-- Row 2 -->
+                            <div style="color: #666;"><i class="fas fa-battery-half" style="color: ${point.battery > 20 ? '#22c55e' : '#ef4444'}; width: 16px;"></i>باتری:</div>
+                            <div style="font-weight: bold;">${point.battery}%</div>
+
+                            <div style="color: #666;"><i class="fas fa-compass" style="color: #8b5cf6; width: 16px;"></i>جهت:</div>
+                            <div style="font-weight: bold;">${point.direction}°</div>
+                        </div>
                 `;
-                // Add Status if useful, e.g. Moving/Stopped
-                // if (point.status) popupContent += `<div>وضعیت: ${point.status}</div>`;
                 
+                if (point.address) {
+                   popupContent += `<div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #eee; font-size: 0.85em; color: #888;">
+                        <div style="margin-bottom: 4px;"><i class="fas fa-map-marker-alt" style="color: #666; margin-left: 5px;"></i>${point.address}</div>
+                   </div>`;
+                }
                 popupContent += `</div>`;
-                
                 marker.getPopup().setContent(popupContent);
                 
-                // Sync with Speed Chart
                 if (speedChart) {
-                    // Find the dataset index (usually 0 for speed) and point index
-                    const activeElements = [{ datasetIndex: 0, index: index }];
-                    speedChart.tooltip.setActiveElements(activeElements, {
-                        x: 0, y: 0
-                    });
+                    const activeElements = [{ datasetIndex: 0, index: idx }];
+                    speedChart.tooltip.setActiveElements(activeElements, {x: 0, y: 0});
                     speedChart.update();
                 }
-
-                index++;
-                setTimeout(animate, animationDelay); // Use setTimeout for speed control
             }
             
-            animate();
+            // Initial UI update
+            updateUI(points[0], 0);
+
+            function animate(timestamp) {
+                if (!window.isAnimating) return;
+                
+                if (!segmentStartTime) segmentStartTime = timestamp;
+                const elapsed = timestamp - segmentStartTime;
+                
+                // Calculate LERP progress (0.0 to 1.0)
+                let progress = elapsed / durationPerSegment;
+                
+                if (progress >= 1) {
+                    // Segment finished, move to next
+                    index++;
+                    if (index >= points.length - 1) {
+                        // End of route
+                        const lastPoint = points[points.length - 1];
+                        marker.setLatLng([lastPoint.lat, lastPoint.lng]);
+                        updateUI(lastPoint, points.length - 1);
+                        
+                        // Cleanup
+                        marker.setIcon(originalIcon);
+                        marker.closePopup();
+                        marker.bindPopup('<b>شروع مسیر</b><br>' + points[0].time);
+                        window.isAnimating = false;
+                        
+                        if (speedChart && speedChart.tooltip) {
+                            speedChart.tooltip.setActiveElements([], {x: 0, y: 0});
+                            speedChart.update();
+                        }
+                        return;
+                    }
+                    
+                    // Setup for next segment
+                    segmentStartTime = timestamp;
+                    progress = 0; 
+                    // Update UI for the new "current" point (start of next segment)
+                    updateUI(points[index], index);
+                }
+                
+                // Interpolate
+                const startPoint = points[index];
+                const endPoint = points[index + 1];
+                
+                const currentLat = startPoint.lat + (endPoint.lat - startPoint.lat) * progress;
+                const currentLng = startPoint.lng + (endPoint.lng - startPoint.lng) * progress;
+                
+                marker.setLatLng([currentLat, currentLng]);
+
+                requestAnimationFrame(animate);
+            }
+            
+            requestAnimationFrame(animate);
         };
     {% endif %}    
 
