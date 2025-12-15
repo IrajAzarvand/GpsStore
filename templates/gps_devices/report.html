@@ -1220,18 +1220,24 @@
                     lng: {{ record.longitude|default:0 }},
                     time: '{{ record.shamsi_time }}',
                     speed: {{ record.speed|default:0 }},
-                    direction: {{ record.direction|default:0 }}
+                    direction: {{ record.direction|default:0 }},
+                    battery: {{ record.battery|default:0 }},
+                    satellites: {{ record.satellites|default:0 }},
+                    status: '{{ record.status|default:"" }}',
+                    address: '{{ record.address|default:""|escapejs }}' // Add address if available
                 },
                 {% endfor %}
             ],
             {% endfor %}
         };
         
+        
         // Global variables for map layers
         let currentPolyline = null;
         let startMarker = null;
         let endMarker = null;
         window.currentRoutePoints = [];
+        window.speedCharts = {}; // Store chart instances
 
         // Function to draw route for specific date
         window.drawRouteForDate = function(date) {
@@ -1314,27 +1320,69 @@
             
             const originalIcon = marker.getIcon();
             marker.setIcon(movingIcon);
+            
+            // Ensure popup is open for the moving marker
             marker.closePopup();
+            marker.bindPopup('در حال بارگذاری...', { autoClose: false, closeOnClick: false }).openPopup();
             
             let index = 0;
-            const speedMultiplier = 1; // Adjust for faster/slower playback
+            const points = window.currentRoutePoints;
+            const totalPoints = points.length;
             
+            // Speed control: 100ms per point is reasonably slow (~10 points/sec)
+            // Adjust delay to change speed.
+            const animationDelay = 200; 
+            
+            // Get current chart for sync
+            const currentDayDate = document.querySelector('.compact-date-select').value;
+            const speedChart = window.speedCharts[currentDayDate];
+
             function animate() {
-                // Use window.currentRoutePoints instead of the old routePoints variable
-                if (index >= window.currentRoutePoints.length) {
+                if (index >= points.length || !window.isAnimating) {
                     marker.setIcon(originalIcon);
+                    marker.closePopup();
+                    // Restore original popup content
+                    marker.bindPopup('<b>شروع مسیر</b><br>' + points[0].time);
+                    
                     window.isAnimating = false;
+                    
+                    // Clear chart highlight
+                    if (speedChart && speedChart.tooltip) {
+                        speedChart.tooltip.setActiveElements([], {x: 0, y: 0});
+                        speedChart.update();
+                    }
                     return;
                 }
                 
-                const point = window.currentRoutePoints[index];
+                const point = points[index];
                 marker.setLatLng([point.lat, point.lng]);
                 
-                // Optional: Update popup content if needed or just keep moving
-                // marker.getPopup().setContent(...) 
+                // Update Popup Content
+                let popupContent = `
+                    <div style="font-family: 'Vazirmatn'; text-align: right; min-width: 150px;">
+                        <div style="font-weight: bold; margin-bottom: 4px; color: #4361ee;">${point.time}</div>
+                        <div>سرعت: <b>${point.speed}</b> km/h</div>
+                        <div>باتری: ${point.battery}% | ماهواره: ${point.satellites}</div>
+                `;
+                // Add Status if useful, e.g. Moving/Stopped
+                // if (point.status) popupContent += `<div>وضعیت: ${point.status}</div>`;
                 
+                popupContent += `</div>`;
+                
+                marker.getPopup().setContent(popupContent);
+                
+                // Sync with Speed Chart
+                if (speedChart) {
+                    // Find the dataset index (usually 0 for speed) and point index
+                    const activeElements = [{ datasetIndex: 0, index: index }];
+                    speedChart.tooltip.setActiveElements(activeElements, {
+                        x: 0, y: 0
+                    });
+                    speedChart.update();
+                }
+
                 index++;
-                requestAnimationFrame(animate);
+                setTimeout(animate, animationDelay); // Use setTimeout for speed control
             }
             
             animate();
@@ -1423,7 +1471,7 @@
                 // 1. Speed Line Chart
                 const speedCtx = document.getElementById('speedChart-' + dayDate);
                 if (speedCtx) {
-                    new Chart(speedCtx, {
+                    const speedChartInstance = new Chart(speedCtx, {
                         type: 'line',
                         data: {
                             labels: points.map(p => p.time),
@@ -1464,9 +1512,17 @@
                                         color: 'rgba(255, 255, 255, 0.05)'
                                     }
                                 }
-                            }
+                            },
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
                         }
                     });
+                    
+                    // Store instance globally
+                    if (!window.speedCharts) window.speedCharts = {};
+                    window.speedCharts[dayDate] = speedChartInstance;
                 }
         
                 // 2. Status Doughnut Chart
