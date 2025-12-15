@@ -239,6 +239,7 @@ def report(request):
                 'signal': loc.signal_strength,
                 'status': status,
                 'address': clean_and_format_address(loc.address) if loc.address else 'آدرس نامشخص',
+                'matched_geometry': loc.matched_geometry, # Add matched geometry
                 'raw_timestamp': loc.created_at.timestamp()
             }
             

@@ -1224,7 +1224,8 @@
                     battery: {{ record.battery|default:0 }},
                     satellites: {{ record.satellites|default:0 }},
                     status: '{{ record.status|default:"" }}',
-                    address: '{{ record.address|default:""|escapejs }}' // Add address if available
+                    address: '{{ record.address|default:""|escapejs }}', // Add address if available
+                    geometry: '{{ record.matched_geometry|default:""|escapejs }}' // Encoded Polyline
                 },
                 {% endfor %}
             ],
@@ -1239,60 +1240,117 @@
         window.currentRoutePoints = [];
         window.speedCharts = {}; // Store chart instances
 
+        // Helper: Decode Google Polyline
+        function decodePolyline(encoded) {
+            if (!encoded) return [];
+            var poly = [];
+            var index = 0, len = encoded.length;
+            var lat = 0, lng = 0;
+
+            while (index < len) {
+                var b, shift = 0, result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                var dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                var dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+
+                poly.push([lat / 1e5, lng / 1e5]);
+            }
+            return poly;
+        }
+
         // Function to draw route for specific date
         window.drawRouteForDate = function(date) {
-            const points = dailyRouteData[date];
-            if (!points || points.length === 0) return;
-            
-            // Update global current points for playback
-            window.currentRoutePoints = points;
-            
-            // Clear existing layers
+            // Clear existing
             if (currentPolyline) map.removeLayer(currentPolyline);
             if (startMarker) map.removeLayer(startMarker);
             if (endMarker) map.removeLayer(endMarker);
             
-            // Draw new polyline
-            const latlngs = points.map(p => [p.lat, p.lng]);
-            currentPolyline = L.polyline(latlngs, {
+            // Stop any existing animation
+            if (window.startRouteAnimation) {
+                // Find a way to stop it? Usually done by checking window.isAnimating inside the loop
+                // But we can reset variables here just in case
+                window.isAnimating = false;
+            }
+
+            const points = dailyRouteData[date] || [];
+            
+            if (points.length === 0) {
+                window.currentRoutePoints = [];
+                return;
+            }
+
+            // Expose points to global scope for animation
+            window.currentRoutePoints = points;
+
+            // Build Full Path using Matched Geometry if available
+            let fullPathLatlngs = [];
+            
+            points.forEach(point => {
+                if (point.geometry) {
+                    // If matched geometry exists, decode and add points
+                    const decoded = decodePolyline(point.geometry);
+                    fullPathLatlngs = fullPathLatlngs.concat(decoded);
+                } else {
+                    // Fallback to straight line
+                    fullPathLatlngs.push([point.lat, point.lng]);
+                }
+            });
+            
+            // If no geometry was found at all, fullPathLatlngs will just be the points (same as before)
+
+            // Draw Polyline
+            currentPolyline = L.polyline(fullPathLatlngs, {
                 color: '#4361ee',
                 weight: 4,
-                opacity: 0.7,
+                opacity: 0.8,
                 smoothFactor: 1
             }).addTo(map);
-            
-            // Start Icon (Play)
-            const startIcon = L.divIcon({
-                className: 'custom-marker',
-                html: '<div style="background: #22c55e; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-play"></i></div>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-            
-            // End Icon (Stop)
-            const endIcon = L.divIcon({
-                className: 'custom-marker',
-                html: '<div style="background: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-stop"></i></div>',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-            
-            // Add Markers
-            startMarker = L.marker([points[0].lat, points[0].lng], { icon: startIcon })
-                .addTo(map)
-                .bindPopup('<b>شروع مسیر</b><br>' + points[0].time);
-                
-            endMarker = L.marker([points[points.length - 1].lat, points[points.length - 1].lng], { icon: endIcon })
-                .addTo(map)
-                .bindPopup('<b>پایان مسیر</b><br>' + points[points.length - 1].time);
-                
-            // Bind Playback Click
-            startMarker.on('click', function() {
-                startRouteAnimation(this);
-            });
-            
-            // Fit bounds
+
+            // Fit Bounds
             map.fitBounds(currentPolyline.getBounds(), { padding: [50, 50] });
+
+            // Start/End Markers (Interactive)
+            // Use FontAwesome icons for markers
+            const startIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div style="background-color: #22c55e; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: pointer;"><i class="fas fa-play" style="color: white; margin-left:2px;"></i></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+            
+            const endIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div style="background-color: #ef4444; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fas fa-flag-checkered" style="color: white;"></i></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            startMarker = L.marker([points[0].lat, points[0].lng], { icon: startIcon }).addTo(map);
+            startMarker.bindPopup('<b>شروع مسیر</b><br>' + points[0].time);
+            
+            // Add Click Event to Start Marker for Playback
+            startMarker.on('click', function() {
+                if (window.startRouteAnimation) {
+                    window.startRouteAnimation(startMarker);
+                }
+            });
+
+            endMarker = L.marker([points[points.length-1].lat, points[points.length-1].lng], { icon: endIcon }).addTo(map);
+            endMarker.bindPopup('<b>پایان مسیر</b><br>' + points[points.length-1].time);
         };
 
         // Initialize with first available day
@@ -1305,12 +1363,13 @@
         
         // Expose map to window for external access
         window.map = map;
-        // Moving Icon Definition
+        // Moving Icon Definition - Green Arrow
         const movingIcon = L.divIcon({
-            className: 'moving-marker',
-            html: '<div style="background: #4361ee; width: 24px; height: 24px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(67, 97, 238, 0.5);"></div>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            className: 'moving-marker-arrow',
+            html: '<img src="{% static "img/markers/arrow.png" %}" style="width: 32px; height: 32px; filter: hue-rotate(90deg) brightness(1.2);" class="arrow-img">',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -10]
         });
 
         // Animation Function
@@ -1343,6 +1402,21 @@
             // Get current chart for sync
             const currentDayDate = document.querySelector('.compact-date-select').value;
             const speedChart = window.speedCharts[currentDayDate];
+            
+            // Helper to calculate bearing between two points
+            function getBearing(startLat, startLng, destLat, destLng) {
+                const startLatRad = startLat * (Math.PI / 180);
+                const startLngRad = startLng * (Math.PI / 180);
+                const destLatRad = destLat * (Math.PI / 180);
+                const destLngRad = destLng * (Math.PI / 180);
+
+                const y = Math.sin(destLngRad - startLngRad) * Math.cos(destLatRad);
+                const x = Math.cos(startLatRad) * Math.sin(destLatRad) -
+                          Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLngRad - startLngRad);
+                let brng = Math.atan2(y, x);
+                brng = brng * (180 / Math.PI);
+                return (brng + 360) % 360;
+            }
 
             // Helper to update popup/UI
             function updateUI(point, idx) {
@@ -1385,6 +1459,20 @@
                 }
             }
             
+            // Helper: Shortest path angle interpolation
+            function interpolateAngle(start, end, t) {
+                const diff = (end - start + 180) % 360 - 180;
+                const shortestAngle = (diff + 360) % 360 - (diff < -180 ? -360 : 0); // Normalize to -180...180 range logic simplification
+                // Let's use a simpler logic for 0-360 handling
+                let delta = (end - start + 540) % 360 - 180;
+                return (start + delta * t + 360) % 360;
+            }
+
+            let previousBearing = 0;
+            if (points.length > 1) {
+                previousBearing = getBearing(points[0].lat, points[0].lng, points[1].lat, points[1].lng);
+            }
+
             // Initial UI update
             updateUI(points[0], 0);
 
@@ -1394,14 +1482,13 @@
                 if (!segmentStartTime) segmentStartTime = timestamp;
                 const elapsed = timestamp - segmentStartTime;
                 
-                // Calculate LERP progress (0.0 to 1.0)
+                // Calculate LERP progress
                 let progress = elapsed / durationPerSegment;
                 
                 if (progress >= 1) {
-                    // Segment finished, move to next
                     index++;
                     if (index >= points.length - 1) {
-                        // End of route
+                        // End
                         const lastPoint = points[points.length - 1];
                         marker.setLatLng([lastPoint.lat, lastPoint.lng]);
                         updateUI(lastPoint, points.length - 1);
@@ -1418,22 +1505,68 @@
                         }
                         return;
                     }
-                    
-                    // Setup for next segment
                     segmentStartTime = timestamp;
                     progress = 0; 
-                    // Update UI for the new "current" point (start of next segment)
+                    
+                    // Update previous bearing when segment changes
+                    // If we have valid lookahead, use it, else keep previous
+                    if (index < points.length - 1) {
+                        const p1 = points[index];
+                        const p2 = points[index+1];
+                        previousBearing = getBearing(p1.lat, p1.lng, p2.lat, p2.lng);
+                    }
+                    
                     updateUI(points[index], index);
                 }
                 
-                // Interpolate
+                // Interpolate Position
                 const startPoint = points[index];
                 const endPoint = points[index + 1];
                 
+                // Calculate target bearing
+                const targetBearing = getBearing(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+                
+                // Smoothly interpolate rotation
+                // We use 'progress' as the interpolation factor. 
+                // Note: For very sharp turns, this might still feel quick if the segment is short.
+                // But it smoothly transitions from 'previousBearing' (start of segment) isn't entirely correct because 
+                // we want to turn TOWARDS the new direction.
+                // Actually, standard GPS markers usually face the direction of the segment they are currently on.
+                // If the user wants "smooth rotation", they imply they don't want an INSTANT snap when entering a new segment.
+                // So we should interpolate from the bearing of the PREVIOUS segment to the CURRENT segment.
+                // However, 'progress' ensures we gradually reach the full bearing? No, typically a car aligns with the road.
+                // If we want to simulate a turn, we should probably interpolate based on progress.
+                
+                // Let's rely on the previous frame's rotation for even smoother transitions, 
+                // OR interpolate from (Heading of Pt i-1 -> Pt i) TO (Heading of Pt i -> Pt i+1).
+                // Simplified approach: Interpolate from 'previousBearing' to 'targetBearing'.
+                // Ideally, 'previousBearing' should be the actual rendered rotation from the last frame?
+                // Or simply the bearing of the previous segment.
+                
+                // Let's store the current displayed rotation to ensure continuity
+                if (window.currentDisplayedRotation === undefined) window.currentDisplayedRotation = targetBearing;
+                
+                // Interpolate from current displayed -> target
+                // We want to align with 'targetBearing' quickly but smoothly.
+                // Using a fixed small t (e.g. 0.1) creates an asymptotic ease-out.
+                window.currentDisplayedRotation = interpolateAngle(window.currentDisplayedRotation, targetBearing, 0.35);
+
                 const currentLat = startPoint.lat + (endPoint.lat - startPoint.lat) * progress;
                 const currentLng = startPoint.lng + (endPoint.lng - startPoint.lng) * progress;
                 
                 marker.setLatLng([currentLat, currentLng]);
+                
+                // Rotate Marker
+                const iconEl = marker.getElement();
+                if (iconEl) {
+                    const img = iconEl.querySelector('img');
+                    if (img) {
+                        img.style.transform = `rotate(${window.currentDisplayedRotation}deg)`;
+                    }
+                }
+                
+                // Center Map (Follow Mode)
+                map.setView([currentLat, currentLng], map.getZoom(), { animate: false });
 
                 requestAnimationFrame(animate);
             }
