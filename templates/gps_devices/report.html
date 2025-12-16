@@ -399,6 +399,9 @@
     }
 
     .map-overlay-top-left .map-overlay-content {
+        overflow-y: hidden;
+        overflow-x: hidden;
+        padding: 6px;
         scrollbar-width: thin;
         scrollbar-color: rgba(72, 149, 239, 0.9) rgba(255, 255, 255, 0.08);
     }
@@ -420,6 +423,33 @@
 
     .map-overlay-top-left .map-overlay-content::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(180deg, rgba(96, 165, 250, 0.98), rgba(72, 149, 239, 0.92));
+    }
+
+    .map-overlay-top-left .overlay-charts-grid {
+        gap: 6px;
+    }
+
+    .map-overlay-top-left .overlay-chart-box {
+        padding: 6px;
+    }
+
+    .map-overlay-top-left .overlay-chart-box .chart-canvas-wrapper {
+        height: 92px;
+    }
+
+    .map-overlay-top-left .overlay-chart-box,
+    .map-overlay-top-left .overlay-charts-grid,
+    .map-overlay-top-left .chart-canvas-wrapper {
+        max-width: 100%;
+        width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    }
+
+    .map-overlay-top-left canvas {
+        max-width: 100% !important;
+        width: 100% !important;
+        display: block;
     }
 
     .map-overlay-panel.collapsed .map-overlay-content {
@@ -511,6 +541,223 @@
     }
 
     .playback-speed-select option {
+        color: #0f172a;
+    }
+
+    body.light-theme .map-overlay-panel {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.92));
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: 0 8px 26px rgba(15, 23, 42, 0.14);
+    }
+
+    body.light-theme .panel-header {
+        background: rgba(15, 23, 42, 0.04);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    body.light-theme .panel-title {
+        color: #0f172a;
+    }
+
+    body.light-theme .panel-title i {
+        color: #2563eb;
+    }
+
+    body.light-theme .panel-nav-btn,
+    body.light-theme .playback-btn {
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        color: #0f172a;
+    }
+
+    body.light-theme .panel-nav-btn:hover,
+    body.light-theme .playback-btn:hover {
+        background: rgba(15, 23, 42, 0.08);
+    }
+
+    body.light-theme .playback-speed-select,
+    body.light-theme .compact-date-select {
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        color: #0f172a;
+    }
+
+    body.light-theme .overlay-chart-box {
+        background: rgba(15, 23, 42, 0.03);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    body.light-theme .stat-item {
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+    }
+
+    body.light-theme .stat-label {
+        color: rgba(15, 23, 42, 0.75);
+    }
+
+    body.light-theme .stat-value {
+        color: #0f172a;
+    }
+
+    body.light-theme .stat-value small {
+        opacity: 0.8;
+    }
+
+    body.light-theme #reportForm,
+    body.light-theme .report-form-bar {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 0.98)) !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    body.light-theme #reportForm {
+        backdrop-filter: blur(18px) !important;
+    }
+
+    body.light-theme .main-content .report-toolbar {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 1), rgba(255, 255, 255, 1)) !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    body.light-theme .main-content .report-toolbar .toolbar-input {
+        background: rgba(15, 23, 42, 0.04) !important;
+        border: 1px solid rgba(15, 23, 42, 0.12) !important;
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a;
+        caret-color: #0f172a;
+        color-scheme: light;
+    }
+
+    body.light-theme .main-content .report-toolbar .toolbar-input:focus {
+        background: rgba(15, 23, 42, 0.06) !important;
+        border-color: rgba(37, 99, 235, 0.7) !important;
+    }
+
+    body.light-theme .main-content .report-toolbar .toolbar-input::placeholder {
+        color: rgba(15, 23, 42, 0.55) !important;
+    }
+
+    body.light-theme .main-content .report-toolbar .toolbar-input::-webkit-calendar-picker-indicator {
+        filter: invert(0);
+        opacity: 0.75;
+    }
+
+    body.light-theme .main-content .report-toolbar .toolbar-select-trigger,
+    body.light-theme .main-content .report-toolbar .select-dropdown {
+        background: rgba(15, 23, 42, 0.04) !important;
+        border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    }
+
+    body.light-theme .main-content .report-toolbar .toolbar-select-trigger,
+    body.light-theme .main-content .report-toolbar .select-option,
+    body.light-theme .main-content .report-toolbar .search-box input {
+        color: #0f172a !important;
+    }
+
+    body.light-theme .report-toolbar {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 1), rgba(255, 255, 255, 1)) !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    body.light-theme #startDate,
+    body.light-theme #endDate,
+    body.light-theme #startTime,
+    body.light-theme #endTime {
+        background: rgba(15, 23, 42, 0.04) !important;
+        border: 1px solid rgba(15, 23, 42, 0.12) !important;
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a;
+        caret-color: #0f172a;
+        color-scheme: light;
+    }
+
+    body.light-theme #startDate::placeholder,
+    body.light-theme #endDate::placeholder {
+        color: rgba(15, 23, 42, 0.55) !important;
+    }
+
+    body.light-theme .report-toolbar .selected-text,
+    body.light-theme .report-toolbar .selected-text.placeholder {
+        color: #0f172a !important;
+    }
+
+    body.light-theme .report-toolbar .toolbar-btn {
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+    }
+
+    body.light-theme .datepicker-plot-area {
+        background: rgba(255, 255, 255, 0.98) !important;
+        border: 1px solid rgba(15, 23, 42, 0.12) !important;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12) !important;
+        color: #0f172a !important;
+    }
+
+    body.light-theme .datepicker-plot-area .datepicker-navigator,
+    body.light-theme .datepicker-plot-area .datepicker-header {
+        background: rgba(15, 23, 42, 0.04) !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+        color: #0f172a !important;
+    }
+
+    body.light-theme .datepicker-plot-area .datepicker-day-view .table-days td span,
+    body.light-theme .datepicker-plot-area .datepicker-month-view .month-item,
+    body.light-theme .datepicker-plot-area .datepicker-year-view .year-item {
+        color: #0f172a !important;
+    }
+
+    body.light-theme .datepicker-plot-area .datepicker-day-view .table-days td.selected span,
+    body.light-theme .datepicker-plot-area .datepicker-month-view .month-item.selected,
+    body.light-theme .datepicker-plot-area .datepicker-year-view .year-item.selected {
+        background: rgba(37, 99, 235, 0.12) !important;
+        color: #0f172a !important;
+    }
+
+    body.light-theme .datepicker-plot-area .datepicker-day-view .table-days td span:hover,
+    body.light-theme .datepicker-plot-area .datepicker-month-view .month-item:hover,
+    body.light-theme .datepicker-plot-area .datepicker-year-view .year-item:hover {
+        background: rgba(15, 23, 42, 0.06) !important;
+    }
+
+    body.light-theme .toolbar-select-trigger,
+    body.light-theme .select-dropdown {
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+    }
+
+    body.light-theme .toolbar-select-trigger,
+    body.light-theme .select-option,
+    body.light-theme .search-box input {
+        color: #0f172a;
+    }
+
+    body.light-theme .search-box {
+        border-bottom: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(15, 23, 42, 0.03);
+    }
+
+    body.light-theme .search-box input::placeholder {
+        color: rgba(15, 23, 42, 0.5);
+    }
+
+    body.light-theme .select-option {
+        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    body.light-theme .select-option:hover {
+        background: rgba(15, 23, 42, 0.06);
+    }
+
+    body.light-theme .compact-date-select:hover {
+        background-color: rgba(15, 23, 42, 0.06);
+        border-color: rgba(15, 23, 42, 0.18);
+        color: #0f172a;
+    }
+
+    body.light-theme .compact-date-select option {
+        background: rgb(255, 255, 255);
         color: #0f172a;
     }
 
@@ -1058,6 +1305,7 @@
                     <option value="1" selected>1x</option>
                     <option value="1.5">1.5x</option>
                     <option value="2">2x</option>
+                    <option value="4">4x</option>
                 </select>
             </div>
 
@@ -1438,7 +1686,7 @@
         window.routePlaybackSetSpeed = function(value) {
             const v = parseFloat(value);
             if (!window.routePlayback) return;
-            if ([0.5, 1, 1.5, 2].includes(v)) {
+            if ([0.5, 1, 1.5, 2, 4].includes(v)) {
                 window.routePlayback.setSpeed(v);
             }
         };
@@ -1803,6 +2051,74 @@
         }
     };
 
+    window.getReportThemeColors = function() {
+        const isLight = document.body.classList.contains('light-theme');
+        return {
+            isLight,
+            text: isLight ? 'rgba(15, 23, 42, 0.75)' : 'rgba(255, 255, 255, 0.75)',
+            textMuted: isLight ? 'rgba(15, 23, 42, 0.55)' : 'rgba(255, 255, 255, 0.6)',
+            grid: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.1)',
+            gridMuted: isLight ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.05)',
+            tooltipBg: isLight ? 'rgba(255, 255, 255, 0.96)' : 'rgba(15, 23, 42, 0.96)',
+            tooltipText: isLight ? '#0f172a' : '#ffffff',
+            segmentBorder: isLight ? 'rgba(255, 255, 255, 1)' : 'rgba(15, 23, 42, 1)'
+        };
+    };
+
+    window.applyReportChartTheme = function() {
+        const t = window.getReportThemeColors ? window.getReportThemeColors() : { isLight: false };
+        const charts = [];
+
+        if (window.speedCharts) {
+            Object.values(window.speedCharts).forEach(ch => ch && charts.push(ch));
+        }
+        if (window.statusCharts) {
+            Object.values(window.statusCharts).forEach(ch => ch && charts.push(ch));
+        }
+        if (window.sensorCharts) {
+            Object.values(window.sensorCharts).forEach(ch => ch && charts.push(ch));
+        }
+
+        charts.forEach(chart => {
+            if (!chart.options) return;
+
+            if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                chart.options.plugins.legend.labels.color = t.text;
+            }
+            if (chart.options.scales) {
+                Object.keys(chart.options.scales).forEach(axisKey => {
+                    const axis = chart.options.scales[axisKey];
+                    if (axis && axis.ticks) axis.ticks.color = t.textMuted;
+                    if (axis && axis.grid) axis.grid.color = axisKey === 'x' ? t.gridMuted : t.grid;
+                });
+            }
+
+            if (chart.options.plugins && chart.options.plugins.tooltip) {
+                chart.options.plugins.tooltip.backgroundColor = t.tooltipBg;
+                chart.options.plugins.tooltip.titleColor = t.tooltipText;
+                chart.options.plugins.tooltip.bodyColor = t.tooltipText;
+                chart.options.plugins.tooltip.borderColor = t.isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)';
+                chart.options.plugins.tooltip.borderWidth = 1;
+            }
+
+            if (chart.data && chart.data.datasets) {
+                chart.data.datasets.forEach(ds => {
+                    if (Array.isArray(ds.borderColor) && ds.borderColor.length > 1 && chart.config && chart.config.type === 'doughnut') {
+                        ds.borderColor = t.segmentBorder;
+                    }
+                });
+            }
+
+            chart.update();
+        });
+    };
+
+    if (document.body) {
+        new MutationObserver(() => {
+            if (window.applyReportChartTheme) window.applyReportChartTheme();
+        }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+
     // Initialize Charts if report data exists
         {% if report_data %}
             {% for day in report_data %}
@@ -1823,6 +2139,8 @@
                     {% endfor %}
                 ];
         
+                const theme = window.getReportThemeColors ? window.getReportThemeColors() : { isLight: false };
+
                 // Chart.js default config for RTL
                 const defaultOptions = {
                     responsive: true,
@@ -1831,7 +2149,7 @@
                         legend: {
                             labels: {
                                 font: { family: 'Vazirmatn', size: 11 },
-                                color: 'rgba(255, 255, 255, 0.8)',
+                                color: theme.text,
                                 usePointStyle: true,
                                 padding: 15
                             }
@@ -1865,22 +2183,22 @@
                                 y: {
                                     beginAtZero: true,
                                     ticks: {
-                                        color: 'rgba(255, 255, 255, 0.6)',
+                                        color: theme.textMuted,
                                         font: { family: 'Vazirmatn', size: 10 }
                                     },
                                     grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
+                                        color: theme.grid
                                     }
                                 },
                                 x: {
                                     ticks: {
-                                        color: 'rgba(255, 255, 255, 0.6)',
+                                        color: theme.textMuted,
                                         font: { family: 'Vazirmatn', size: 9 },
                                         maxRotation: 45,
                                         minRotation: 45
                                     },
                                     grid: {
-                                        color: 'rgba(255, 255, 255, 0.05)'
+                                        color: theme.gridMuted
                                     }
                                 }
                             },
@@ -1888,6 +2206,16 @@
                                 mode: 'index',
                                 intersect: false,
                             },
+                            plugins: {
+                                ...defaultOptions.plugins,
+                                tooltip: {
+                                    backgroundColor: theme.tooltipBg,
+                                    titleColor: theme.tooltipText,
+                                    bodyColor: theme.tooltipText,
+                                    borderColor: theme.isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)',
+                                    borderWidth: 1
+                                }
+                            }
                         }
                     });
                     
@@ -1904,7 +2232,7 @@
         
                 const statusCtx = document.getElementById('statusChart-' + dayDate);
                 if (statusCtx) {
-                    new Chart(statusCtx, {
+                    const statusChartInstance = new Chart(statusCtx, {
                         type: 'doughnut',
                         data: {
                             labels: Object.keys(statusCounts),
@@ -1917,7 +2245,7 @@
                                     '#64748b'  // offline - gray
                                 ],
                                 borderWidth: 2,
-                                borderColor: 'rgba(15, 23, 42, 1)'
+                                borderColor: theme.segmentBorder
                             }]
                         },
                         options: {
@@ -1929,10 +2257,20 @@
                                     ...defaultOptions.plugins.legend,
                                     position: 'right',
                                     checkOrientation: false
+                                },
+                                tooltip: {
+                                    backgroundColor: theme.tooltipBg,
+                                    titleColor: theme.tooltipText,
+                                    bodyColor: theme.tooltipText,
+                                    borderColor: theme.isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)',
+                                    borderWidth: 1
                                 }
                             }
                         }
                     });
+
+                    if (!window.statusCharts) window.statusCharts = {};
+                    window.statusCharts[dayDate] = statusChartInstance;
                 }
         
                 // 3. Sensor Bar Chart
@@ -1942,7 +2280,7 @@
         
                 const sensorCtx = document.getElementById('sensorChart-' + dayDate);
                 if (sensorCtx) {
-                    new Chart(sensorCtx, {
+                    const sensorChartInstance = new Chart(sensorCtx, {
                         type: 'bar',
                         data: {
                             labels: ['ماهواره', 'باتری (%)', 'سیگنال (%)'],
@@ -1970,25 +2308,42 @@
                                     beginAtZero: true,
                                     max: 100,
                                     ticks: {
-                                        color: 'rgba(255, 255, 255, 0.6)',
+                                        color: theme.textMuted,
                                         font: { family: 'Vazirmatn', size: 10 }
                                     },
                                     grid: {
-                                        color: 'rgba(255, 255, 255, 0.1)'
+                                        color: theme.grid
                                     }
                                 },
                                 x: {
                                     ticks: {
-                                        color: 'rgba(255, 255, 255, 0.6)',
-                                        font: { family: 'Vazirmatn', size: 10 }
+                                        color: theme.textMuted,
+                                        font: { family: 'Vazirmatn', size: 9 }
                                     },
                                     grid: {
-                                        display: false
+                                        color: theme.gridMuted
                                     }
+                                }
+                            },
+                            plugins: {
+                                ...defaultOptions.plugins,
+                                tooltip: {
+                                    backgroundColor: theme.tooltipBg,
+                                    titleColor: theme.tooltipText,
+                                    bodyColor: theme.tooltipText,
+                                    borderColor: theme.isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)',
+                                    borderWidth: 1
                                 }
                             }
                         }
                     });
+
+                    if (!window.sensorCharts) window.sensorCharts = {};
+                    window.sensorCharts[dayDate] = sensorChartInstance;
+                }
+
+                if (window.applyReportChartTheme) {
+                    window.applyReportChartTheme();
                 }
             })();
             {% endfor %}
