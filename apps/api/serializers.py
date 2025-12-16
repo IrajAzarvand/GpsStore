@@ -62,9 +62,11 @@ class ApiKeySerializer(serializers.ModelSerializer):
         model = ApiKey
         fields = '__all__'
         extra_kwargs = {'api_key': {'write_only': True}}
-    """Serializer for PaymentRecord model"""
-    subscription = SubscriptionSerializer(read_only=True)
 
-    class Meta:
-        model = PaymentRecord
-        fields = '__all__'
+    if False:
+        """Serializer for PaymentRecord model"""
+        subscription = SubscriptionSerializer(read_only=True)
+
+        class Meta:
+            model = PaymentRecord
+            fields = '__all__'

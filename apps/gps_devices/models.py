@@ -1,5 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db.models import Q
+from django.utils import timezone
 
 class State(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -43,15 +46,66 @@ class Device(models.Model):
     sim_no = models.CharField(max_length=20, blank=True, null=True)
     model = models.ForeignKey(Model, on_delete=models.PROTECT, related_name='devices')
     driver_name = models.CharField(max_length=100, blank=True, null=True)
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owned_devices')
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='owned_devices'
+    )
+
+    assigned_subuser = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subuser_assigned_devices'
+    )
+
+    expires_at = models.DateTimeField(null=True, blank=True)
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     consecutive_count = models.JSONField(default=dict, blank=True, help_text='Tracks consecutive occurrences of packet types/states')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=Q(assigned_subuser__isnull=True) | Q(owner__isnull=False),
+                name='gps_device_assigned_requires_owner',
+            )
+        ]
+
     def __str__(self):
         return f"{self.name} ({self.imei})"
+
+    def clean(self):
+        super().clean()
+
+        if self.assigned_subuser_id is not None and self.owner_id is None:
+            raise ValidationError({'assigned_subuser': 'برای واگذاری به زیرکاربر، ابتدا باید مالک دستگاه مشخص باشد.'})
+
+        if self.assigned_subuser_id is not None and self.owner_id is not None:
+            # assigned_subuser must be a (direct) subuser of owner
+            if getattr(self.assigned_subuser, 'is_subuser_of_id', None) != self.owner_id:
+                raise ValidationError({'assigned_subuser': 'زیرکاربر انتخابی باید زیرمجموعه کاربر مالک باشد.'})
+
+
+def get_visible_devices_queryset(user, only_active=False):
+    qs = Device.objects.all().select_related('model')
+    if only_active:
+        qs = qs.filter(status='active')
+
+    if getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False):
+        return qs
+
+    qs = qs.filter(Q(expires_at__isnull=True) | Q(expires_at__gte=timezone.now()))
+
+    if getattr(user, 'is_subuser_of_id', None):
+        return qs.filter(assigned_subuser=user)
+
+    return qs.filter(owner=user)
 
 
 class LocationData(models.Model):

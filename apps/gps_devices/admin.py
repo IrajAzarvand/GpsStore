@@ -18,9 +18,9 @@ class ModelAdmin(admin.ModelAdmin):
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'imei', 'model', 'owner', 'status', 'created_at')
+    list_display = ('name', 'imei', 'model', 'owner', 'assigned_subuser', 'expires_at', 'status', 'created_at')
     list_filter = ('status', 'model')
-    search_fields = ('name', 'imei', 'owner__username')
+    search_fields = ('name', 'imei', 'owner__username', 'assigned_subuser__username')
 
 @admin.register(LocationData)
 class LocationDataAdmin(admin.ModelAdmin):

@@ -1,20 +1,24 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Device, LocationData
+from .models import Device, LocationData, get_visible_devices_queryset
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core import serializers
 from django.conf import settings
+
 from datetime import datetime, timedelta
+
 import json
 import jdatetime
 import re
+
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from apps.gps_devices.services import MapMatchingService
 
 User = get_user_model()
+
 
 def clean_and_format_address(addr):
     """
@@ -70,15 +74,7 @@ def map_v2(request):
         hierarchy.append(build_user_tree(request.user, is_admin=False))
 
     # Collect all devices for JSON data
-    if request.user.is_staff or request.user.is_superuser:
-        devices = Device.objects.filter(status='active').select_related('model')
-    else:
-        # Get devices for current user and all subusers
-        user_ids = get_all_subuser_ids(request.user)
-        devices = Device.objects.filter(
-            owner_id__in=user_ids,
-            status='active'
-        ).select_related('model')
+    devices = get_visible_devices_queryset(request.user, only_active=True)
 
     # Serialize device data for JavaScript
     device_data = []
@@ -120,11 +116,9 @@ def map_v2(request):
         'user': request.user,
         'show_sidebar': True,
         'NESHAN_MAP_API_KEY': settings.NESHAN_MAP_API_KEY,
-        'NESHAN_SERVICE_API_KEY': settings.NESHAN_SERVICE_API_KEY,
     }
 
     return render(request, 'gps_devices/map_v2.html', context)
-
 
 @login_required
 def report(request):
@@ -135,11 +129,7 @@ def report(request):
     user_tree = build_user_tree(request.user)
 
     # Get active devices
-    if request.user.is_staff or request.user.is_superuser:
-        devices = Device.objects.filter(status='active').select_related('model')
-    else:
-        user_ids = get_all_subuser_ids(request.user)
-        devices = Device.objects.filter(owner_id__in=user_ids, status='active').select_related('model')
+    devices = get_visible_devices_queryset(request.user, only_active=True)
 
     devices_json = serializers.serialize('json', devices)
 
@@ -151,7 +141,6 @@ def report(request):
         'user': request.user,
         'show_sidebar': False,
         'NESHAN_MAP_API_KEY': settings.NESHAN_MAP_API_KEY,
-        'NESHAN_SERVICE_API_KEY': settings.NESHAN_SERVICE_API_KEY,
     }
 
     if request.method == 'POST':
@@ -297,10 +286,6 @@ def report(request):
 
     return render(request, 'gps_devices/report.html', context)
 
-
-
-
-
 def determine_device_status(latest_location):
     """Determine device status based on latest location data"""
     if latest_location:
@@ -315,21 +300,27 @@ def determine_device_status(latest_location):
     else:
         return 'offline'
     
-    
 def build_user_tree(user, is_admin=False):
     """
     Build hierarchical tree structure for a user and their devices
     """
     # Get user's devices
-    user_devices = Device.objects.filter(
-        owner=user, 
-        status='active'
-    ).select_related('model')
+    if getattr(user, 'is_subuser_of_id', None):
+        user_devices = Device.objects.filter(
+            assigned_subuser=user,
+            status='active'
+        ).select_related('model')
+    else:
+        user_devices = Device.objects.filter(
+            owner=user,
+            status='active'
+        ).select_related('model')
     
     # Get device data with latest location
     devices_list = []
     for device in user_devices:
         latest_location = device.locations.first()
+
         # Determine status based on latest location
         status = determine_device_status(latest_location)
         
@@ -366,7 +357,6 @@ def build_user_tree(user, is_admin=False):
     
     return user_node
 
-
 def get_all_subuser_ids(user):
     """
     Get IDs of user and all their subusers recursively
@@ -378,7 +368,6 @@ def get_all_subuser_ids(user):
         user_ids.extend(get_all_subuser_ids(subuser))
     
     return user_ids
-
 
 @login_required
 def get_device_report(request):
@@ -403,11 +392,8 @@ def get_device_report(request):
             return JsonResponse({'error': 'تمام فیلدها الزامی هستند'}, status=400)
         
         # بررسی دسترسی کاربر به دستگاه
-        if request.user.is_staff or request.user.is_superuser:
-            device = Device.objects.filter(id=device_id, status='active').first()
-        else:
-            user_ids = get_all_subuser_ids(request.user)
-            device = Device.objects.filter(id=device_id, owner_id__in=user_ids, status='active').first()
+        devices_qs = get_visible_devices_queryset(request.user, only_active=True)
+        device = devices_qs.filter(id=device_id).first()
         
         if not device:
             return JsonResponse({'error': 'دستگاه یافت نشد یا دسترسی ندارید'}, status=404)

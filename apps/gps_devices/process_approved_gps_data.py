@@ -464,6 +464,16 @@ class Command(BaseCommand):
                     }
                 )
 
+            # Send to assigned subuser group (if any)
+            if getattr(device, 'assigned_subuser_id', None):
+                async_to_sync(channel_layer.group_send)(
+                    f'user_group_{device.assigned_subuser_id}',
+                    {
+                        'type': 'device_update',
+                        'data': device_data
+                    }
+                )
+
             logger.info(f'Broadcasted update for device {device.imei}')
 
         except Exception as e:

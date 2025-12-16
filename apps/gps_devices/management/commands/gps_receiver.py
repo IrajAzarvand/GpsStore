@@ -996,7 +996,7 @@ class GPSReceiver:
                     device = Device.objects.create(
                         imei=device_id,
                         name=f'{device_id}',
-                        owner=admin_user,
+                        owner=None,
                         model=default_model,  # حالا مدل صحیح استفاده می‌شود
                         status='active'
                     )
@@ -1323,6 +1323,15 @@ class GPSReceiver:
                     }
                 )
 
+            # Send to assigned subuser group (if any)
+            if getattr(device, 'assigned_subuser_id', None):
+                async_to_sync(channel_layer.group_send)(
+                    f'user_group_{device.assigned_subuser_id}',
+                    {
+                        'type': 'device_update',
+                        'data': device_data
+                    }
+                )
         except Exception as e:
             logger.error(f'Error broadcasting device update: {e}')
 

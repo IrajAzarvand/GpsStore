@@ -141,8 +141,8 @@
                                                         {% if subuser.is_active %}فعال{% else %}غیرفعال{% endif %}
                                                     </span>
                                                 </td>
-                                                <td>{{ subuser.assigned_devices.count }}</td>
-                                                <td>{{ subuser.created_at|date:"Y-m-d" }}</td>
+                                                <td>{{ subuser.subuser_assigned_devices.count }}</td>
+                                                <td>{{ subuser.date_joined|date:"Y-m-d" }}</td>
                                                 <td>
                                                     <a href="{% url 'accounts:subuser_edit' subuser.pk %}" class="btn btn-sm btn-primary">ویرایش</a>
                                                     <a href="{% url 'accounts:subuser_delete' subuser.pk %}" class="btn btn-sm btn-danger">حذف</a>

@@ -33,10 +33,7 @@ class UserRegistrationForm(UserCreationForm):
         if commit:
             user.save()
             # Create profile with phone number (only if it doesn't exist)
-            UserProfile.objects.get_or_create(
-                user=user,
-                defaults={'phone_number': self.cleaned_data['phone_number']}
-            )
+            pass
         return user
 
 
@@ -57,11 +54,14 @@ class UserLoginForm(AuthenticationForm):
         self.fields['username'].widget.attrs.update({'class': 'form-control'})
         self.fields['password'].widget.attrs.update({'class': 'form-control'})
 
+
+class AssignDevicesToSubuserForm(forms.Form):
     """
     Form for assigning devices to sub-users
     """
+
     subuser = forms.ModelChoiceField(
-        queryset=SubUser.objects.none(),
+        queryset=User.objects.none(),
         widget=forms.Select(attrs={'class': 'form-control'}),
         required=True
     )
@@ -72,18 +72,105 @@ class UserLoginForm(AuthenticationForm):
     )
 
     def __init__(self, *args, **kwargs):
-        self.customer = kwargs.pop('customer', None)
+        self.owner = kwargs.pop('owner', None)
+        if self.owner is None:
+            self.owner = kwargs.pop('customer', None)
         super().__init__(*args, **kwargs)
-        if self.customer:
-            self.fields['subuser'].queryset = SubUser.objects.filter(customer=self.customer)
+
+        if self.owner:
+            self.fields['subuser'].queryset = User.objects.filter(
+                is_subuser_of=self.owner,
+                is_active=True,
+            )
             self.fields['devices'].queryset = Device.objects.filter(
-                customer=self.customer,
-                status='active'
+                owner=self.owner,
+                status='active',
             ).exclude(expires_at__lt=timezone.now())
 
     def save(self):
         subuser = self.cleaned_data['subuser']
-        devices = self.cleaned_data['devices']
-        subuser.assigned_devices.set(devices)
-        subuser.save()
+        devices = self.cleaned_data.get('devices')
+        device_ids = set(d.id for d in devices)
+
+        # Unassign devices currently assigned to this subuser but not selected anymore
+        Device.objects.filter(
+            owner=self.owner,
+            assigned_subuser=subuser,
+        ).exclude(id__in=device_ids).update(assigned_subuser=None)
+
+        # Assign selected devices to this subuser
+        if device_ids:
+            Device.objects.filter(
+                owner=self.owner,
+                id__in=device_ids,
+            ).update(assigned_subuser=subuser)
+
         return subuser
+
+
+class SubUserForm(forms.ModelForm):
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+    )
+    assigned_devices = forms.ModelMultipleChoiceField(
+        queryset=Device.objects.none(),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        required=False,
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'is_active')
+
+    def __init__(self, *args, **kwargs):
+        self.owner = kwargs.pop('owner', None)
+        super().__init__(*args, **kwargs)
+
+        self.fields['password'].required = not bool(self.instance and self.instance.pk)
+
+        for field_name in self.fields:
+            if field_name in ('assigned_devices', 'password'):
+                continue
+            self.fields[field_name].widget.attrs.update({'class': 'form-control'})
+
+        effective_owner = self.owner or getattr(self.instance, 'is_subuser_of', None)
+        if effective_owner:
+            self.fields['assigned_devices'].queryset = Device.objects.filter(
+                owner=effective_owner,
+                status='active',
+            ).exclude(expires_at__lt=timezone.now())
+
+        if self.instance and self.instance.pk:
+            self.initial['assigned_devices'] = Device.objects.filter(assigned_subuser=self.instance)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+
+        if self.owner is not None:
+            user.is_subuser_of = self.owner
+
+        password = self.cleaned_data.get('password')
+        if password:
+            user.set_password(password)
+
+        if commit:
+            user.save()
+
+            effective_owner = self.owner or getattr(user, 'is_subuser_of', None)
+            selected_devices = self.cleaned_data.get('assigned_devices')
+            selected_ids = set(d.id for d in selected_devices)
+
+            if effective_owner:
+                Device.objects.filter(
+                    owner=effective_owner,
+                    assigned_subuser=user,
+                ).exclude(id__in=selected_ids).update(assigned_subuser=None)
+
+                if selected_ids:
+                    Device.objects.filter(
+                        owner=effective_owner,
+                        id__in=selected_ids,
+                    ).update(assigned_subuser=user)
+
+        return user

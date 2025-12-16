@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions
-from apps.gps_devices.models import Device, LocationData
+from apps.gps_devices.models import Device, LocationData, get_visible_devices_queryset
 from apps.accounts.models import User, UserDevice
 from apps.api.models import ApiKey
 from .serializers import (
@@ -15,9 +15,8 @@ class DeviceViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff or user.is_superuser:
-            return Device.objects.all()
-        return Device.objects.filter(owner=user)
+        return get_visible_devices_queryset(user, only_active=False)
+
 class LocationDataViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for LocationData model"""
     queryset = LocationData.objects.all()
@@ -28,6 +27,5 @@ class LocationDataViewSet(viewsets.ReadOnlyModelViewSet):
         user = self.request.user
         if user.is_staff or user.is_superuser:
             return LocationData.objects.all()
-        # Get devices owned by user
-        user_devices = Device.objects.filter(owner=user)
+        user_devices = get_visible_devices_queryset(user, only_active=False)
         return LocationData.objects.filter(device__in=user_devices)
