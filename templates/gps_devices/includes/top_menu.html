@@ -1,19 +1,15 @@
 <header class="header">
     <div class="header-actions">
-        <div class="theme-switcher" onclick="toggleTheme()"><i class="fas fa-moon theme-icon"></i><span>تم
-                تیره</span></div><button class="action-btn" title="هشدارها"><i
+        <div class="theme-switcher" onclick="toggleTheme()"><i class="fas fa-moon theme-icon"></i><span class="theme-text">تم تیره</span></div><button class="action-btn" title="هشدارها"><i
                 class="fas fa-bell"></i></button><button class="action-btn" title="پروفایل"><i
                 class="fas fa-user"></i></button>
     </div>
     <nav class="main-nav">
-        <div class="nav-item"><a href="{% url 'gps_devices:map_v2' %}" class="nav-link {% if request.resolver_match.url_name == 'map_v2' %}active{% endif %}"><i class="fas fa-map-marked-alt"></i><span>نقشه
-                    زنده</span></a></div>
-        <div class="nav-item"><a href="#" class="nav-link"><i class="fas fa-camera"></i><span>بازبینی</span></a>
-        </div>
-        <div class="nav-item"><a href="#" class="nav-link"><i class="fas fa-draw-polygon"></i><span>حصار
-                    جغرافیایی</span></a></div>
-        <div class="nav-item"><a href="{% url 'gps_devices:report' %}" class="nav-link {% if request.resolver_match.url_name == 'report' %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>گزارش
-                    گیری</span></a></div>
+        <div class="nav-item"><a href="{% url 'gps_devices:map_v2' %}" class="nav-link {% if request.resolver_match.url_name == 'map_v2' %}active{% endif %}"><i class="fas fa-map-marked-alt"></i><span>نقشه زنده</span></a></div>
+        <div class="nav-item"><a href="#" class="nav-link"><i class="fas fa-camera"></i><span>بازبینی</span></a></div>
+        <div class="nav-item"><a href="#" class="nav-link"><i class="fas fa-draw-polygon"></i><span>حصار جغرافیایی</span></a></div>
+        <div class="nav-item"><a href="{% url 'gps_devices:report' %}" class="nav-link {% if request.resolver_match.url_name == 'report' %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>گزارش گیری</span></a></div>
+        <div class="nav-item"><a href="#" class="nav-link"><i class="fas fa-cog"></i><span>مدیریت</span></a></div>
         <div class="nav-item"><a href="#" class="nav-link"><i class="fas fa-cog"></i><span>مدیریت</span></a>
         </div>
     </nav>

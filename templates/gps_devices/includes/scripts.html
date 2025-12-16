@@ -19,11 +19,12 @@
 
 
     // --- Theme Toggle Function ---
-    function toggleTheme() {
-        document.body.classList.toggle('light-theme');
+    function updateThemeSwitcherUI() {
+        const isLight = document.body.classList.contains('light-theme');
+
         const themeIcon = document.querySelector('.theme-icon');
         if (themeIcon) {
-            if (document.body.classList.contains('light-theme')) {
+            if (isLight) {
                 themeIcon.classList.remove('fa-moon');
                 themeIcon.classList.add('fa-sun');
             } else {
@@ -31,6 +32,16 @@
                 themeIcon.classList.add('fa-moon');
             }
         }
+
+        const themeText = document.querySelector('.theme-switcher .theme-text');
+        if (themeText) {
+            themeText.textContent = isLight ? 'تم روشن' : 'تم تیره';
+        }
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        updateThemeSwitcherUI();
         // Save theme preference to localStorage
         localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
     }
@@ -40,12 +51,9 @@
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             document.body.classList.add('light-theme');
-            const themeIcon = document.querySelector('.theme-icon');
-            if (themeIcon) {
-                themeIcon.classList.remove('fa-moon');
-                themeIcon.classList.add('fa-sun');
-            }
         }
+
+        updateThemeSwitcherUI();
     });
 
     // --- Initialization ---
