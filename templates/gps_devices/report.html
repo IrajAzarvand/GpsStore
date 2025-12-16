@@ -644,48 +644,34 @@
         opacity: 0.75;
     }
 
-    body.light-theme .main-content .report-toolbar .toolbar-select-trigger,
-    body.light-theme .main-content .report-toolbar .select-dropdown {
-        background: rgba(15, 23, 42, 0.04) !important;
-        border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    body.light-theme .toolbar-select-trigger {
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: none;
     }
 
-    body.light-theme .main-content .report-toolbar .toolbar-select-trigger,
-    body.light-theme .main-content .report-toolbar .select-option,
-    body.light-theme .main-content .report-toolbar .search-box input {
+    body.light-theme .toolbar-select-trigger .selected-text {
         color: #0f172a !important;
     }
 
-    body.light-theme .report-toolbar {
-        background: linear-gradient(135deg, rgba(248, 250, 252, 1), rgba(255, 255, 255, 1)) !important;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
-    }
-
-    body.light-theme #startDate,
-    body.light-theme #endDate,
-    body.light-theme #startTime,
-    body.light-theme #endTime {
-        background: rgba(15, 23, 42, 0.04) !important;
-        border: 1px solid rgba(15, 23, 42, 0.12) !important;
-        color: #0f172a !important;
-        -webkit-text-fill-color: #0f172a;
-        caret-color: #0f172a;
-        color-scheme: light;
-    }
-
-    body.light-theme #startDate::placeholder,
-    body.light-theme #endDate::placeholder {
+    body.light-theme .toolbar-select-trigger .selected-text.placeholder {
         color: rgba(15, 23, 42, 0.55) !important;
     }
 
-    body.light-theme .report-toolbar .selected-text,
-    body.light-theme .report-toolbar .selected-text.placeholder {
+    body.light-theme .toolbar-select-trigger i {
         color: #0f172a !important;
     }
 
-    body.light-theme .report-toolbar .toolbar-btn {
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+    body.light-theme .select-dropdown {
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.18);
+    }
+
+    body.light-theme .toolbar-select-trigger,
+    body.light-theme .select-option,
+    body.light-theme .search-box input {
+        color: #0f172a;
     }
 
     body.light-theme .datepicker-plot-area {
@@ -719,41 +705,6 @@
     body.light-theme .datepicker-plot-area .datepicker-month-view .month-item:hover,
     body.light-theme .datepicker-plot-area .datepicker-year-view .year-item:hover {
         background: rgba(15, 23, 42, 0.06) !important;
-    }
-
-    body.light-theme .toolbar-select-trigger,
-    body.light-theme .select-dropdown {
-        background: rgba(15, 23, 42, 0.04);
-        border: 1px solid rgba(15, 23, 42, 0.12);
-    }
-
-    body.light-theme .toolbar-select-trigger,
-    body.light-theme .select-option,
-    body.light-theme .search-box input {
-        color: #0f172a;
-    }
-
-    body.light-theme .search-box {
-        border-bottom: 1px solid rgba(15, 23, 42, 0.10);
-        background: rgba(15, 23, 42, 0.03);
-    }
-
-    body.light-theme .search-box input::placeholder {
-        color: rgba(15, 23, 42, 0.5);
-    }
-
-    body.light-theme .select-option {
-        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-    }
-
-    body.light-theme .select-option:hover {
-        background: rgba(15, 23, 42, 0.06);
-    }
-
-    body.light-theme .compact-date-select:hover {
-        background-color: rgba(15, 23, 42, 0.06);
-        border-color: rgba(15, 23, 42, 0.18);
-        color: #0f172a;
     }
 
     body.light-theme .compact-date-select option {
@@ -1395,11 +1346,15 @@
         // Initialize Persian Date Pickers
         $('#startDate').persianDatepicker({
             format: 'YYYY-MM-DD',
+            calendarType: 'persian',
+            initialValueType: 'persian',
             initialValue: true,
+            observer: true,
             autoClose: true,
             calendar: {
                 persian: {
-                    locale: 'fa'
+                    locale: 'fa',
+                    leapYearMode: 'astronomical'
                 }
             },
             navigator: {
@@ -1415,11 +1370,15 @@
 
         $('#endDate').persianDatepicker({
             format: 'YYYY-MM-DD',
+            calendarType: 'persian',
+            initialValueType: 'persian',
             initialValue: true,
+            observer: true,
             autoClose: true,
             calendar: {
                 persian: {
-                    locale: 'fa'
+                    locale: 'fa',
+                    leapYearMode: 'astronomical'
                 }
             },
             navigator: {
