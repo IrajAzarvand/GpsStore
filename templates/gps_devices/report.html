@@ -376,6 +376,160 @@
         overflow: hidden;
     }
 
+    .map-overlay-panel {
+        position: fixed;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4);
+        z-index: 950;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .map-overlay-panel .panel-header {
+        cursor: pointer;
+    }
+
+    .map-overlay-content {
+        padding: 8px;
+        overflow-y: auto;
+    }
+
+    .map-overlay-top-left .map-overlay-content {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(72, 149, 239, 0.9) rgba(255, 255, 255, 0.08);
+    }
+
+    .map-overlay-top-left .map-overlay-content::-webkit-scrollbar {
+        width: 7px;
+    }
+
+    .map-overlay-top-left .map-overlay-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+    }
+
+    .map-overlay-top-left .map-overlay-content::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(72, 149, 239, 0.95), rgba(67, 97, 238, 0.85));
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .map-overlay-top-left .map-overlay-content::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, rgba(96, 165, 250, 0.98), rgba(72, 149, 239, 0.92));
+    }
+
+    .map-overlay-panel.collapsed .map-overlay-content {
+        display: none;
+    }
+
+    .map-overlay-top-right {
+        top: 140px;
+        right: 20px;
+        width: 260px;
+        max-height: 190px;
+    }
+
+    .map-overlay-top-left {
+        top: 140px;
+        left: 20px;
+        width: 280px;
+        max-height: 300px;
+    }
+
+    .map-overlay-bottom-center {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(500px, calc(100vw - 40px));
+        max-height: 190px;
+    }
+
+    .overlay-charts-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .overlay-chart-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 8px;
+    }
+
+    .overlay-chart-box .chart-canvas-wrapper {
+        height: 120px;
+    }
+
+    .map-overlay-bottom-center .chart-canvas-wrapper {
+        height: 120px;
+    }
+
+    .speed-playback-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 10px;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .playback-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex: 0 0 auto;
+    }
+
+    .playback-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .playback-speed-select {
+        height: 28px;
+        padding: 0 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.9);
+        font-family: 'Vazirmatn', sans-serif;
+        font-size: 0.85rem;
+        outline: none;
+    }
+
+    .playback-speed-select option {
+        color: #0f172a;
+    }
+
+    @media (max-width: 768px) {
+        .map-overlay-top-left,
+        .map-overlay-top-right {
+            left: 20px;
+            right: 20px;
+            width: auto;
+        }
+
+        .map-overlay-bottom-center {
+            left: 20px;
+            right: 20px;
+            width: auto;
+            transform: none;
+        }
+    }
+
     @keyframes slideUp {
         from { transform: translateY(100%); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
@@ -383,38 +537,38 @@
 
     /* Panel Header */
     .panel-header {
-        height: 50px;
+        height: 42px;
         background: rgba(255, 255, 255, 0.05);
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 20px;
+        padding: 0 12px;
         flex-shrink: 0;
     }
 
     .panel-title {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
         color: white;
-        font-size: 1rem;
+        font-size: 0.9rem;
         font-weight: 600;
     }
 
     .panel-title i {
         color: #4895ef;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .panel-controls {
         display: flex;
-        gap: 8px;
+        gap: 6px;
     }
 
     .panel-nav-btn {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.2);
         background: rgba(255, 255, 255, 0.05);
@@ -599,9 +753,6 @@
         width: 80%;
     }
 
-    .stat-item {
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
     .stat-item {
         background: rgba(0, 0, 0, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -804,6 +955,131 @@
 
 {% block content %}
 <div class="map-container">
+    {% if report_data %}
+    <div class="map-overlay-panel map-overlay-top-right" id="dailySummaryPanel">
+        <div class="panel-header" onclick="toggleMapPanel('dailySummaryPanel')">
+            <div class="panel-title">
+                <i class="fas fa-info-circle"></i>
+                <span>خلاصه روز</span>
+            </div>
+
+            <div class="panel-controls">
+                <select class="compact-date-select" onchange="switchDashboardDate(this.value)" onclick="event.stopPropagation()">
+                    {% for d in report_data %}
+                    <option value="{{ d.date }}" {% if forloop.first %}selected{% endif %}>{{ d.date }}</option>
+                    {% endfor %}
+                </select>
+                <button class="panel-nav-btn" type="button" onclick="event.stopPropagation(); toggleMapPanel('dailySummaryPanel');" title="باز/بسته">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="map-overlay-content">
+            {% for day in report_data %}
+            <div class="overlay-day overlay-summary" id="summary-{{ day.date }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+                <div class="stats-grid" style="width: 100%;">
+                    <div class="stat-item">
+                        <div class="stat-label"><i class="fas fa-road"></i> مسافت کل</div>
+                        <div class="stat-value">{{ day.stats.distance }}<small>km</small></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label"><i class="fas fa-tachometer-alt"></i> حداکثر سرعت</div>
+                        <div class="stat-value">{{ day.stats.max_speed }}<small>km/h</small></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label"><i class="fas fa-chart-line"></i> میانگین سرعت</div>
+                        <div class="stat-value">{{ day.stats.avg_speed }}<small>km/h</small></div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label"><i class="fas fa-percentage"></i> درصد حرکت</div>
+                        <div class="stat-value">{{ day.stats.move_percent }}<small>%</small></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="map-overlay-panel map-overlay-top-left" id="statusSensorsPanel">
+        <div class="panel-header" onclick="toggleMapPanel('statusSensorsPanel')">
+            <div class="panel-title">
+                <i class="fas fa-chart-pie"></i>
+                <span>وضعیت و سنسورها</span>
+            </div>
+
+            <div class="panel-controls">
+                <button class="panel-nav-btn" type="button" onclick="event.stopPropagation(); toggleMapPanel('statusSensorsPanel');" title="باز/بسته">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="map-overlay-content">
+            {% for day in report_data %}
+            <div class="overlay-day overlay-status-sensors" id="statusSensors-{{ day.date }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+                <div class="overlay-charts-grid">
+                    <div class="overlay-chart-box">
+                        <div class="chart-canvas-wrapper">
+                            <canvas id="statusChart-{{ day.date }}"></canvas>
+                        </div>
+                    </div>
+                    <div class="overlay-chart-box">
+                        <div class="chart-canvas-wrapper">
+                            <canvas id="sensorChart-{{ day.date }}"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="map-overlay-panel map-overlay-bottom-center" id="speedChartPanel">
+        <div class="panel-header" onclick="toggleMapPanel('speedChartPanel')">
+            <div class="panel-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>نمودار سرعت</span>
+            </div>
+
+            <div class="speed-playback-controls" onclick="event.stopPropagation();">
+                <button class="playback-btn" type="button" onclick="event.stopPropagation(); routePlaybackNext();" title="جلو">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+                <button class="playback-btn" type="button" onclick="event.stopPropagation(); routePlaybackToggle();" title="پخش/توقف">
+                    <i class="fas fa-play" id="routePlayPauseIcon"></i>
+                </button>
+                <button class="playback-btn" type="button" onclick="event.stopPropagation(); routePlaybackPrev();" title="عقب">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                
+                <select class="playback-speed-select" id="routePlaybackSpeed" onchange="routePlaybackSetSpeed(this.value)" onclick="event.stopPropagation();" title="سرعت پخش">
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                </select>
+            </div>
+
+            <div class="panel-controls">
+                <button class="panel-nav-btn" type="button" onclick="event.stopPropagation(); toggleMapPanel('speedChartPanel');" title="باز/بسته">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="map-overlay-content">
+            {% for day in report_data %}
+            <div class="overlay-day overlay-speed" id="speed-{{ day.date }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+                <div class="chart-canvas-wrapper">
+                    <canvas id="speedChart-{{ day.date }}"></canvas>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {% include "gps_devices/includes/map_container.html" %}
     {% include "gps_devices/includes/map_controls.html" %}
 </div>
@@ -860,129 +1136,6 @@
 </div>
 <!-- Results Sidebar Panel (shown after form submission) -->
 <!-- New Bottom Panel for Report Results -->
-{% if report_data %}
-<div class="report-bottom-panel" id="reportBottomPanel">
-    <!-- Panel Header -->
-    <div class="panel-header">
-        <div class="panel-title">
-            <i class="fas fa-chart-line"></i>
-            <span>داشبورد گزارشات</span>
-        </div>
-        
-
-        <div class="panel-controls">
-            <button class="panel-nav-btn" onclick="scrollCharts(-1)" title="قبلی">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-            <button class="panel-nav-btn" onclick="scrollCharts(1)" title="بعدی">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="close-panel-btn" onclick="document.getElementById('reportBottomPanel').style.display='none'">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Horizontal Scroll Container with Charts -->
-    <div class="charts-scroll-container" id="chartsContainer">
-        {% for day in report_data %}
-        <div class="day-charts-wrapper" id="charts-{{ day.date }}" style="display: {% if forloop.first %}contents{% else %}none{% endif %};">
-            
-            <!-- Card 1: Overview Stats -->
-            <div class="chart-card overview-card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-info-circle"></i>
-                        <span>خلاصه روز</span>
-                    </div>
-                    <!-- Date Selector inside Overview Card -->
-                    <div class="card-date-selector">
-                        <select class="compact-date-select" onchange="switchDashboardDate(this.value)">
-                            {% for d in report_data %}
-                            <option value="{{ d.date }}" {% if d.date == day.date %}selected{% endif %}>{{ d.date }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-road"></i> مسافت کل</div>
-                            <div class="stat-value">{{ day.stats.distance }}<small>km</small></div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-tachometer-alt"></i> حداکثر سرعت</div>
-                            <div class="stat-value">{{ day.stats.max_speed }}<small>km/h</small></div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-chart-line"></i> میانگین سرعت</div>
-                            <div class="stat-value">{{ day.stats.avg_speed }}<small>km/h</small></div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-label"><i class="fas fa-percentage"></i> درصد حرکت</div>
-                            <div class="stat-value">{{ day.stats.move_percent }}<small>%</small></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 2: Speed Chart -->
-            <div class="chart-card speed-card extra-wide">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>نمودار سرعت</span>
-                    </div>
-                    <div class="card-badge">{{ day.points|length }} نقطه</div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="speedChart-{{ day.date }}"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3: Status Distribution -->
-            <div class="chart-card status-card wide">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-chart-pie"></i>
-                        <span>توزیع وضعیت</span>
-                    </div>
-                    <div class="card-badge">{{ day.stats.total_points }} نقطه</div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="statusChart-{{ day.date }}"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 4: Sensor Metrics -->
-            <div class="chart-card sensor-card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-satellite-dish"></i>
-                        <span>سنسورها</span>
-                    </div>
-                    <div class="card-badge">میانگین</div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="sensorChart-{{ day.date }}"></canvas>
-                    </div>
-                </div>
-            </div>
-
-           
-
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-
-{% endif %}
 {% endblock %}
 
 
@@ -1120,17 +1273,17 @@
                 {
                     lat: {{ record.latitude|default:0 }},
                     lng: {{ record.longitude|default:0 }},
-                    time: '{{ record.shamsi_time }}',
+                    time: '{{ record.shamsi_time|default:""|escapejs }}',
                     speed: {{ record.speed|default:0 }},
                     direction: {{ record.direction|default:0 }},
                     battery: {{ record.battery|default:0 }},
                     satellites: {{ record.satellites|default:0 }},
-                    status: '{{ record.status|default:"" }}',
-                    address: '{{ record.address|default:""|escapejs }}', // Add address if available
-                    geometry: '{{ record.matched_geometry|default:""|escapejs }}' // Encoded Polyline
-                },
+                    status: '{{ record.status|default:""|escapejs }}',
+                    address: '{{ record.address|default:""|escapejs }}',
+                    geometry: '{{ record.matched_geometry|default:""|escapejs }}'
+                }{% if not forloop.last %},{% endif %}
                 {% endfor %}
-            ],
+            ]{% if not forloop.last %},{% endif %}
             {% endfor %}
         };
         
@@ -1275,37 +1428,69 @@
         });
 
         // Animation Function
-        window.startRouteAnimation = function(marker) {
-            if (window.isAnimating) return;
-            window.isAnimating = true;
-            
-            const originalIcon = marker.getIcon();
-            marker.setIcon(movingIcon);
-            
-            // Ensure popup is open for the moving marker
-            marker.closePopup();
-            marker.bindPopup('در حال بارگذاری...', { autoClose: false, closeOnClick: false }).openPopup();
-            
-            const points = window.currentRoutePoints;
-            const totalPoints = points.length;
-            
-            if (totalPoints < 2) {
-                window.isAnimating = false;
+        window.updateRoutePlaybackControls = function() {
+            const icon = document.getElementById('routePlayPauseIcon');
+            if (!icon) return;
+            const isPlaying = !!(window.routePlayback && window.routePlayback.running && !window.routePlayback.paused);
+            icon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+        };
+
+        window.routePlaybackSetSpeed = function(value) {
+            const v = parseFloat(value);
+            if (!window.routePlayback) return;
+            if ([0.5, 1, 1.5, 2].includes(v)) {
+                window.routePlayback.setSpeed(v);
+            }
+        };
+
+        window.routePlaybackToggle = function() {
+            if (!window.routePlayback) {
+                if (startMarker && window.startRouteAnimation) {
+                    window.startRouteAnimation(startMarker);
+                }
                 return;
             }
+            window.routePlayback.toggle();
+        };
 
-            // Interpolation settings
-            // Duration between points in milliseconds
-            const durationPerSegment = 1000; 
-            
-            let index = 0;
-            let segmentStartTime = null;
-            
-            // Get current chart for sync
+        window.routePlaybackPrev = function() {
+            if (!window.routePlayback) {
+                if (startMarker && window.startRouteAnimation) {
+                    window.startRouteAnimation(startMarker);
+                }
+                return;
+            }
+            window.routePlayback.step(-1);
+        };
+
+        window.routePlaybackNext = function() {
+            if (!window.routePlayback) {
+                if (startMarker && window.startRouteAnimation) {
+                    window.startRouteAnimation(startMarker);
+                }
+                return;
+            }
+            window.routePlayback.step(1);
+        };
+
+        window.startRouteAnimation = function(marker) {
+            const points = window.currentRoutePoints;
+            const totalPoints = points.length;
+            if (totalPoints < 2) return;
+
+            if (window.routePlayback && window.routePlayback.stop) {
+                window.routePlayback.stop(true);
+            }
+
+            const originalIcon = marker.getIcon();
+            marker.setIcon(movingIcon);
+
+            marker.closePopup();
+            marker.bindPopup('در حال بارگذاری...', { autoClose: false, closeOnClick: false }).openPopup();
+
             const currentDayDate = document.querySelector('.compact-date-select').value;
             const speedChart = window.speedCharts[currentDayDate];
-            
-            // Helper to calculate bearing between two points
+
             function getBearing(startLat, startLng, destLat, destLng) {
                 const startLatRad = startLat * (Math.PI / 180);
                 const startLngRad = startLng * (Math.PI / 180);
@@ -1320,7 +1505,6 @@
                 return (brng + 360) % 360;
             }
 
-            // Helper to update popup/UI
             function updateUI(point, idx) {
                  // Update Popup Content
                  let popupContent = `
@@ -1370,60 +1554,148 @@
                 return (start + delta * t + 360) % 360;
             }
 
-            let previousBearing = 0;
+            const controller = {
+                marker,
+                points,
+                running: false,
+                paused: false,
+                pausedAt: null,
+                baseDurationPerSegment: 1000,
+                speedMultiplier: 1,
+                index: 0,
+                segmentStartTime: null,
+                progress: 0,
+                lastTimestamp: null,
+                previousBearing: 0,
+                stop: function(resetIcon) {
+                    window.isAnimating = false;
+                    this.running = false;
+                    this.paused = false;
+                    this.pausedAt = null;
+                    this.segmentStartTime = null;
+                    this.progress = 0;
+                    this.lastTimestamp = null;
+
+                    if (resetIcon) {
+                        this.marker.setIcon(originalIcon);
+                        this.marker.closePopup();
+                        this.marker.bindPopup('<b>شروع مسیر</b><br>' + this.points[0].time);
+                    }
+
+                    if (speedChart && speedChart.tooltip) {
+                        speedChart.tooltip.setActiveElements([], {x: 0, y: 0});
+                        speedChart.update();
+                    }
+
+                    window.updateRoutePlaybackControls();
+                },
+                pause: function() {
+                    if (!this.running || this.paused) return;
+                    this.paused = true;
+                    this.pausedAt = performance.now();
+                    window.isAnimating = false;
+                    window.updateRoutePlaybackControls();
+                },
+                play: function() {
+                    if (this.running && !this.paused) return;
+                    if (this.paused && this.pausedAt && this.segmentStartTime) {
+                        const pausedFor = performance.now() - this.pausedAt;
+                        this.segmentStartTime += pausedFor;
+                    }
+                    this.paused = false;
+                    this.pausedAt = null;
+                    this.running = true;
+                    window.isAnimating = true;
+                    window.updateRoutePlaybackControls();
+                    requestAnimationFrame(animate);
+                },
+                toggle: function() {
+                    if (!this.running || this.paused) {
+                        this.play();
+                    } else {
+                        this.pause();
+                    }
+                },
+                setSpeed: function(mult) {
+                    this.speedMultiplier = mult;
+                    const select = document.getElementById('routePlaybackSpeed');
+                    if (select) select.value = String(mult);
+
+                    if (this.segmentStartTime && this.lastTimestamp) {
+                        const duration = this.baseDurationPerSegment / this.speedMultiplier;
+                        this.segmentStartTime = this.lastTimestamp - (this.progress * duration);
+                    }
+                },
+                step: function(dir) {
+                    if (!this.running) {
+                        this.running = true;
+                    }
+                    this.pause();
+
+                    this.index = Math.max(0, Math.min(this.points.length - 1, this.index + dir));
+                    const p = this.points[this.index];
+                    this.marker.setLatLng([p.lat, p.lng]);
+                    updateUI(p, this.index);
+
+                    if (this.index < this.points.length - 1) {
+                        const p2 = this.points[this.index + 1];
+                        this.previousBearing = getBearing(p.lat, p.lng, p2.lat, p2.lng);
+                        window.currentDisplayedRotation = this.previousBearing;
+                    }
+
+                    this.segmentStartTime = null;
+                    this.progress = 0;
+                }
+            };
+
             if (points.length > 1) {
-                previousBearing = getBearing(points[0].lat, points[0].lng, points[1].lat, points[1].lng);
+                controller.previousBearing = getBearing(points[0].lat, points[0].lng, points[1].lat, points[1].lng);
+                window.currentDisplayedRotation = controller.previousBearing;
             }
 
-            // Initial UI update
             updateUI(points[0], 0);
+
+            window.routePlayback = controller;
+            controller.setSpeed(1);
 
             function animate(timestamp) {
                 if (!window.isAnimating) return;
-                
-                if (!segmentStartTime) segmentStartTime = timestamp;
-                const elapsed = timestamp - segmentStartTime;
-                
-                // Calculate LERP progress
+
+                controller.lastTimestamp = timestamp;
+
+                if (!controller.segmentStartTime) controller.segmentStartTime = timestamp;
+                const elapsed = timestamp - controller.segmentStartTime;
+
+                const durationPerSegment = controller.baseDurationPerSegment / controller.speedMultiplier;
                 let progress = elapsed / durationPerSegment;
-                
+                controller.progress = progress;
+
                 if (progress >= 1) {
-                    index++;
-                    if (index >= points.length - 1) {
-                        // End
+                    controller.index++;
+                    if (controller.index >= points.length - 1) {
                         const lastPoint = points[points.length - 1];
                         marker.setLatLng([lastPoint.lat, lastPoint.lng]);
                         updateUI(lastPoint, points.length - 1);
-                        
-                        // Cleanup
-                        marker.setIcon(originalIcon);
-                        marker.closePopup();
-                        marker.bindPopup('<b>شروع مسیر</b><br>' + points[0].time);
-                        window.isAnimating = false;
-                        
-                        if (speedChart && speedChart.tooltip) {
-                            speedChart.tooltip.setActiveElements([], {x: 0, y: 0});
-                            speedChart.update();
-                        }
+                        controller.stop(true);
                         return;
                     }
-                    segmentStartTime = timestamp;
-                    progress = 0; 
-                    
-                    // Update previous bearing when segment changes
-                    // If we have valid lookahead, use it, else keep previous
-                    if (index < points.length - 1) {
-                        const p1 = points[index];
-                        const p2 = points[index+1];
-                        previousBearing = getBearing(p1.lat, p1.lng, p2.lat, p2.lng);
+
+                    controller.segmentStartTime = timestamp;
+                    progress = 0;
+                    controller.progress = 0;
+
+                    if (controller.index < points.length - 1) {
+                        const p1 = points[controller.index];
+                        const p2 = points[controller.index + 1];
+                        controller.previousBearing = getBearing(p1.lat, p1.lng, p2.lat, p2.lng);
                     }
-                    
-                    updateUI(points[index], index);
+
+                    updateUI(points[controller.index], controller.index);
                 }
                 
                 // Interpolate Position
-                const startPoint = points[index];
-                const endPoint = points[index + 1];
+                const startPoint = points[controller.index];
+                const endPoint = points[controller.index + 1];
                 
                 // Calculate target bearing
                 const targetBearing = getBearing(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
@@ -1472,24 +1744,22 @@
 
                 requestAnimationFrame(animate);
             }
-            
+
+            controller.running = true;
+            controller.paused = false;
+            window.isAnimating = true;
+            window.updateRoutePlaybackControls();
             requestAnimationFrame(animate);
         };
     {% endif %}    
 
-    // Helper functions need to be global for onclick handlers
-    window.scrollCharts = function(direction) {
-        const container = document.getElementById('chartsContainer');
-        const scrollAmount = 400;
-        if (container) {
-            container.scrollBy({
-                left: direction * scrollAmount,
-                behavior: 'smooth'
-            });
-        }
-    };
-
     window.switchDashboardDate = function(date) {
+        if (window.routePlayback && window.routePlayback.stop) {
+            window.routePlayback.stop(false);
+            window.routePlayback = null;
+            window.updateRoutePlaybackControls();
+        }
+
         // Update map route
         if (window.drawRouteForDate) {
             window.drawRouteForDate(date);
@@ -1500,16 +1770,29 @@
             select.value = date;
         });
 
-        // Hide all day wrappers
-        document.querySelectorAll('.day-charts-wrapper').forEach(el => {
+        document.querySelectorAll('.overlay-day').forEach(el => {
             el.style.display = 'none';
         });
-        
-        // Show selected day wrapper
-        const selectedWrapper = document.getElementById('charts-' + date);
-        if (selectedWrapper) {
-            selectedWrapper.style.display = 'contents';
+
+        const summaryEl = document.getElementById('summary-' + date);
+        if (summaryEl) summaryEl.style.display = 'block';
+
+        const speedEl = document.getElementById('speed-' + date);
+        if (speedEl) speedEl.style.display = 'block';
+
+        const statusSensorsEl = document.getElementById('statusSensors-' + date);
+        if (statusSensorsEl) statusSensorsEl.style.display = 'block';
+
+        if (window.speedCharts && window.speedCharts[date]) {
+            window.speedCharts[date].resize();
+            window.speedCharts[date].update();
         }
+    };
+
+    window.toggleMapPanel = function(panelId) {
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+        panel.classList.toggle('collapsed');
     };
 
     window.focusOnPoint = function(el, lat, lng) {
