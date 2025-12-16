@@ -19,20 +19,25 @@
         left: 0;
         right: 0;
         height: 70px;
-        background: linear-gradient(135deg, rgba(30, 41, 59, 1), rgba(15, 23, 42, 1));
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: transparent;
+        border-bottom: none;
         z-index: 1000;
         display: flex;
         align-items: center;
+        justify-content: center;
         padding: 0 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        box-shadow: none;
     }
 
     .report-form-horizontal {
         display: flex;
         align-items: center;
         gap: 15px;
-        width: 100%;
+        width: fit-content;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(15, 23, 42, 0.96);
     }
 
     .form-item {
@@ -43,7 +48,7 @@
         white-space: nowrap;
         flex-wrap: nowrap !important;
     }
-    
+
     .form-item > * {
         margin-bottom: 0 !important;
     }
@@ -67,7 +72,7 @@
         height: 40px;
         box-sizing: border-box;
     }
-    
+
     .toolbar-input:focus {
         border-color: #4361ee;
         background: rgba(255, 255, 255, 0.1);
@@ -79,7 +84,7 @@
         position: relative;
         min-width: 200px;
     }
-    
+
     .toolbar-select-trigger {
         height: 40px;
         background: rgba(255, 255, 255, 0.05);
@@ -106,9 +111,9 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-right: auto; /* Push to left (RTL) or right depending on directio */
+        margin-right: 0;
     }
-    
+
     .toolbar-btn:hover {
         transform: translateY(-1px);
         box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
@@ -606,19 +611,23 @@
 
     body.light-theme #reportForm,
     body.light-theme .report-form-bar {
-        background: linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 0.98)) !important;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
     }
 
     body.light-theme #reportForm {
-        backdrop-filter: blur(18px) !important;
+        backdrop-filter: none !important;
     }
 
     body.light-theme .main-content .report-toolbar {
-        background: linear-gradient(135deg, rgba(248, 250, 252, 1), rgba(255, 255, 255, 1)) !important;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.10) !important;
-        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+        background: transparent !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
+    }
+
+    body.light-theme .main-content .report-toolbar .report-form-horizontal {
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: rgba(255, 255, 255, 0.98);
     }
 
     body.light-theme .main-content .report-toolbar .toolbar-input {
@@ -1680,9 +1689,60 @@
             window.routePlayback.step(1);
         };
 
-        window.startRouteAnimation = function(marker) {
-            const points = window.currentRoutePoints;
-            const totalPoints = points.length;
+        window.getReportMapMatchedRoute = async function(date, rawPoints) {
+            window.reportMapMatchCache = window.reportMapMatchCache || {};
+            if (window.reportMapMatchCache[date]) return window.reportMapMatchCache[date];
+
+            const csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+            const csrfToken = csrfEl ? csrfEl.value : '';
+
+            const payload = {
+                points: (rawPoints || []).map(p => ({ lat: p.lat, lng: p.lng }))
+            };
+
+            const res = await fetch('/gps_devices/api/map-match/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                throw new Error('map-match failed');
+            }
+
+            const data = await res.json();
+            const snapped = Array.isArray(data.snappedPoints) ? data.snappedPoints : [];
+
+            const snappedLatLngs = snapped.map(sp => {
+                const loc = sp && sp.location ? sp.location : {};
+                return { lat: loc.latitude, lng: loc.longitude };
+            }).filter(p => typeof p.lat === 'number' && typeof p.lng === 'number');
+
+            let points = rawPoints;
+            if (snappedLatLngs.length >= 2) {
+                const n = Math.min(points.length, snappedLatLngs.length);
+                points = points.map((p, i) => {
+                    if (i >= n) return p;
+                    const s = snappedLatLngs[i];
+                    return { ...p, lat: s.lat, lng: s.lng };
+                });
+            }
+
+            const result = {
+                points,
+                geometry: data.geometry
+            };
+
+            window.reportMapMatchCache[date] = result;
+            return result;
+        };
+
+        window.startRouteAnimation = async function(marker) {
+            const rawPoints = window.currentRoutePoints;
+            const totalPoints = rawPoints.length;
             if (totalPoints < 2) return;
 
             if (window.routePlayback && window.routePlayback.stop) {
@@ -1697,6 +1757,37 @@
 
             const currentDayDate = document.querySelector('.compact-date-select').value;
             const speedChart = window.speedCharts[currentDayDate];
+
+            let points = rawPoints;
+            try {
+                const mm = await window.getReportMapMatchedRoute(currentDayDate, rawPoints);
+                if (mm && mm.points && mm.points.length >= 2) {
+                    points = mm.points;
+                }
+
+                if (mm && mm.geometry) {
+                    const decodedPlayback = decodePolyline(mm.geometry);
+                    if (decodedPlayback && decodedPlayback.length > 1) {
+                        if (currentPolyline) map.removeLayer(currentPolyline);
+                        currentPolyline = L.polyline(decodedPlayback, {
+                            color: '#4361ee',
+                            weight: 4,
+                            opacity: 0.8,
+                            smoothFactor: 1
+                        }).addTo(map);
+                    }
+                }
+            } catch (e) {
+                points = rawPoints;
+            }
+
+            if (points && points.length) {
+                marker.setLatLng([points[0].lat, points[0].lng]);
+            }
+
+            if (endMarker && points && points.length) {
+                endMarker.setLatLng([points[points.length - 1].lat, points[points.length - 1].lng]);
+            }
 
             function getBearing(startLat, startLng, destLat, destLng) {
                 const startLatRad = startLat * (Math.PI / 180);

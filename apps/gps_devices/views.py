@@ -10,6 +10,9 @@ from datetime import datetime, timedelta
 import json
 import jdatetime
 import re
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from apps.gps_devices.services import MapMatchingService
 
 User = get_user_model()
 
@@ -502,3 +505,61 @@ def get_device_report(request):
         
     except Exception as e:
         return JsonResponse({'error': f'خطا در پردازش درخواست: {str(e)}'}, status=500)
+
+
+@login_required
+@require_POST
+def map_match_points(request):
+    """Server-side map-matching endpoint used by report playback.
+
+    Expects JSON body:
+        {"points": [{"lat": 35.7, "lng": 51.3}, ...]}
+
+    Returns:
+        {"snappedPoints": [...], "geometry": "..."}
+    """
+    try:
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+        except Exception:
+            return JsonResponse({'error': 'بدنه درخواست نامعتبر است (JSON).'}, status=400)
+
+        points_in = payload.get('points')
+        if not isinstance(points_in, list) or len(points_in) < 2:
+            return JsonResponse({'error': 'حداقل 2 نقطه برای map-matching لازم است.'}, status=400)
+
+        # Hard cap to protect service/API
+        max_points = 200
+        if len(points_in) > max_points:
+            points_in = points_in[:max_points]
+
+        points = []
+        for p in points_in:
+            if not isinstance(p, dict):
+                continue
+            lat = p.get('lat')
+            lng = p.get('lng')
+            if lat is None or lng is None:
+                continue
+            try:
+                lat_f = float(lat)
+                lng_f = float(lng)
+            except (TypeError, ValueError):
+                continue
+            points.append((lat_f, lng_f))
+
+        if len(points) < 2:
+            return JsonResponse({'error': 'نقاط معتبر کافی نیست.'}, status=400)
+
+        service = MapMatchingService()
+        result = service.match_points(points, use_cache=True)
+        if not result:
+            return JsonResponse({'error': 'map-matching ناموفق بود.'}, status=502)
+
+        return JsonResponse({
+            'snappedPoints': result.get('snappedPoints', []),
+            'geometry': result.get('geometry'),
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': f'خطا در map-matching: {str(e)}'}, status=500)
