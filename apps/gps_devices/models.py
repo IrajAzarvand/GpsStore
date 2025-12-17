@@ -62,6 +62,15 @@ class Device(models.Model):
         related_name='subuser_assigned_devices'
     )
 
+    assigned_by = models.ForeignKey(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name='gps_devices_assigned', 
+    verbose_name='تخصیص دهنده'
+    )
+
     expires_at = models.DateTimeField(null=True, blank=True)
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')

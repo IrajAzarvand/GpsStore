@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 app_name = 'gps_devices'
 urlpatterns = [
-    path('map/', views.map_v2, name='map_v2'),
+    path('map/', views.map_v2, name='device_map'),
     path('report/', views.report, name='report'),
     path('api/report/', views.get_device_report, name='get_device_report'),
     path('api/map-match/', views.map_match_points, name='map_match_points'),
