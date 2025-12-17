@@ -37,7 +37,9 @@ def logout_view(request):
 
 @login_required
 def dashboard_view(request):
-    return render(request, 'accounts/dashboard.html')
+    if getattr(request.user, 'is_subuser_of_id', None):
+        return redirect('accounts:subuser_dashboard')
+    return redirect('accounts:customer_dashboard')
 
 
 @login_required
