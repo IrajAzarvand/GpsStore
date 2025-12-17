@@ -69,6 +69,10 @@ def map_v2(request):
 
         for user in root_users:
             hierarchy.append(build_user_tree(user, is_admin=True))
+
+        unowned_devices_node = build_unowned_devices_node()
+        if unowned_devices_node:
+            hierarchy.append(unowned_devices_node)
     else:
         # Regular user sees only themselves and their subusers
         hierarchy.append(build_user_tree(request.user, is_admin=False))
@@ -356,6 +360,41 @@ def build_user_tree(user, is_admin=False):
         user_node['children'].append(build_user_tree(subuser, is_admin))
     
     return user_node
+
+def build_unowned_devices_node():
+    unowned_devices = Device.objects.filter(owner__isnull=True, status='active').select_related('model')
+
+    if not unowned_devices.exists():
+        return None
+
+    devices_list = []
+    for device in unowned_devices:
+        latest_location = device.locations.first()
+        status = determine_device_status(latest_location)
+
+        devices_list.append({
+            'id': device.id,
+            'name': device.name,
+            'imei': device.imei,
+            'status': status,
+            'speed': latest_location.speed if latest_location else 0,
+        })
+
+    total_devices = unowned_devices.count()
+    online_devices = sum(1 for d in devices_list if d.get('speed', 0) > 0)
+
+    return {
+        'id': 'unowned',
+        'name': 'دستگاه‌های بدون مالک',
+        'username': '',
+        'role': 'سیستمی',
+        'is_main': True,
+        'total_devices': total_devices,
+        'active_devices': total_devices,
+        'online_devices': online_devices,
+        'devices': devices_list,
+        'children': [],
+    }
 
 def get_all_subuser_ids(user):
     """

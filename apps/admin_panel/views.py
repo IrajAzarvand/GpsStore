@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.conf import settings
+from django import forms
 from django.http import HttpResponse, HttpResponseForbidden
 from pathlib import Path
 import os
@@ -11,6 +13,8 @@ import datetime
 from backup import DatabaseBackup
 from restore import DatabaseRestore
 import logging
+
+from apps.gps_devices.models import Device
 
 logger = logging.getLogger(__name__)
 
@@ -114,3 +118,36 @@ class BackupRestoreView(View):
                 return f"{size:.1f} {unit}"
             size /= 1024
         return f"{size:.1f} TB"
+
+
+@method_decorator(user_passes_test(superuser_required), name='dispatch')
+class AssignDeviceOwnerView(View):
+    template_name = 'admin_panel/assign_device_owner.html'
+
+    class Form(forms.Form):
+        device = forms.ModelChoiceField(queryset=Device.objects.all(), required=True)
+        owner = forms.ModelChoiceField(queryset=None, required=True)
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            User = get_user_model()
+            self.fields['owner'].queryset = User.objects.filter(
+                is_subuser_of__isnull=True,
+                is_active=True,
+            ).exclude(is_superuser=True)
+
+    def get(self, request):
+        form = self.Form()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = self.Form(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form})
+
+        device = form.cleaned_data['device']
+        owner = form.cleaned_data['owner']
+
+        Device.objects.filter(id=device.id).update(owner=owner, assigned_subuser=None)
+        messages.success(request, 'مالک دستگاه با موفقیت تغییر کرد.')
+        return redirect('admin:index')

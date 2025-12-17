@@ -996,8 +996,8 @@ class GPSReceiver:
                     device = Device.objects.create(
                         imei=device_id,
                         name=f'{device_id}',
-                        owner=None,
-                        model=default_model,  # حالا مدل صحیح استفاده می‌شود
+                        owner=admin_user,
+                        model=default_model,  
                         status='active'
                     )
                     logger.info(f'Automatically created device {device.imei} with model {default_model.model_name} and assigned to admin')
