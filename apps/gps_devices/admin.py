@@ -18,9 +18,16 @@ class ModelAdmin(admin.ModelAdmin):
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'imei', 'model', 'owner', 'assigned_subuser', 'expires_at', 'status', 'created_at')
+    list_display = ('name', 'imei', 'model', 'owner', 'assigned_subuser', 'assigned_by', 'expires_at', 'status', 'created_at')
     list_filter = ('status', 'model')
-    search_fields = ('name', 'imei', 'owner__username', 'assigned_subuser__username')
+    search_fields = ('name', 'imei', 'owner__username', 'assigned_subuser__username', 'assigned_by__username')
+    readonly_fields = ('assigned_by',)
+    
+    def save_model(self, request, obj, form, change):
+        # Set assigned_by to the current user if it's not set or if it's a new device
+        if not obj.assigned_by_id:
+            obj.assigned_by = request.user
+        super().save_model(request, obj, form, change)
 
 @admin.register(LocationData)
 class LocationDataAdmin(admin.ModelAdmin):
