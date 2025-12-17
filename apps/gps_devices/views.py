@@ -7,6 +7,9 @@ from django.utils import timezone
 from django.core import serializers
 from django.conf import settings
 
+from django.views.decorators.csrf import csrf_protect
+from django.middleware.csrf import get_token
+
 from datetime import datetime, timedelta
 
 import json
@@ -58,6 +61,8 @@ def map_v2(request):
     # Generate JWT token for WebSocket authentication
     refresh = RefreshToken.for_user(request.user)
     access_token = str(refresh.access_token)
+
+    get_token(request)
 
     # Build hierarchical structure
     hierarchy = []
@@ -113,6 +118,19 @@ def map_v2(request):
             'address': clean_and_format_address(latest_location.address) if latest_location else None,
         })
 
+    is_admin_user = bool(getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False))
+    is_subuser = bool(getattr(request.user, 'is_subuser_of_id', None))
+
+    root_users_json = json.dumps([
+        {'id': u.id, 'username': u.username, 'name': u.get_full_name() or u.username}
+        for u in User.objects.filter(is_subuser_of__isnull=True, is_active=True)
+    ]) if is_admin_user else json.dumps([])
+
+    subusers_json = json.dumps([
+        {'id': u.id, 'username': u.username, 'name': u.get_full_name() or u.username}
+        for u in User.objects.filter(is_subuser_of=request.user, is_active=True)
+    ]) if (not is_admin_user and not is_subuser) else json.dumps([])
+
     context = {
         'access_token': access_token,
         'hierarchy': hierarchy,
@@ -120,9 +138,85 @@ def map_v2(request):
         'user': request.user,
         'show_sidebar': True,
         'NESHAN_MAP_API_KEY': settings.NESHAN_MAP_API_KEY,
+        'is_admin_user': is_admin_user,
+        'can_assign_in_tree': bool(is_admin_user or not is_subuser),
+        'root_users_json': root_users_json,
+        'subusers_json': subusers_json,
     }
 
     return render(request, 'gps_devices/map_v2.html', context)
+
+@login_required
+@require_POST
+@csrf_protect
+def assign_device_owner(request):
+    if not (getattr(request.user, 'is_staff', False) or getattr(request.user, 'is_superuser', False)):
+        return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+    device_id = request.POST.get('device_id')
+    owner_id = request.POST.get('owner_id')
+    new_username = request.POST.get('new_username')
+    new_password = request.POST.get('new_password')
+    new_first_name = request.POST.get('new_first_name', '')
+    new_last_name = request.POST.get('new_last_name', '')
+
+    if not device_id:
+        return JsonResponse({'ok': False, 'error': 'device_id_required'}, status=400)
+
+    device = Device.objects.filter(id=device_id).first()
+    if not device:
+        return JsonResponse({'ok': False, 'error': 'device_not_found'}, status=404)
+
+    owner = None
+    if owner_id:
+        owner = User.objects.filter(id=owner_id, is_subuser_of__isnull=True, is_active=True).first()
+        if not owner:
+            return JsonResponse({'ok': False, 'error': 'owner_not_found'}, status=404)
+    else:
+        if not (new_username and new_password):
+            return JsonResponse({'ok': False, 'error': 'owner_id_or_new_user_required'}, status=400)
+
+        if User.objects.filter(username=new_username).exists():
+            return JsonResponse({'ok': False, 'error': 'username_exists'}, status=400)
+
+        owner = User.objects.create_user(
+            username=new_username,
+            password=new_password,
+            first_name=new_first_name,
+            last_name=new_last_name,
+            is_active=True,
+        )
+
+    Device.objects.filter(id=device.id).update(owner=owner, assigned_subuser=None)
+    return JsonResponse({'ok': True, 'device_id': device.id, 'owner_id': owner.id})
+
+@login_required
+@require_POST
+@csrf_protect
+def assign_device_subuser(request):
+    if getattr(request.user, 'is_subuser_of_id', None):
+        return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+    device_id = request.POST.get('device_id')
+    subuser_id = request.POST.get('subuser_id')
+
+    if not device_id:
+        return JsonResponse({'ok': False, 'error': 'device_id_required'}, status=400)
+
+    device = Device.objects.filter(id=device_id, owner=request.user).first()
+    if not device:
+        return JsonResponse({'ok': False, 'error': 'device_not_found_or_forbidden'}, status=404)
+
+    if not subuser_id:
+        Device.objects.filter(id=device.id).update(assigned_subuser=None)
+        return JsonResponse({'ok': True, 'device_id': device.id, 'subuser_id': None})
+
+    subuser = User.objects.filter(id=subuser_id, is_subuser_of=request.user, is_active=True).first()
+    if not subuser:
+        return JsonResponse({'ok': False, 'error': 'subuser_not_found'}, status=404)
+
+    Device.objects.filter(id=device.id).update(assigned_subuser=subuser)
+    return JsonResponse({'ok': True, 'device_id': device.id, 'subuser_id': subuser.id})
 
 @login_required
 def report(request):

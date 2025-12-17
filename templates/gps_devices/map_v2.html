@@ -10,6 +10,55 @@
     <button class="show-sidebar-btn control-btn" id="showSidebarBtn" title="نمایش سایدبار" style="display: none;"><i class="fas fa-chevron-left"></i></button>
 </div>
 
+<div id="assignModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999;">
+    <div style="max-width: 560px; margin: 8vh auto; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px; color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+        <div style="display:flex; align-items:center; justify-content: space-between; gap: 10px;">
+            <div style="font-weight: 700;">واگذاری دستگاه</div>
+            <button type="button" onclick="closeAssignModal()" style="background: transparent; border: 0; color: rgba(255,255,255,0.8); cursor: pointer; font-size: 18px;">×</button>
+        </div>
+
+        <div style="margin-top: 10px; font-size: 0.85rem; color: rgba(255,255,255,0.75);" id="assignModalDeviceTitle"></div>
+
+        <div id="assignModalAdmin" style="display:none; margin-top: 14px;">
+            <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                <div style="flex: 1 1 250px;">
+                    <div style="font-size: 0.85rem; margin-bottom: 6px;">سرگروه موجود</div>
+                    <select id="assignOwnerSelect" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff;"></select>
+                </div>
+            </div>
+
+            <div id="assignOwnerCreateBox" style="margin-top: 12px; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); display:none;">
+                <div style="font-size: 0.85rem; margin-bottom: 10px;">ایجاد سرگروه جدید</div>
+                <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                    <input id="newRootUsername" placeholder="نام کاربری" style="flex: 1 1 160px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff;" />
+                    <input id="newRootPassword" placeholder="رمز عبور" type="password" style="flex: 1 1 160px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff;" />
+                </div>
+                <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <input id="newRootFirstName" placeholder="نام" style="flex: 1 1 160px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff;" />
+                    <input id="newRootLastName" placeholder="نام خانوادگی" style="flex: 1 1 160px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff;" />
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+                <button type="button" onclick="closeAssignModal()" style="padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: #fff; cursor: pointer;">انصراف</button>
+                <button type="button" onclick="submitAssignOwner()" style="padding: 10px 14px; border-radius: 10px; border: 0; background: #2563eb; color: #fff; cursor: pointer; font-weight: 700;">ثبت واگذاری</button>
+            </div>
+        </div>
+
+        <div id="assignModalOwner" style="display:none; margin-top: 14px;">
+            <div style="font-size: 0.85rem; margin-bottom: 6px;">واگذاری به زیرکاربر</div>
+            <select id="assignSubuserSelect" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: #fff;"></select>
+
+            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+                <button type="button" onclick="closeAssignModal()" style="padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: #fff; cursor: pointer;">انصراف</button>
+                <button type="button" onclick="submitAssignSubuser()" style="padding: 10px 14px; border-radius: 10px; border: 0; background: #16a34a; color: #fff; cursor: pointer; font-weight: 700;">ثبت واگذاری</button>
+            </div>
+        </div>
+
+        <div id="assignModalError" style="display:none; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: rgba(255,255,255,0.92);"></div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block page_scripts %}
@@ -17,6 +66,7 @@
 <script> // --- Configuration ---
         let markers = {};
         let ws;
+        
         let pollInterval;
         let userLocation;
         
@@ -688,6 +738,161 @@
                 }
             }
         }
+
+        const IS_ADMIN_USER = {{ is_admin_user|yesno:"true,false" }};
+        const ROOT_USERS = JSON.parse('{{ root_users_json|escapejs }}');
+        const SUBUSERS = JSON.parse('{{ subusers_json|escapejs }}');
+        const API_ASSIGN_OWNER_URL = "{% url 'gps_devices:api_assign_device_owner' %}";
+        const API_ASSIGN_SUBUSER_URL = "{% url 'gps_devices:api_assign_device_subuser' %}";
+
+        let assignTargetDeviceId = null;
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function setAssignError(msg) {
+            const box = document.getElementById('assignModalError');
+            if (!msg) {
+                box.style.display = 'none';
+                box.textContent = '';
+                return;
+            }
+            box.style.display = 'block';
+            box.textContent = msg;
+        }
+
+        function openAssignModal(deviceId) {
+            assignTargetDeviceId = deviceId;
+            setAssignError('');
+
+            const d = devices[deviceId] || {};
+            const title = document.getElementById('assignModalDeviceTitle');
+            title.textContent = `دستگاه: ${d.name || ''} ${d.imei ? `(${d.imei})` : ''}`;
+
+            document.getElementById('assignModalAdmin').style.display = IS_ADMIN_USER ? 'block' : 'none';
+            document.getElementById('assignModalOwner').style.display = IS_ADMIN_USER ? 'none' : 'block';
+
+            if (IS_ADMIN_USER) {
+                const select = document.getElementById('assignOwnerSelect');
+                select.innerHTML = '';
+                const optCreate = document.createElement('option');
+                optCreate.value = '';
+                optCreate.textContent = 'ایجاد سرگروه جدید';
+                select.appendChild(optCreate);
+
+                ROOT_USERS.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = `${u.name} (${u.username})`;
+                    select.appendChild(opt);
+                });
+
+                select.onchange = () => {
+                    document.getElementById('assignOwnerCreateBox').style.display = select.value ? 'none' : 'block';
+                };
+                document.getElementById('assignOwnerCreateBox').style.display = select.value ? 'none' : 'block';
+            } else {
+                const select = document.getElementById('assignSubuserSelect');
+                select.innerHTML = '';
+                const optNone = document.createElement('option');
+                optNone.value = '';
+                optNone.textContent = 'لغو واگذاری به زیرکاربر';
+                select.appendChild(optNone);
+                SUBUSERS.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = `${u.name} (${u.username})`;
+                    select.appendChild(opt);
+                });
+            }
+
+            document.getElementById('assignModal').style.display = 'block';
+        }
+
+        function closeAssignModal() {
+            document.getElementById('assignModal').style.display = 'none';
+            assignTargetDeviceId = null;
+            setAssignError('');
+        }
+
+        async function submitAssignOwner() {
+            setAssignError('');
+            if (!assignTargetDeviceId) return;
+
+            const ownerId = document.getElementById('assignOwnerSelect').value;
+            const fd = new FormData();
+            fd.append('device_id', assignTargetDeviceId);
+
+            if (ownerId) {
+                fd.append('owner_id', ownerId);
+            } else {
+                const username = document.getElementById('newRootUsername').value.trim();
+                const password = document.getElementById('newRootPassword').value;
+                const firstName = document.getElementById('newRootFirstName').value.trim();
+                const lastName = document.getElementById('newRootLastName').value.trim();
+                if (!username || !password) {
+                    setAssignError('نام کاربری و رمز عبور الزامی است.');
+                    return;
+                }
+                fd.append('new_username', username);
+                fd.append('new_password', password);
+                fd.append('new_first_name', firstName);
+                fd.append('new_last_name', lastName);
+            }
+
+            try {
+                const res = await fetch(API_ASSIGN_OWNER_URL, {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken') || ''
+                    }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) {
+                    setAssignError(data.error || 'خطا در ثبت واگذاری');
+                    return;
+                }
+                closeAssignModal();
+                window.location.reload();
+            } catch (e) {
+                setAssignError('خطای ارتباط با سرور');
+            }
+        }
+
+        async function submitAssignSubuser() {
+            setAssignError('');
+            if (!assignTargetDeviceId) return;
+
+            const subuserId = document.getElementById('assignSubuserSelect').value;
+            const fd = new FormData();
+            fd.append('device_id', assignTargetDeviceId);
+            if (subuserId) fd.append('subuser_id', subuserId);
+
+            try {
+                const res = await fetch(API_ASSIGN_SUBUSER_URL, {
+                    method: 'POST',
+                    body: fd,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken') || ''
+                    }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) {
+                    setAssignError(data.error || 'خطا در ثبت واگذاری');
+                    return;
+                }
+                closeAssignModal();
+                window.location.reload();
+            } catch (e) {
+                setAssignError('خطای ارتباط با سرور');
+            }
+        }
+
 </script>
 
 {% endblock %}
