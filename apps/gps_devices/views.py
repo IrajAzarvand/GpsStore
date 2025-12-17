@@ -9,6 +9,7 @@ from django.conf import settings
 
 from django.views.decorators.csrf import csrf_protect
 from django.middleware.csrf import get_token
+from django.views.decorators.cache import never_cache
 
 from datetime import datetime, timedelta
 
@@ -53,6 +54,7 @@ def clean_and_format_address(addr):
     
     return " - ".join(cleaned_parts)
 
+@never_cache
 @login_required
 def map_v2(request):
     """
@@ -218,6 +220,7 @@ def assign_device_subuser(request):
     Device.objects.filter(id=device.id).update(assigned_subuser=subuser)
     return JsonResponse({'ok': True, 'device_id': device.id, 'subuser_id': subuser.id})
 
+@never_cache
 @login_required
 def report(request):
     """
@@ -502,6 +505,7 @@ def get_all_subuser_ids(user):
     
     return user_ids
 
+@never_cache
 @login_required
 def get_device_report(request):
     """
