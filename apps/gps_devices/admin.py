@@ -1,4 +1,7 @@
 from django.contrib import admin
+from django.db import transaction
+
+from apps.accounts.models import UserDevice
 from .models import State, Model, Device, LocationData, DeviceState, RawGpsData, MaliciousPattern
 
 import logging
@@ -27,7 +30,46 @@ class DeviceAdmin(admin.ModelAdmin):
         # Set assigned_by to the current user if it's not set or if it's a new device
         if not obj.assigned_by_id:
             obj.assigned_by = request.user
-        super().save_model(request, obj, form, change)
+
+        with transaction.atomic():
+            super().save_model(request, obj, form, change)
+            self._sync_userdevice_from_device(request, obj)
+
+    def _sync_userdevice_from_device(self, request, device: Device):
+        if device.owner_id is None:
+            UserDevice.objects.filter(device=device, is_active=True).update(is_active=False)
+            return
+
+        keep_ids = []
+
+        owner_row, _ = UserDevice.objects.update_or_create(
+            user_id=device.owner_id,
+            device=device,
+            defaults={
+                'assigned_by': request.user,
+                'is_owner': True,
+                'can_view': True,
+                'can_control': True,
+                'is_active': True,
+            },
+        )
+        keep_ids.append(owner_row.id)
+
+        if device.assigned_subuser_id:
+            sub_row, _ = UserDevice.objects.update_or_create(
+                user_id=device.assigned_subuser_id,
+                device=device,
+                defaults={
+                    'assigned_by': request.user,
+                    'is_owner': False,
+                    'can_view': True,
+                    'can_control': False,
+                    'is_active': True,
+                },
+            )
+            keep_ids.append(sub_row.id)
+
+        UserDevice.objects.filter(device=device, is_active=True).exclude(id__in=keep_ids).update(is_active=False)
 
 @admin.register(LocationData)
 class LocationDataAdmin(admin.ModelAdmin):

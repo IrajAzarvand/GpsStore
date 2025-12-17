@@ -63,12 +63,12 @@ class Device(models.Model):
     )
 
     assigned_by = models.ForeignKey(
-    settings.AUTH_USER_MODEL,
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True,
-    related_name='gps_devices_assigned', 
-    verbose_name='تخصیص دهنده'
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='gps_devices_assigned', 
+        verbose_name='تخصیص دهنده'
     )
 
     expires_at = models.DateTimeField(null=True, blank=True)
