@@ -71,6 +71,7 @@
         let userLocation;
         
         let selectedDeviceId = null;
+        const CSRF_TOKEN = '{{ csrf_token_value }}';
 
         // --- Helpers ---
         function formatGpsStrength(device) {
@@ -389,8 +390,22 @@
             if (!devices[id]) devices[id] = {};
             const prevStatus = devices[id].status; // وضعیت قبلی را نگه‌دار
             Object.assign(devices[id], data);
-            // اگر پیام جدید status نداشت ولی قبلاً moving/parked/... داشتیم، همان را حفظ کن
-            if (!data.status && prevStatus) {
+            // اگر status از سمت بک‌اند «وضعیت مدل» باشد (active/inactive/maintenance)، برای UI نباید override کند
+            const modelStatuses = new Set(['active', 'inactive', 'maintenance']);
+            const incomingStatus = (data.status || '').toString().toLowerCase();
+            if (incomingStatus && modelStatuses.has(incomingStatus)) {
+                if (prevStatus) {
+                    devices[id].status = prevStatus;
+                } else {
+                    // Derive a UI-friendly status if we don't have one yet
+                    const sp = Number(devices[id].speed || 0);
+                    if (devices[id].is_alarm) devices[id].status = 'alert';
+                    else if (sp > 1) devices[id].status = 'moving';
+                    else if ((devices[id].device_state || '').toString().toUpperCase() === 'I') devices[id].status = 'idle';
+                    else devices[id].status = 'parked';
+                }
+            } else if (!data.status && prevStatus) {
+                // اگر پیام جدید status نداشت ولی قبلاً moving/parked/... داشتیم، همان را حفظ کن
                 devices[id].status = prevStatus;
             }
 
@@ -422,31 +437,25 @@
                 });
             }
 
-            // Update Timestamp
             const now = new Date();
 
             document.getElementById('lastUpdate').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
 
         function updateDeviceUI(device) {
-            // Update Sidebar Item
-            const sidebarItem = document.getElementById(`sidebar-device-${device.id}`);
-            if (sidebarItem) {
-                // Update icon background
+            const sidebarItems = document.querySelectorAll(`[id="sidebar-device-${device.id}"]`);
+            sidebarItems.forEach((sidebarItem) => {
                 const avatar = sidebarItem.querySelector('.user-avatar');
                 if (avatar) {
-                    // Remove old status classes
                     avatar.classList.remove('status-bg-online', 'status-bg-moving', 'status-bg-offline', 'status-bg-alert', 'status-bg-parked');
-                    // Add new status class
                     avatar.classList.add(`status-bg-${device.status || 'offline'}`);
                 }
 
-                // Update speed display
                 const speedElement = sidebarItem.querySelector('.device-speed .speed-value');
                 if (speedElement) {
                     speedElement.textContent = device.speed || 0;
                 }
-            }
+            });
         }
 
         function updateConnectionStatus(status) {
@@ -465,24 +474,19 @@
             }
         }
 
-        // --- Interaction ---
         function focusOnDevice(deviceId) {
             const device = devices[deviceId];
             if (device && markers[deviceId]) {
-                // Enable follow mode for this device
                 followingDeviceId = deviceId;
 
-                // Update selected device indication
                 updateSelectedDevice(deviceId);
 
-                // Smooth pan to device with animation
                 map.flyTo([device.lat, device.lng], 19, {
                     animate: true,
-                    duration: 1.5, // 1.5 seconds smooth animation
+                    duration: 1.5, 
                     easeLinearity: 0.25
                 });
 
-                // Close all open popups before opening the new one
                 Object.values(markers).forEach(marker => {
                     if (marker.isPopupOpen()) {
                         marker.closePopup();
@@ -490,28 +494,23 @@
                 });
 
                 markers[deviceId].openPopup();
-                // Show device info in bottom panel
                 showDeviceInfo(deviceId);
             }
         }
 
         function updateSelectedDevice(deviceId) {
-            // Remove selected class from all device items
             const allDeviceItems = document.querySelectorAll('.user-item[id^="sidebar-device-"]');
             allDeviceItems.forEach(item => {
                 item.classList.remove('selected');
             });
 
-            // Add selected class to the clicked device
-            const selectedItem = document.getElementById(`sidebar-device-${deviceId}`);
-            if (selectedItem) {
+            const selectedItems = document.querySelectorAll(`[id="sidebar-device-${deviceId}"]`);
+            selectedItems.forEach((selectedItem) => {
                 selectedItem.classList.add('selected');
-            }
+            });
 
-            // Update the selected device ID
             selectedDeviceId = deviceId;
         }
-
 
         function showDeviceInfo(deviceId) {
             const device = devices[deviceId];
@@ -687,19 +686,19 @@
             };
 
             // GPS Icon
-            const gpsIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gps"]`);
-            if (gpsIcon) {
+            const gpsIcons = document.querySelectorAll(`[data-device-id="${deviceId}"][data-icon-type="gps"]`);
+            gpsIcons.forEach((gpsIcon) => {
                 const gpsFresh = isSignalFresh(device.gps_timestamp, 5);
                 const gpsHasData = (device.satellites !== undefined && device.satellites !== null) ||
                     device.gps_valid !== undefined || device.gps_timestamp;
                 const gpsOk = gpsHasData && gpsFresh;
                 gpsIcon.classList.toggle('active', gpsOk);
                 gpsIcon.classList.toggle('inactive', !gpsOk);
-            }
+            });
 
             // GSM Icon
-            const gsmIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="gsm"]`);
-            if (gsmIcon) {
+            const gsmIcons = document.querySelectorAll(`[data-device-id="${deviceId}"][data-icon-type="gsm"]`);
+            gsmIcons.forEach((gsmIcon) => {
                 const gsmFresh = isSignalFresh(device.gsm_timestamp, 5);
                 const gsmHasData = (device.signal_strength !== undefined && device.signal_strength !== null) ||
                     (device.gsm_signal !== undefined && device.gsm_signal !== null) ||
@@ -707,11 +706,11 @@
                 const gsmOk = gsmHasData && gsmFresh;
                 gsmIcon.classList.toggle('active', gsmOk);
                 gsmIcon.classList.toggle('inactive', !gsmOk);
-            }
+            });
 
             // Status Icon
-            const statusIcon = document.querySelector(`[data-device-id="${deviceId}"][data-icon-type="status"]`);
-            if (statusIcon) {
+            const statusIcons = document.querySelectorAll(`[data-device-id="${deviceId}"][data-icon-type="status"]`);
+            statusIcons.forEach((statusIcon) => {
                 const rawStatus = (device.status || '').toLowerCase();
                 let effectiveStatus = rawStatus;
 
@@ -750,7 +749,7 @@
                 } else {
                     statusIcon.classList.remove('moving');
                 }
-            }
+            });
         }
 
         const IS_ADMIN_USER = {{ is_admin_user|yesno:"true,false" }};
@@ -862,11 +861,17 @@
                 const res = await fetch(API_ASSIGN_OWNER_URL, {
                     method: 'POST',
                     body: fd,
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken') || ''
-                    }
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN }
                 });
-                const data = await res.json();
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    const text = await res.text();
+                    setAssignError(text.slice(0, 250)); // فقط برای دیباگ
+                    return;
+                }
                 if (!res.ok || !data.ok) {
                     setAssignError(data.error || 'خطا در ثبت واگذاری');
                     return;
@@ -891,11 +896,17 @@
                 const res = await fetch(API_ASSIGN_SUBUSER_URL, {
                     method: 'POST',
                     body: fd,
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken') || ''
-                    }
+                    credentials: 'same-origin',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN }
                 });
-                const data = await res.json();
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    const text = await res.text();
+                    setAssignError(text.slice(0, 250)); // فقط برای دیباگ
+                    return;
+                }
                 if (!res.ok || !data.ok) {
                     setAssignError(data.error || 'خطا در ثبت واگذاری');
                     return;

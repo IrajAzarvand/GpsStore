@@ -22,6 +22,8 @@ from django.views.decorators.http import require_POST
 from apps.gps_devices.services import MapMatchingService
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.db import transaction
+from apps.accounts.models import UserDevice
 
 User = get_user_model()
 
@@ -53,6 +55,53 @@ def _ws_broadcast_device_assignment(*, device_id, owner_id, assigned_subuser_id,
             )
     except Exception:
         pass
+
+
+def _sync_userdevice_from_device(*, actor_user, device_id: int):
+    """Keep accounts.UserDevice rows consistent with gps_devices.Device assignment.
+
+    Admin already does this in gps_devices.admin.DeviceAdmin._sync_userdevice_from_device,
+    but API assignment endpoints bypass admin, so we must sync here too.
+    """
+    device = Device.objects.filter(id=device_id).only('id', 'owner_id', 'assigned_subuser_id').first()
+    if not device:
+        return
+
+    with transaction.atomic():
+        if device.owner_id is None:
+            UserDevice.objects.filter(device_id=device.id, is_active=True).update(is_active=False)
+            return
+
+        keep_ids = []
+
+        owner_row, _ = UserDevice.objects.update_or_create(
+            user_id=device.owner_id,
+            device_id=device.id,
+            defaults={
+                'assigned_by': actor_user,
+                'is_owner': True,
+                'can_view': True,
+                'can_control': True,
+                'is_active': True,
+            },
+        )
+        keep_ids.append(owner_row.id)
+
+        if device.assigned_subuser_id:
+            sub_row, _ = UserDevice.objects.update_or_create(
+                user_id=device.assigned_subuser_id,
+                device_id=device.id,
+                defaults={
+                    'assigned_by': actor_user,
+                    'is_owner': False,
+                    'can_view': True,
+                    'can_control': False,
+                    'is_active': True,
+                },
+            )
+            keep_ids.append(sub_row.id)
+
+        UserDevice.objects.filter(device_id=device.id, is_active=True).exclude(id__in=keep_ids).update(is_active=False)
 
 
 def clean_and_format_address(addr):
@@ -96,7 +145,7 @@ def map_v2(request):
     refresh = RefreshToken.for_user(request.user)
     access_token = str(refresh.access_token)
 
-    get_token(request)
+    csrf_token_value = get_token(request)
 
     # Build hierarchical structure
     hierarchy = []
@@ -176,6 +225,7 @@ def map_v2(request):
         'can_assign_in_tree': bool(is_admin_user or not is_subuser),
         'root_users_json': root_users_json,
         'subusers_json': subusers_json,
+        'csrf_token_value': csrf_token_value,
     }
 
     return render(request, 'gps_devices/map_v2.html', context)
@@ -225,7 +275,14 @@ def assign_device_owner(request):
             is_active=True,
         )
 
-    Device.objects.filter(id=device.id).update(owner=owner, assigned_subuser=None)
+    Device.objects.filter(id=device.id).update(
+        owner=owner,
+        assigned_subuser=None,
+        assigned_by=request.user,
+        updated_at=timezone.now(),
+    )
+
+    _sync_userdevice_from_device(actor_user=request.user, device_id=device.id)
 
     _ws_broadcast_device_assignment(
         device_id=device.id,
@@ -258,7 +315,13 @@ def assign_device_subuser(request):
     old_assigned_subuser_id = device.assigned_subuser_id
 
     if not subuser_id:
-        Device.objects.filter(id=device.id).update(assigned_subuser=None)
+        Device.objects.filter(id=device.id).update(
+            assigned_subuser=None,
+            assigned_by=request.user,
+            updated_at=timezone.now(),
+        )
+
+        _sync_userdevice_from_device(actor_user=request.user, device_id=device.id)
 
         _ws_broadcast_device_assignment(
             device_id=device.id,
@@ -274,7 +337,13 @@ def assign_device_subuser(request):
     if not subuser:
         return JsonResponse({'ok': False, 'error': 'subuser_not_found'}, status=404)
 
-    Device.objects.filter(id=device.id).update(assigned_subuser=subuser)
+    Device.objects.filter(id=device.id).update(
+        assigned_subuser=subuser,
+        assigned_by=request.user,
+        updated_at=timezone.now(),
+    )
+
+    _sync_userdevice_from_device(actor_user=request.user, device_id=device.id)
 
     _ws_broadcast_device_assignment(
         device_id=device.id,
