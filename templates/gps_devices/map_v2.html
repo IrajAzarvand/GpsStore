@@ -306,6 +306,15 @@
             return statusMap[status] || status || 'نامشخص';
         }
 
+        let __assignmentReloadTimer = null;
+
+        function scheduleAssignmentReload() {
+            if (__assignmentReloadTimer) return;
+            __assignmentReloadTimer = setTimeout(() => {
+                window.location.reload();
+            }, 800);
+        }
+
         
         function initWebSocket() {
             // Ensure map is initialized before starting WebSocket
@@ -330,6 +339,11 @@
                 try {
                     const data = JSON.parse(e.data);
     
+                    if (data.type === 'device_assignment' && data.data) {
+                        scheduleAssignmentReload();
+                        return;
+                    }
+
                     if (data.type === 'device_update' && data.data) {
                         const deviceData = data.data;
     

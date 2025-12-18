@@ -59,7 +59,7 @@
                                                 {% for device in assigned_devices %}
                                                 <tr data-device-id="{{ device.id }}">
                                                     <td>{{ device.name }}</td>
-                                                    <td>{{ device.imei|default:device.device_id|default:"N/A" }}</td>
+                                                    <td>{{ device.imei|default:"N/A" }}</td>
                                                     <td>
                                                         <span class="badge badge-{% if device.status == 'active' %}success{% elif device.status == 'inactive' %}secondary{% else %}warning{% endif %}">
                                                             {{ device.get_status_display }}

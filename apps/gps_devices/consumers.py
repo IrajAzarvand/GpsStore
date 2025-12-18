@@ -112,3 +112,11 @@ class DeviceUpdateConsumer(AsyncWebsocketConsumer):
             "data": payload,
             "timestamp": event.get("timestamp")
         }))
+
+    async def device_assignment(self, event):
+        payload = event.get("data") or {}
+        await self.send(text_data=json.dumps({
+            "type": "device_assignment",
+            "data": payload,
+            "timestamp": event.get("timestamp")
+        }))

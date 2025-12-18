@@ -20,8 +20,39 @@ import re
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from apps.gps_devices.services import MapMatchingService
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 User = get_user_model()
+
+
+def _ws_broadcast_device_assignment(*, device_id, owner_id, assigned_subuser_id, old_owner_id=None, old_assigned_subuser_id=None, action=None):
+    try:
+        channel_layer = get_channel_layer()
+        payload = {
+            'device_id': device_id,
+            'owner_id': owner_id,
+            'assigned_subuser_id': assigned_subuser_id,
+            'old_owner_id': old_owner_id,
+            'old_assigned_subuser_id': old_assigned_subuser_id,
+            'action': action,
+        }
+
+        group_names = {'admins_group'}
+        for uid in (owner_id, assigned_subuser_id, old_owner_id, old_assigned_subuser_id):
+            if uid:
+                group_names.add(f'user_group_{uid}')
+
+        for group_name in group_names:
+            async_to_sync(channel_layer.group_send)(
+                group_name,
+                {
+                    'type': 'device_assignment',
+                    'data': payload,
+                }
+            )
+    except Exception:
+        pass
 
 
 def clean_and_format_address(addr):
@@ -53,6 +84,7 @@ def clean_and_format_address(addr):
     cleaned_parts.reverse()
     
     return " - ".join(cleaned_parts)
+
 
 @never_cache
 @login_required
@@ -148,6 +180,7 @@ def map_v2(request):
 
     return render(request, 'gps_devices/map_v2.html', context)
 
+
 @login_required
 @require_POST
 @csrf_protect
@@ -168,6 +201,9 @@ def assign_device_owner(request):
     device = Device.objects.filter(id=device_id).first()
     if not device:
         return JsonResponse({'ok': False, 'error': 'device_not_found'}, status=404)
+
+    old_owner_id = device.owner_id
+    old_assigned_subuser_id = device.assigned_subuser_id
 
     owner = None
     if owner_id:
@@ -190,7 +226,17 @@ def assign_device_owner(request):
         )
 
     Device.objects.filter(id=device.id).update(owner=owner, assigned_subuser=None)
+
+    _ws_broadcast_device_assignment(
+        device_id=device.id,
+        owner_id=owner.id if owner else None,
+        assigned_subuser_id=None,
+        old_owner_id=old_owner_id,
+        old_assigned_subuser_id=old_assigned_subuser_id,
+        action='owner_changed',
+    )
     return JsonResponse({'ok': True, 'device_id': device.id, 'owner_id': owner.id})
+
 
 @login_required
 @require_POST
@@ -209,8 +255,19 @@ def assign_device_subuser(request):
     if not device:
         return JsonResponse({'ok': False, 'error': 'device_not_found_or_forbidden'}, status=404)
 
+    old_assigned_subuser_id = device.assigned_subuser_id
+
     if not subuser_id:
         Device.objects.filter(id=device.id).update(assigned_subuser=None)
+
+        _ws_broadcast_device_assignment(
+            device_id=device.id,
+            owner_id=request.user.id,
+            assigned_subuser_id=None,
+            old_owner_id=request.user.id,
+            old_assigned_subuser_id=old_assigned_subuser_id,
+            action='unassigned_subuser',
+        )
         return JsonResponse({'ok': True, 'device_id': device.id, 'subuser_id': None})
 
     subuser = User.objects.filter(id=subuser_id, is_subuser_of=request.user, is_active=True).first()
@@ -218,7 +275,17 @@ def assign_device_subuser(request):
         return JsonResponse({'ok': False, 'error': 'subuser_not_found'}, status=404)
 
     Device.objects.filter(id=device.id).update(assigned_subuser=subuser)
+
+    _ws_broadcast_device_assignment(
+        device_id=device.id,
+        owner_id=request.user.id,
+        assigned_subuser_id=subuser.id,
+        old_owner_id=request.user.id,
+        old_assigned_subuser_id=old_assigned_subuser_id,
+        action='assigned_subuser',
+    )
     return JsonResponse({'ok': True, 'device_id': device.id, 'subuser_id': subuser.id})
+
 
 @never_cache
 @login_required

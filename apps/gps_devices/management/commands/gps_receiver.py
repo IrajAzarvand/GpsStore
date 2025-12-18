@@ -1213,6 +1213,14 @@ class GPSReceiver:
         """
         try:
             channel_layer = get_channel_layer()
+
+            ids_row = Device.objects.filter(id=device.id).values('owner_id', 'assigned_subuser_id').first()
+            if ids_row:
+                owner_id = ids_row.get('owner_id')
+                assigned_subuser_id = ids_row.get('assigned_subuser_id')
+            else:
+                owner_id = getattr(device, 'owner_id', None)
+                assigned_subuser_id = getattr(device, 'assigned_subuser_id', None)
             
             last_update = None
             lat = None
@@ -1314,23 +1322,17 @@ class GPSReceiver:
             )
             
             # Send to device owner's personal group
-            if device.owner:
+            if owner_id:
                 async_to_sync(channel_layer.group_send)(
-                    f'user_group_{device.owner.id}',
-                    {
-                        'type': 'device_update',
-                        'data': device_data
-                    }
+                    f'user_group_{owner_id}',
+                    {'type': 'device_update', 'data': device_data}
                 )
 
             # Send to assigned subuser group (if any)
-            if getattr(device, 'assigned_subuser_id', None):
+            if assigned_subuser_id:
                 async_to_sync(channel_layer.group_send)(
-                    f'user_group_{device.assigned_subuser_id}',
-                    {
-                        'type': 'device_update',
-                        'data': device_data
-                    }
+                    f'user_group_{assigned_subuser_id}',
+                    {'type': 'device_update', 'data': device_data}
                 )
         except Exception as e:
             logger.error(f'Error broadcasting device update: {e}')
