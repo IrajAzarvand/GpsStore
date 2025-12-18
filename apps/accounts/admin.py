@@ -22,7 +22,14 @@ class CustomUserAdmin(UserAdmin):
 
 class UserDeviceAddForm(forms.ModelForm):
     devices = forms.ModelMultipleChoiceField(
-        queryset=Device.objects.none(),
+        queryset=Device.objects.filter(
+            Q(owner__isnull=True) | Q(owner__is_superuser=True) | Q(owner__is_staff=True),
+            assigned_subuser__isnull=True,
+        ).exclude(
+            device_users__is_active=True,
+            device_users__user__is_superuser=False,
+            device_users__user__is_staff=False,
+        ).distinct(),
         required=True,
         widget=FilteredSelectMultiple(verbose_name='Device', is_stacked=False),
     )
@@ -33,8 +40,15 @@ class UserDeviceAddForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        qs = Device.objects.filter(owner__isnull=True, assigned_subuser__isnull=True)
-        qs = qs.exclude(device_users__is_active=True)
+        qs = Device.objects.filter(
+            Q(owner__isnull=True) | Q(owner__is_superuser=True) | Q(owner__is_staff=True),
+            assigned_subuser__isnull=True,
+        )
+        qs = qs.exclude(
+            device_users__is_active=True,
+            device_users__user__is_superuser=False,
+            device_users__user__is_staff=False,
+        )
         self.fields['devices'].queryset = qs.distinct()
 
 
@@ -64,7 +78,19 @@ class UserDeviceAdmin(admin.ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'device' and getattr(getattr(request, 'resolver_match', None), 'url_name', '').endswith('_add'):
             qs = Device.objects.all()
-            qs = qs.exclude(Q(owner__isnull=False) | Q(assigned_subuser__isnull=False) | Q(device_users__is_active=True))
+            qs = qs.exclude(
+                Q(assigned_subuser__isnull=False)
+                | Q(
+                    device_users__is_active=True,
+                    device_users__user__is_superuser=False,
+                    device_users__user__is_staff=False,
+                )
+                | (
+                    Q(owner__isnull=False)
+                    & Q(owner__is_superuser=False)
+                    & Q(owner__is_staff=False)
+                )
+            )
             kwargs['queryset'] = qs.distinct()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
