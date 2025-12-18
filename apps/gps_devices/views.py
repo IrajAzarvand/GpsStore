@@ -550,6 +550,7 @@ def build_user_tree(user, is_admin=False):
     else:
         user_devices = Device.objects.filter(
             owner=user,
+            assigned_subuser__isnull=True,
             status='active'
         ).select_related('model')
     
