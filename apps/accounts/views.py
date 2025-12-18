@@ -6,8 +6,10 @@ from django.contrib.auth.decorators import login_required
 from apps.accounts.models import User
 from apps.accounts.forms import AssignDevicesToSubuserForm, SubUserForm
 from apps.gps_devices.models import Device, get_visible_devices_queryset
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.db.models import Count
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
 
 def login_view(request):
     if request.method == 'POST':
@@ -139,3 +141,43 @@ def assign_devices(request):
         form = AssignDevicesToSubuserForm(owner=request.user)
 
     return render(request, 'accounts/assign_devices.html', {'form': form})
+
+
+@login_required
+@require_POST
+@csrf_protect
+def api_subuser_create(request):
+    if getattr(request.user, 'is_subuser_of_id', None):
+        return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+    username = (request.POST.get('username') or '').strip()
+    password = request.POST.get('password') or ''
+    first_name = (request.POST.get('first_name') or '').strip()
+    last_name = (request.POST.get('last_name') or '').strip()
+    email = (request.POST.get('email') or '').strip()
+
+    if not username or not password:
+        return JsonResponse({'ok': False, 'error': 'username_and_password_required'}, status=400)
+
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({'ok': False, 'error': 'username_exists'}, status=400)
+
+    subuser = User.objects.create_user(
+        username=username,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        is_active=True,
+    )
+    subuser.is_subuser_of = request.user
+    subuser.save(update_fields=['is_subuser_of'])
+
+    return JsonResponse({
+        'ok': True,
+        'subuser': {
+            'id': subuser.id,
+            'username': subuser.username,
+            'name': subuser.get_full_name() or subuser.username,
+        }
+    })

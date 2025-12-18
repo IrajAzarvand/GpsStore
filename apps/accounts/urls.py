@@ -14,4 +14,5 @@ urlpatterns = [
     path('subuser/<int:pk>/edit/', views.subuser_edit, name='subuser_edit'),
     path('subuser/<int:pk>/delete/', views.subuser_delete, name='subuser_delete'),
     path('subuser/assign-devices/', views.assign_devices, name='assign_devices'),
+    path('api/subuser/create/', views.api_subuser_create, name='api_subuser_create'),
 ]
