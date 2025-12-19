@@ -7,7 +7,7 @@ from .serializers import (
     UserSerializer, UserDeviceSerializer, ApiKeySerializer
 )
 
-class DeviceViewSet(viewsets.ModelViewSet):
+class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for Device model"""
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.accounts.models import User, UserDevice
+from apps.accounts.models import User, UserDevice, generate_unique_subuser_username
 from apps.gps_devices.models import State, Model, Device, LocationData, DeviceState, RawGpsData
 from apps.api.models import ApiKey
 
@@ -9,11 +9,64 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 'phone', 'date_joined')
         read_only_fields = ('id', 'date_joined')
+
+class SubuserCreateSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(required=False, allow_blank=True, default='')
+    last_name = serializers.CharField(required=False, allow_blank=True, default='')
+    email = serializers.EmailField(required=False, allow_blank=True, default='')
+
+    def validate(self, attrs):
+        owner = self.context.get('owner')
+        if not owner or not getattr(owner, 'id', None):
+            raise serializers.ValidationError('owner_required')
+        if getattr(owner, 'is_subuser_of_id', None):
+            raise serializers.ValidationError('forbidden')
+        return attrs
+
+    def create(self, validated_data):
+        owner = self.context['owner']
+
+        requested_username = (validated_data.get('username') or '').strip()
+        password = validated_data.get('password') or ''
+        first_name = (validated_data.get('first_name') or '').strip()
+        last_name = (validated_data.get('last_name') or '').strip()
+        email = (validated_data.get('email') or '').strip()
+
+        if not requested_username or not password:
+            raise serializers.ValidationError('username_and_password_required')
+
+        subuser = None
+        last_username = None
+        for _ in range(5):
+            last_username = generate_unique_subuser_username(owner, requested_username)
+            try:
+                subuser = User.objects.create_user(
+                    username=last_username,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    is_active=True,
+                )
+                break
+            except Exception:
+                subuser = None
+
+        if subuser is None:
+            raise serializers.ValidationError('username_exists')
+
+        subuser.is_subuser_of = owner
+        subuser.save(update_fields=['is_subuser_of'])
+        return subuser
+
 class StateSerializer(serializers.ModelSerializer):
     """Serializer for State model"""
     class Meta:
         model = State
         fields = '__all__'
+
 class ModelSerializer(serializers.ModelSerializer):
     """Serializer for Device Model"""
     class Meta:
