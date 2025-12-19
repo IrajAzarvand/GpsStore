@@ -1,8 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django import forms
-from django.contrib.auth.forms import AdminUserChangeForm as DjangoAdminUserChangeForm
-from django.contrib.auth.forms import AdminUserCreationForm as DjangoAdminUserCreationForm
+try:
+    from django.contrib.auth.forms import AdminUserChangeForm as DjangoAdminUserChangeForm
+except ImportError:
+    from django.contrib.auth.forms import UserChangeForm as DjangoAdminUserChangeForm
+
+try:
+    from django.contrib.auth.forms import AdminUserCreationForm as DjangoAdminUserCreationForm
+except ImportError:
+    from django.contrib.auth.forms import UserCreationForm as DjangoAdminUserCreationForm
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db import transaction
 from django.db.models import Q
@@ -14,7 +21,7 @@ from .models import User, UserDevice, generate_unique_subuser_username
 class AdminUserCreationForm(DjangoAdminUserCreationForm):
     class Meta(DjangoAdminUserCreationForm.Meta):
         model = User
-        fields = ('username',)
+        fields = ('username', 'phone', 'address', 'is_subuser_of', 'is_premium')
 
     def clean_username(self):
         username = (self.cleaned_data.get('username') or '').strip()
@@ -49,7 +56,8 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('اطلاعات تکمیلی', {'fields': ('phone', 'address', 'is_subuser_of', 'subscription_start', 'subscription_end', 'is_premium')}),
     )
-    add_fieldsets = UserAdmin.add_fieldsets + (
+    add_fieldsets = (
+        (None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}),
         ('اطلاعات تکمیلی', {'fields': ('phone', 'address', 'is_subuser_of', 'is_premium')}),
     )
 
