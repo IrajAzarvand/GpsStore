@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django import forms
-from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.contrib.auth.forms import AdminUserChangeForm as DjangoAdminUserChangeForm
+from django.contrib.auth.forms import AdminUserCreationForm as DjangoAdminUserCreationForm
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db import transaction
 from django.db.models import Q
@@ -10,8 +11,8 @@ from apps.gps_devices.models import Device
 from .models import User, UserDevice, generate_unique_subuser_username
 
 
-class AdminUserCreationForm(UserCreationForm):
-    class Meta(UserCreationForm.Meta):
+class AdminUserCreationForm(DjangoAdminUserCreationForm):
+    class Meta(DjangoAdminUserCreationForm.Meta):
         model = User
         fields = ('username',)
 
@@ -23,8 +24,8 @@ class AdminUserCreationForm(UserCreationForm):
         return username
 
 
-class AdminUserChangeForm(UserChangeForm):
-    class Meta(UserChangeForm.Meta):
+class AdminUserChangeForm(DjangoAdminUserChangeForm):
+    class Meta(DjangoAdminUserChangeForm.Meta):
         model = User
         fields = '__all__'
 
