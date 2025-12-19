@@ -1,17 +1,50 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django import forms
+from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db import transaction
 from django.db.models import Q
 
 from apps.gps_devices.models import Device
-from .models import User, UserDevice
+from .models import User, UserDevice, generate_unique_subuser_username
+
+
+class AdminUserCreationForm(UserCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ('username',)
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip()
+        owner = self.cleaned_data.get('is_subuser_of')
+        if owner:
+            return generate_unique_subuser_username(owner, username)
+        return username
+
+
+class AdminUserChangeForm(UserChangeForm):
+    class Meta(UserChangeForm.Meta):
+        model = User
+        fields = '__all__'
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip()
+        if self.instance and self.instance.pk:
+            if username == (self.instance.username or ''):
+                return username
+
+        owner = self.cleaned_data.get('is_subuser_of') or getattr(self.instance, 'is_subuser_of', None)
+        if owner:
+            return generate_unique_subuser_username(owner, username)
+        return username
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_premium')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups', 'is_premium')
+    add_form = AdminUserCreationForm
+    form = AdminUserChangeForm
     fieldsets = UserAdmin.fieldsets + (
         ('اطلاعات تکمیلی', {'fields': ('phone', 'address', 'is_subuser_of', 'subscription_start', 'subscription_end', 'is_premium')}),
     )

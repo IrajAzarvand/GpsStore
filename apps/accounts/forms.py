@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from apps.accounts.models import User
+from apps.accounts.models import User, generate_unique_subuser_username
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from .models import UserDevice
@@ -143,6 +143,19 @@ class SubUserForm(forms.ModelForm):
 
         if self.instance and self.instance.pk:
             self.initial['assigned_devices'] = Device.objects.filter(assigned_subuser=self.instance)
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip()
+
+        if self.instance and self.instance.pk:
+            if username == (self.instance.username or ''):
+                return username
+
+        effective_owner = self.owner or getattr(self.instance, 'is_subuser_of', None)
+        if effective_owner:
+            return generate_unique_subuser_username(effective_owner, username)
+
+        return username
 
     def save(self, commit=True):
         user = super().save(commit=False)

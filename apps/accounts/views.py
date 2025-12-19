@@ -3,10 +3,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.decorators import login_required
 
-from apps.accounts.models import User
+from apps.accounts.models import User, generate_unique_subuser_username
 from apps.accounts.forms import AssignDevicesToSubuserForm, SubUserForm
 from apps.gps_devices.models import Device, get_visible_devices_queryset
 from django.http import HttpResponseForbidden, JsonResponse
+from django.db import IntegrityError
 from django.db.models import Count
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
@@ -150,26 +151,35 @@ def api_subuser_create(request):
     if getattr(request.user, 'is_subuser_of_id', None):
         return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
 
-    username = (request.POST.get('username') or '').strip()
+    requested_username = (request.POST.get('username') or '').strip()
     password = request.POST.get('password') or ''
     first_name = (request.POST.get('first_name') or '').strip()
     last_name = (request.POST.get('last_name') or '').strip()
     email = (request.POST.get('email') or '').strip()
 
-    if not username or not password:
+    if not requested_username or not password:
         return JsonResponse({'ok': False, 'error': 'username_and_password_required'}, status=400)
 
-    if User.objects.filter(username=username).exists():
+    subuser = None
+    last_username = None
+    for _ in range(5):
+        last_username = generate_unique_subuser_username(request.user, requested_username)
+        try:
+            subuser = User.objects.create_user(
+                username=last_username,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                is_active=True,
+            )
+            break
+        except IntegrityError:
+            subuser = None
+
+    if subuser is None:
         return JsonResponse({'ok': False, 'error': 'username_exists'}, status=400)
 
-    subuser = User.objects.create_user(
-        username=username,
-        password=password,
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        is_active=True,
-    )
     subuser.is_subuser_of = request.user
     subuser.save(update_fields=['is_subuser_of'])
 
@@ -178,6 +188,6 @@ def api_subuser_create(request):
         'subuser': {
             'id': subuser.id,
             'username': subuser.username,
-            'name': subuser.get_full_name() or subuser.username,
+            'name': subuser.get_full_name() or requested_username or subuser.username,
         }
     })

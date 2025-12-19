@@ -134,15 +134,8 @@
     border-radius: 10px;
     cursor: pointer;
     border: 1px solid rgba(255,255,255,0.18);
-    /* Dark theme: متن روشن (برعکس تم) */
     background: rgba(255,255,255,0.08);
     color: rgba(255,255,255,0.92);
-    }
-    body.light-theme .assign-btn{
-    border-color: rgba(0,0,0,0.12);
-    /* Light theme: متن تیره (برعکس تم) */
-    background: rgba(15,23,42,0.06);
-    color: rgba(15,23,42,0.90);
     }
 
  /* Confirm = Blue in both themes */
@@ -241,7 +234,7 @@
 
             <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
                 <button type="button" onclick="closeAssignModal()" class="assign-btn assign-btn-danger">انصراف</button>
-                <button type="button" onclick="submitAssignOwner()" class="assign-btn assign-btn-primary">ثبت واگذاری</button>
+                <button id="assignOwnerSubmitBtn" type="button" onclick="submitAssignOwner()" class="assign-btn assign-btn-primary">ثبت واگذاری</button>
             </div>
         </div>
 
@@ -261,17 +254,11 @@
                         <input id="newSubFirstName" class="assign-input" placeholder="نام" />
                         <input id="newSubLastName" class="assign-input" placeholder="نام خانوادگی" />
                     </div>
-
-                    <div style="display:flex; justify-content: flex-end; margin-top: 12px;">
-                        <button type="button" class="assign-btn assign-btn-primary" onclick="submitCreateSubuser()">
-                            ساخت زیرکاربر
-                        </button>
-                    </div>
                 </div>
 
             <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
                 <button type="button" onclick="closeAssignModal()" class="assign-btn assign-btn-danger">انصراف</button>
-                <button type="button" onclick="submitAssignSubuser()" class="assign-btn assign-btn-primary">ثبت واگذاری</button>
+                <button id="assignSubuserSubmitBtn" type="button" onclick="submitAssignSubuser()" class="assign-btn assign-btn-primary">ثبت واگذاری</button>
             </div>
         </div>
 
@@ -1021,6 +1008,7 @@
         function openAssignModal(deviceId) {
             assignTargetDeviceId = deviceId;
             setAssignError('');
+            setAssignSubmitLoading(false);
 
             const d = devices[deviceId] || {};
             const title = document.getElementById('assignModalDeviceTitle');
@@ -1059,6 +1047,23 @@
             document.getElementById('assignModal').style.display = 'none';
             assignTargetDeviceId = null;
             setAssignError('');
+            setAssignSubmitLoading(false);
+        }
+
+        function setAssignSubmitLoading(isLoading) {
+            const btn = document.getElementById(IS_ADMIN_USER ? 'assignOwnerSubmitBtn' : 'assignSubuserSubmitBtn');
+            if (!btn) return;
+
+            if (isLoading) {
+                if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>در حال بارگذاری...</span>';
+                btn.style.pointerEvents = 'none';
+                btn.disabled = true;
+            } else {
+                if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+                btn.style.pointerEvents = '';
+                btn.disabled = false;
+            }
         }
 
 
@@ -1150,6 +1155,7 @@
             }
 
             try {
+                setAssignSubmitLoading(true);
                 const res = await fetch(API_ASSIGN_OWNER_URL, {
                     method: 'POST',
                     body: fd,
@@ -1162,16 +1168,19 @@
                 } catch (e) {
                     const text = await res.text();
                     setAssignError(text.slice(0, 250)); // فقط برای دیباگ
+                    setAssignSubmitLoading(false);
                     return;
                 }
                 if (!res.ok || !data.ok) {
                     setAssignError(data.error || 'خطا در ثبت واگذاری');
+                    setAssignSubmitLoading(false);
                     return;
                 }
                 closeAssignModal();
                 window.location.reload();
             } catch (e) {
                 setAssignError('خطای ارتباط با سرور');
+                setAssignSubmitLoading(false);
             }
         }
 
@@ -1179,12 +1188,69 @@
             setAssignError('');
             if (!assignTargetDeviceId) return;
 
-            const subuserId = document.getElementById('assignSubuserSelect').value;
-            const fd = new FormData();
-            fd.append('device_id', assignTargetDeviceId);
-            if (subuserId) fd.append('subuser_id', subuserId);
+            let subuserId = document.getElementById('assignSubuserSelect').value;
+            const username = (document.getElementById('newSubUsername')?.value || '').trim();
+            const password = document.getElementById('newSubPassword')?.value || '';
+            const firstName = (document.getElementById('newSubFirstName')?.value || '').trim();
+            const lastName = (document.getElementById('newSubLastName')?.value || '').trim();
+
+            const hasCreateInput = !!(username || password || firstName || lastName);
+            if (!subuserId && hasCreateInput) {
+                if (!username || !password) {
+                    setAssignError('نام کاربری و رمز عبور الزامی است.');
+                    return;
+                }
+            }
 
             try {
+                setAssignSubmitLoading(true);
+
+                if (!subuserId && hasCreateInput) {
+                    const fdCreate = new FormData();
+                    fdCreate.append('username', username);
+                    fdCreate.append('password', password);
+                    fdCreate.append('first_name', firstName);
+                    fdCreate.append('last_name', lastName);
+
+                    const resCreate = await fetch(API_CREATE_SUBUSER_URL, {
+                        method: 'POST',
+                        body: fdCreate,
+                        credentials: 'same-origin',
+                        headers: { 'X-CSRFToken': CSRF_TOKEN }
+                    });
+
+                    let createData = null;
+                    try { createData = await resCreate.json(); }
+                    catch (e) {
+                        const text = await resCreate.text();
+                        setAssignError(text.slice(0, 250));
+                        setAssignSubmitLoading(false);
+                        return;
+                    }
+
+                    if (!resCreate.ok || !createData.ok) {
+                        setAssignError(createData.error || 'خطا در ساخت زیرکاربر');
+                        setAssignSubmitLoading(false);
+                        return;
+                    }
+
+                    const su = createData.subuser;
+                    if (!su || !su.id) {
+                        setAssignError('خطا در ساخت زیرکاربر');
+                        setAssignSubmitLoading(false);
+                        return;
+                    }
+
+                    const exists = SUBUSERS.some(x => String(x.id) === String(su.id));
+                    if (!exists) SUBUSERS.push(su);
+                    subuserId = String(su.id);
+                    rebuildSubuserSelect(subuserId);
+                }
+
+                const fd = new FormData();
+                fd.append('device_id', assignTargetDeviceId);
+                if (subuserId) fd.append('subuser_id', subuserId);
+
                 const res = await fetch(API_ASSIGN_SUBUSER_URL, {
                     method: 'POST',
                     body: fd,
@@ -1197,16 +1263,19 @@
                 } catch (e) {
                     const text = await res.text();
                     setAssignError(text.slice(0, 250)); // فقط برای دیباگ
+                    setAssignSubmitLoading(false);
                     return;
                 }
                 if (!res.ok || !data.ok) {
                     setAssignError(data.error || 'خطا در ثبت واگذاری');
+                    setAssignSubmitLoading(false);
                     return;
                 }
                 closeAssignModal();
                 window.location.reload();
             } catch (e) {
                 setAssignError('خطای ارتباط با سرور');
+                setAssignSubmitLoading(false);
             }
         }
 
