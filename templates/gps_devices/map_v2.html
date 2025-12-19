@@ -129,26 +129,41 @@
   }
 
   /* Buttons */
-  .assign-btn{
+    .assign-btn{
     padding: 10px 14px;
     border-radius: 10px;
     cursor: pointer;
     border: 1px solid rgba(255,255,255,0.18);
-    background: rgba(255,255,255,0.1);
-    color: #000;
-  }
-  body.light-theme .assign-btn{
+    /* Dark theme: متن روشن (برعکس تم) */
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.92);
+    }
+    body.light-theme .assign-btn{
     border-color: rgba(0,0,0,0.12);
-    background: rgba(0,0,0,0.1);
-    color: #fff;
-  }
+    /* Light theme: متن تیره (برعکس تم) */
+    background: rgba(15,23,42,0.06);
+    color: rgba(15,23,42,0.90);
+    }
 
-  .assign-btn-primary{
-    border: 0;
-    background: var(--primary);
-    color: #fff;
-    font-weight: 700;
-  }
+ /* Confirm = Blue in both themes */
+    .assign-btn-primary{
+        border: 0;
+        background: #2563eb; /* آبی ثابت */
+        color: #fff;
+        font-weight: 700;
+    }
+    /* Cancel = Red in both themes */
+    .assign-btn-danger{
+        border: 0;
+        background: #ef4444; /* قرمز ثابت */
+        color: #fff;
+        font-weight: 700;
+    }
+    /* optional hover */
+    .assign-btn:hover{ filter: brightness(1.05); }
+    .assign-btn-primary:hover{ filter: brightness(1.05); }
+    .assign-btn-danger:hover{ filter: brightness(1.05); }
+
   .assign-btn-success{
     border: 0;
     background: var(--success);
@@ -200,7 +215,7 @@
     <div class="assign-modal">
         <div style="display:flex; align-items:center; justify-content: space-between; gap: 10px;">
             <div style="font-weight: 700;">واگذاری دستگاه</div>
-            <button type="button" onclick="closeAssignModal()" class="assign-close">×</button>
+            <button type="button" onclick="closeAssignModal()" class="assign-btn assign-btn-danger">×</button>
         </div>
         <div style="margin-top: 10px; font-size: 0.85rem; opacity: 0.85;" id="assignModalDeviceTitle"></div>
        
@@ -225,7 +240,7 @@
             </div>
 
             <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
-                <button type="button" onclick="closeAssignModal()" class="assign-btn">انصراف</button>
+                <button type="button" onclick="closeAssignModal()" class="assign-btn assign-btn-danger">انصراف</button>
                 <button type="button" onclick="submitAssignOwner()" class="assign-btn assign-btn-primary">ثبت واگذاری</button>
             </div>
         </div>
@@ -255,7 +270,7 @@
                 </div>
 
             <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
-                <button type="button" onclick="closeAssignModal()" class="assign-btn">انصراف</button>
+                <button type="button" onclick="closeAssignModal()" class="assign-btn assign-btn-danger">انصراف</button>
                 <button type="button" onclick="submitAssignSubuser()" class="assign-btn assign-btn-primary">ثبت واگذاری</button>
             </div>
         </div>
