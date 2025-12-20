@@ -150,6 +150,25 @@
   - وضعیت Android toolchain:
     - Android SDK در مسیر پیش‌فرض `%LOCALAPPDATA%\Android\Sdk` یافت نشد (adb/sdkmanager نیز یافت نشد)
 
+- 2025-12-20:
+  - نصب/راه‌اندازی Flutter SDK روی ویندوز و اجرای `flutter doctor -v`.
+  - وضعیت کلی `flutter doctor`:
+    - Flutter OK (Channel stable 3.38.4)
+    - Android SDK موجود ولی نیازمندی‌های toolchain ناقص/ناسازگار بود
+    - Chrome نصب/شناخته نشده (برای Android الزامی نیست)
+    - Visual Studio نصب نیست (برای Windows desktop لازم است، برای Android الزامی نیست)
+  - تلاش برای Build اندروید:
+    - اجرای `flutter build apk --release`
+    - خطا: `[CXX1101] NDK ... did not have a source.properties file` (NDK خراب/ناقص)
+    - اقدام: حذف/پاکسازی NDK خراب و نصب مجدد از Android Studio > SDK Manager > SDK Tools > NDK (Side by side)
+    - نتیجه: نصب موفق NDK نسخه `28.2.13676358` و ایجاد فایل `...\ndk\28.2.13676358\source.properties`
+  - اجرای پروژه / پاکسازی:
+    - اجرای `flutter clean`
+  - شبیه‌ساز (Emulator):
+    - ایجاد AVD با نام `Pixel_8` (Android 16 / API 36)
+    - `flutter emulators` شبیه‌ساز را نمایش می‌دهد اما `flutter emulators --launch Pixel_8` با exit code 1 خطا می‌دهد
+    - در `flutter devices` گاهی `emulator-5554 is offline` مشاهده شد (نیاز به بررسی ADB/Cold Boot/Wipe Data)
+
 ---
 
 ## 11) TODO کوتاه‌مدت (Next Actions)
