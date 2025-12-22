@@ -24,13 +24,23 @@ class AppLogo extends StatelessWidget {
           return _fallback();
         }
 
-        final logoUri = base.resolve('/static/img/logo.png');
+        // Some deployments are hosted under a path prefix (e.g. https://example.com/app/)
+        // In that case, '/static/..' may be wrong and 'static/..' is correct.
+        final logoUriRelative = base.resolve('static/img/logo.png');
+        final logoUriRoot = base.resolve('/static/img/logo.png');
 
         return Image.network(
-          logoUri.toString(),
+          logoUriRelative.toString(),
           height: height,
           fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => _fallback(),
+          errorBuilder: (context, error, stackTrace) {
+            return Image.network(
+              logoUriRoot.toString(),
+              height: height,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => _fallback(),
+            );
+          },
         );
       },
     );

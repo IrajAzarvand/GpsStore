@@ -27,7 +27,7 @@ class _HomeShellState extends State<HomeShell> {
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
+      body: pages[_index],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
         type: BottomNavigationBarType.fixed,
@@ -68,10 +68,8 @@ class _HomeLogoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: AppLogo(height: 140),
-      ),
+    return const Center(
+      child: AppLogo(height: 140),
     );
   }
 }
