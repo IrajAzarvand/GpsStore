@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'src/pages/devices_page.dart';
+import 'src/pages/home_shell.dart';
 import 'src/pages/login_page.dart';
 import 'src/pages/settings_page.dart';
 import 'src/storage/app_config_repository.dart';
@@ -51,7 +51,7 @@ class _AppRootState extends State<AppRoot> {
           case _BootstrapKind.needsLogin:
             return const LoginPage();
           case _BootstrapKind.ready:
-            return const DevicesPage();
+            return const HomeShell();
         }
       },
     );

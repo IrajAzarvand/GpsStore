@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await _authApi.login(username: u, password: p);
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/devices');
+      Navigator.of(context).pushReplacementNamed('/home');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
