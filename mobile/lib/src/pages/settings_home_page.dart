@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/auth_api.dart';
 import '../storage/app_config_repository.dart';
 import 'settings_page.dart';
+import '../widgets/app_logo.dart';
 
 class SettingsHomePage extends StatefulWidget {
   const SettingsHomePage({super.key});
@@ -33,7 +34,14 @@ class _SettingsHomePageState extends State<SettingsHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تنظیمات'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            AppLogo(height: 28),
+            SizedBox(width: 8),
+            Text('تنظیمات'),
+          ],
+        ),
       ),
       body: ListView(
         children: [

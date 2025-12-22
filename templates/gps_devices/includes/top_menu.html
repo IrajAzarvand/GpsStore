@@ -1,3 +1,4 @@
+{% load static %}
 <header class="header">
     <div class="header-actions">
         <div class="theme-switcher" onclick="toggleTheme()"><i class="fas fa-moon theme-icon"></i><span class="theme-text">تم تیره</span></div><button class="action-btn" title="هشدارها"><i
@@ -14,6 +15,6 @@
         </div>
     </nav>
     <div class="logo">
-        <h1>🚀 Navid GPS</h1>
+        <img src="{% static 'img/logo.png' %}" alt="لوگو" style="height: 40px; width: auto;">
     </div>
 </header>

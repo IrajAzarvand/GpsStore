@@ -4,6 +4,7 @@ import 'devices_page.dart';
 import 'live_map_page.dart';
 import 'reports_page.dart';
 import 'settings_home_page.dart';
+import '../widgets/app_logo.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -18,6 +19,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
+      const _HomeLogoPage(),
       const DevicesPage(),
       const LiveMapPage(),
       const ReportsPage(),
@@ -36,6 +38,10 @@ class _HomeShellState extends State<HomeShell> {
         },
         items: const [
           BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'خانه',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.directions_car_filled_outlined),
             label: 'دستگاه‌ها',
           ),
@@ -52,6 +58,19 @@ class _HomeShellState extends State<HomeShell> {
             label: 'تنظیمات',
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HomeLogoPage extends StatelessWidget {
+  const _HomeLogoPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: AppLogo(height: 140),
       ),
     );
   }

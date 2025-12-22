@@ -4,6 +4,7 @@ import '../api/auth_api.dart';
 import '../api/devices_api.dart';
 import '../models/device.dart';
 import 'login_page.dart';
+import '../widgets/app_logo.dart';
 
 class DevicesPage extends StatefulWidget {
   const DevicesPage({super.key});
@@ -43,7 +44,14 @@ class _DevicesPageState extends State<DevicesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('دستگاه‌ها'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            AppLogo(height: 28),
+            SizedBox(width: 8),
+            Text('دستگاه‌ها'),
+          ],
+        ),
         actions: [
           IconButton(
             onPressed: _reload,
