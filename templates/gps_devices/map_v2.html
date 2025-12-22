@@ -273,6 +273,9 @@
 <script> // --- Configuration ---
         let markers = {};
         let ws;
+        let __wsHeartbeatTimer = null;
+        let __wsLastActivityAt = 0;
+        let __wsLastPongAt = 0;
         
         let pollInterval;
         let userLocation;
@@ -523,6 +526,38 @@
             }, 800);
         }
 
+        function _wsTouch() {
+            __wsLastActivityAt = Date.now();
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function _wsStartHeartbeat() {
+            _wsStopHeartbeat();
+            __wsLastPongAt = Date.now();
+            __wsHeartbeatTimer = setInterval(() => {
+                if (!ws || ws.readyState !== WebSocket.OPEN) return;
+                try {
+                    ws.send(JSON.stringify({ action: 'ping' }));
+                } catch (e) {
+                    try { ws.close(); } catch (_) {}
+                    return;
+                }
+
+                // If we haven't received pong for too long, force reconnect
+                if (Date.now() - __wsLastPongAt > 90000) {
+                    try { ws.close(); } catch (_) {}
+                }
+            }, 25000);
+        }
+
+        function _wsStopHeartbeat() {
+            if (__wsHeartbeatTimer) {
+                clearInterval(__wsHeartbeatTimer);
+                __wsHeartbeatTimer = null;
+            }
+        }
+
         
         function initWebSocket() {
             // Ensure map is initialized before starting WebSocket
@@ -533,19 +568,29 @@
             }
             
             updateConnectionStatus('connecting');
+            _wsStopHeartbeat();
             ws = new WebSocket(WS_URL);
     
             ws.onopen = function () {
                 updateConnectionStatus('connected');
-    
-                // Update timestamp on connection
-                const now = new Date();
-                document.getElementById('lastUpdate').textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+                _wsTouch();
+                _wsStartHeartbeat();
             };
     
             ws.onmessage = function (e) {
                 try {
                     const data = JSON.parse(e.data);
+
+                    if (data.type === 'connection') {
+                        _wsTouch();
+                        return;
+                    }
+
+                    if (data.type === 'pong') {
+                        __wsLastPongAt = Date.now();
+                        _wsTouch();
+                        return;
+                    }
     
                     if (data.type === 'device_assignment' && data.data) {
                         scheduleAssignmentReload();
@@ -554,8 +599,13 @@
 
                     if (data.type === 'device_update' && data.data) {
                         const deviceData = data.data;
+
+                        // If this device isn't present in the sidebar tree yet, reload once to rebuild hierarchy
+                        if (deviceData.id && !document.querySelector(`#sidebar-device-${deviceData.id}`)) {
+                            scheduleAssignmentReload();
+                        }
     
-                        // به‌روزرسانی state و UI
+                        //state and ui update
                         handleDeviceUpdate(deviceData);
     
                         // رسم Polyline اگر وجود داشت
@@ -568,12 +618,14 @@
             };
     
             ws.onclose = function () {
+                _wsStopHeartbeat();
                 updateConnectionStatus('disconnected');
                 setTimeout(initWebSocket, 5000);
             };
     
             ws.onerror = function (err) {
                 console.error('WebSocket Error:', err);
+                _wsStopHeartbeat();
                 ws.close();
             };
         }
