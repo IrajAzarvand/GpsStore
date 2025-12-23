@@ -1,0 +1,15 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'admin_theme/admin.css' %}">
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script defer src="{% static 'admin_theme/admin.js' %}"></script>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} gps-admin{% endblock %}
+

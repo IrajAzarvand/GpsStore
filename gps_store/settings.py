@@ -16,6 +16,8 @@ import os
 from dotenv import load_dotenv
 from django.contrib import admin
 
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development').lower()
+
 # Load .env first, then .env.local can override it if needed
 load_dotenv()
 if Path('.env.local').exists():
@@ -32,8 +34,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-$k^$wtq^$g=%t%^@2^*8rve0s_y$d%*%$3j2$))v6%u6p$&^&h')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+if ENVIRONMENT == 'production' and os.getenv('DEBUG') is None:
+    DEBUG = False
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver,bruna.ir').split(',')
 
@@ -70,6 +73,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -169,8 +173,11 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise for serving static files in production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if ENVIRONMENT == 'production':
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+else:
+    WHITENOISE_USE_FINDERS = True
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # CDN Configuration (for production)
 # STATIC_URL = 'https://cdn.example.com/static/'

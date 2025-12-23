@@ -1,0 +1,152 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block page_title %}داشبورد مدیریت GPS{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<!-- کارت‌های آماری -->
+<div class="stats-cards">
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-title">دستگاه‌های فعال</div>
+            <div class="stat-icon gps">
+                <i class="fas fa-satellite"></i>
+            </div>
+        </div>
+        <div class="stat-value">۴۸</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            ۱۲% افزایش نسبت به ماه گذشته
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-title">کاربران آنلاین</div>
+            <div class="stat-icon users">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+        <div class="stat-value">۱,۲۴۸</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            ۸% افزایش نسبت به دیروز
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-title">دستگاه‌های آنلاین</div>
+            <div class="stat-icon active">
+                <i class="fas fa-signal"></i>
+            </div>
+        </div>
+        <div class="stat-value">۳۲</div>
+        <div class="stat-change negative">
+            <i class="fas fa-arrow-down"></i>
+            ۲ دستگاه آفلاین
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-title">دستگاه‌های نیاز به تعمیر</div>
+            <div class="stat-icon inactive">
+                <i class="fas fa-tools"></i>
+            </div>
+        </div>
+        <div class="stat-value">۵</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-down"></i>
+            ۳ دستگاه تعمیر شد
+        </div>
+    </div>
+</div>
+
+<!-- نقشه -->
+<div class="map-container">
+    <div class="map-header">
+        <div class="map-title">موقعیت دستگاه‌ها بر روی نقشه</div>
+        <div class="table-actions">
+            <a class="btn btn-primary" href="{% url 'backup_restore' %}">
+                <i class="fas fa-database"></i>
+                بکاپ / ریستور
+            </a>
+            <a class="btn btn-secondary" href="{% url 'admin_assign_device_owner' %}">
+                <i class="fas fa-satellite"></i>
+                تغییر مالک دستگاه
+            </a>
+        </div>
+    </div>
+    <div id="map"></div>
+</div>
+
+<!-- جدول دستگاه‌ها (نمونه نمایشی) -->
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">دستگاه‌های GPS</div>
+        <div class="table-actions">
+            <a class="btn btn-primary" href="{% url 'admin:gps_devices_device_add' %}">
+                <i class="fas fa-plus"></i>
+                افزودن دستگاه
+            </a>
+            <a class="btn btn-secondary" href="{% url 'admin:gps_devices_device_changelist' %}">
+                <i class="fas fa-list"></i>
+                لیست دستگاه‌ها
+            </a>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>شناسه دستگاه</th>
+                <th>نام دستگاه</th>
+                <th>مدل</th>
+                <th>مالک</th>
+                <th>وضعیت</th>
+                <th>آخرین موقعیت</th>
+                <th>آخرین بروزرسانی</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>GPS-2023-001</td>
+                <td>ون حمل و نقل</td>
+                <td>Tracker Pro X</td>
+                <td>شرکت باربری آسان</td>
+                <td>آنلاین</td>
+                <td>تهران، خیابان ولیعصر</td>
+                <td>۲ دقیقه پیش</td>
+                <td>
+                    <div class="table-actions">
+                        <a class="btn btn-secondary" href="{% url 'admin:gps_devices_device_changelist' %}">مشاهده</a>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var el = document.getElementById('map');
+    if (!el || !window.L) return;
+    var map = L.map('map').setView([32.4279, 53.6880], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18,
+    }).addTo(map);
+  });
+</script>
+{% endblock %}

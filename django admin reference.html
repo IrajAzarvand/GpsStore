@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت GPS | ردیابی هوشمند</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-color: #10b981;
+            --primary-dark: #059669;
+            --secondary-color: #3b82f6;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+            
+            --bg-color: #f8fafc;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --header-bg: #ffffff;
+            
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+            
+            --sidebar-width: 280px;
+            --sidebar-collapsed: 80px;
+            --header-height: 70px;
+        }
+
+        .dark-theme {
+            --primary-color: #10b981;
+            --primary-dark: #059669;
+            --secondary-color: #3b82f6;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+            
+            --bg-color: #0f172a;
+            --sidebar-bg: #1e293b;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --header-bg: #1e293b;
+            
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: var(--transition);
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* نوار کناری */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        .sidebar-header {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .logo-text {
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+            border-right: 3px solid transparent;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+            border-right: 3px solid var(--primary-color);
+        }
+
+        .menu-item i {
+            font-size: 1.2rem;
+            width: 24px;
+            margin-left: 10px;
+        }
+
+        .menu-text {
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed .menu-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .badge {
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-right: auto;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .theme-toggle i {
+            font-size: 1.2rem;
+        }
+
+        .sidebar.collapsed .theme-text {
+            display: none;
+        }
+
+        /* بخش اصلی */
+        .main-content {
+            flex: 1;
+            margin-right: var(--sidebar-width);
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-right: var(--sidebar-collapsed);
+        }
+
+        /* هدر */
+        .header {
+            height: var(--header-height);
+            background-color: var(--header-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .page-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .breadcrumb {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--primary-color);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar input {
+            padding: 10px 15px 10px 40px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 250px;
+            color: var(--text-color);
+            transition: var(--transition);
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .search-bar i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .notification {
+            position: relative;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--text-color);
+            cursor: pointer;
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .notification-btn:hover {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .user-profile:hover {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-role {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* محتوا */
+        .content {
+            padding: 30px;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.gps {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        }
+
+        .stat-icon.users {
+            background: linear-gradient(135deg, var(--secondary-color), #1d4ed8);
+        }
+
+        .stat-icon.active {
+            background: linear-gradient(135deg, var(--info-color), #0e7490);
+        }
+
+        .stat-icon.inactive {
+            background: linear-gradient(135deg, var(--warning-color), #b45309);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-change.positive {
+            color: var(--primary-color);
+        }
+
+        .stat-change.negative {
+            color: var(--danger-color);
+        }
+
+        /* نقشه */
+        .map-container {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .map-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+
+        /* جدول دستگاه‌ها */
+        .table-container {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #2563eb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        th {
+            padding: 16px 20px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        .device-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-dot.online {
+            background-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-dot.offline {
+            background-color: var(--danger-color);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
+        .status-dot.idle {
+            background-color: var(--warning-color);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-icon.view {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .btn-icon.view:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-icon.edit {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+        }
+
+        .btn-icon.edit:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-icon.delete {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .btn-icon.delete:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        /* فوتر */
+        .footer {
+            margin-top: 40px;
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* رسپانسیو */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: var(--sidebar-collapsed);
+            }
+            
+            .sidebar:not(.collapsed) {
+                width: var(--sidebar-width);
+            }
+            
+            .main-content {
+                margin-right: var(--sidebar-collapsed);
+            }
+            
+            .search-bar input {
+                width: 200px;
+            }
+            
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                padding: 0 15px;
+            }
+            
+            .search-bar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+            }
+            
+            .table-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .table-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            
+            .user-info {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="container">
+        <!-- نوار کناری -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-satellite-dish logo-icon"></i>
+                    <span class="logo-text">GPS Tracker</span>
+                </div>
+                <button class="toggle-btn" id="toggle-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-menu">
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-home"></i>
+                    <span class="menu-text">داشبورد</span>
+                </a>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span class="menu-text">نقشه زنده</span>
+                    <span class="badge">3</span>
+                </a>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-satellite"></i>
+                    <span class="menu-text">دستگاه‌ها</span>
+                </a>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-users"></i>
+                    <span class="menu-text">مدیریت کاربران</span>
+                </a>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-route"></i>
+                    <span class="menu-text">مسیرها</span>
+                </a>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="menu-text">گزارشات</span>
+                </a>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span class="menu-text">تنظیمات</span>
+                </a>
+                
+                <a href="#" class="menu-item">
+                    <i class="fas fa-bell"></i>
+                    <span class="menu-text">هشدارها</span>
+                    <span class="badge">5</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="theme-toggle" id="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                    <span class="theme-text">تم تیره</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- بخش اصلی -->
+        <main class="main-content">
+            <!-- هدر -->
+            <header class="header">
+                <div class="header-left">
+                    <div class="page-title">
+                        <h1>داشبورد مدیریت GPS</h1>
+                        <div class="breadcrumb">
+                            <a href="#">خانه</a> / <span>داشبورد</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="search-bar">
+                        <input type="text" placeholder="جستجوی دستگاه یا کاربر...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    
+                    <div class="notification">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">5</span>
+                        </button>
+                    </div>
+                    
+                    <div class="user-profile">
+                        <div class="avatar">
+                            <span>GP</span>
+                        </div>
+                        <div class="user-info">
+                            <span class="user-name">مدیر سیستم</span>
+                            <span class="user-role">Administrator</span>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- محتوا -->
+            <div class="content">
+                <!-- کارت‌های آماری -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">دستگاه‌های فعال</div>
+                            <div class="stat-icon gps">
+                                <i class="fas fa-satellite"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">۴۸</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            ۱۲% افزایش نسبت به ماه گذشته
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">کاربران آنلاین</div>
+                            <div class="stat-icon users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">۱,۲۴۸</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            ۸% افزایش نسبت به دیروز
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">دستگاه‌های آنلاین</div>
+                            <div class="stat-icon active">
+                                <i class="fas fa-signal"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">۳۲</div>
+                        <div class="stat-change negative">
+                            <i class="fas fa-arrow-down"></i>
+                            ۲ دستگاه آفلاین
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-title">دستگاه‌های نیاز به تعمیر</div>
+                            <div class="stat-icon inactive">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">۵</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-down"></i>
+                            ۳ دستگاه تعمیر شد
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- نقشه -->
+                <div class="map-container">
+                    <div class="map-header">
+                        <div class="map-title">موقعیت دستگاه‌ها بر روی نقشه</div>
+                        <div class="table-actions">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-sync-alt"></i>
+                                بروزرسانی موقعیت
+                            </button>
+                        </div>
+                    </div>
+                    <div id="map"></div>
+                </div>
+                
+                <!-- جدول دستگاه‌ها -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">دستگاه‌های GPS</div>
+                        <div class="table-actions">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                افزودن دستگاه
+                            </button>
+                            <button class="btn btn-secondary">
+                                <i class="fas fa-download"></i>
+                                خروجی Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>شناسه دستگاه</th>
+                                <th>نام دستگاه</th>
+                                <th>مدل</th>
+                                <th>مالک</th>
+                                <th>وضعیت</th>
+                                <th>آخرین موقعیت</th>
+                                <th>آخرین بروزرسانی</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>GPS-2023-001</td>
+                                <td>ون حمل و نقل</td>
+                                <td>Tracker Pro X</td>
+                                <td>شرکت باربری آسان</td>
+                                <td>
+                                    <div class="device-status">
+                                        <span class="status-dot online"></span>
+                                        <span>آنلاین</span>
+                                    </div>
+                                </td>
+                                <td>تهران، خیابان ولیعصر</td>
+                                <td>۲ دقیقه پیش</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="btn-icon view" title="نمایش موقعیت">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="btn-icon edit" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="btn-icon delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>GPS-2023-002</td>
+                                <td>کامیون سبک</td>
+                                <td>Tracker Mini</td>
+                                <td>حمل و نقل سبک بار</td>
+                                <td>
+                                    <div class="device-status">
+                                        <span class="status-dot idle"></span>
+                                        <span>ثابت</span>
+                                    </div>
+                                </td>
+                                <td>کرج، شهرک صنعتی</td>
+                                <td>۱۵ دقیقه پیش</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="btn-icon view" title="نمایش موقعیت">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="btn-icon edit" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="btn-icon delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>GPS-2023-003</td>
+                                <td>خودروی شخصی</td>
+                                <td>Car Tracker 4G</td>
+                                <td>علیرضا محمدی</td>
+                                <td>
+                                    <div class="device-status">
+                                        <span class="status-dot online"></span>
+                                        <span>آنلاین</span>
+                                    </div>
+                                </td>
+                                <td>مشهد، بلوار وکیل‌آباد</td>
+                                <td>۵ دقیقه پیش</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="btn-icon view" title="نمایش موقعیت">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="btn-icon edit" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="btn-icon delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>GPS-2023-004</td>
+                                <td>وانت باربری</td>
+                                <td>Tracker Pro X</td>
+                                <td>حمل و نقل تهران</td>
+                                <td>
+                                    <div class="device-status">
+                                        <span class="status-dot offline"></span>
+                                        <span>آفلاین</span>
+                                    </div>
+                                </td>
+                                <td>اصفهان، خیابان چهارباغ</td>
+                                <td>۲ ساعت پیش</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="btn-icon view" title="نمایش موقعیت">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="btn-icon edit" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="btn-icon delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>GPS-2023-005</td>
+                                <td>موتور پیک</td>
+                                <td>Bike Tracker Mini</td>
+                                <td>پیک موتوری فوری</td>
+                                <td>
+                                    <div class="device-status">
+                                        <span class="status-dot online"></span>
+                                        <span>آنلاین</span>
+                                    </div>
+                                </td>
+                                <td>شیراز، میدان ارم</td>
+                                <td>۱ دقیقه پیش</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="btn-icon view" title="نمایش موقعیت">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="btn-icon edit" title="ویرایش">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div class="btn-icon delete" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- فوتر -->
+                <div class="footer">
+                    <p>© ۱۴۰۲ - سیستم ردیابی GPS هوشمند. تمامی حقوق محفوظ است. نسخه ۲.۱.۴</p>
+                    <p style="margin-top: 5px; font-size: 0.8rem;">
+                        <i class="fas fa-circle" style="color: var(--primary-color); font-size: 0.6rem;"></i> 
+                        ۳۲ دستگاه آنلاین از ۴۸ دستگاه
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // تغییر تم
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = themeToggle.querySelector('i');
+            const themeText = themeToggle.querySelector('.theme-text');
+            
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-theme');
+                
+                if (document.body.classList.contains('dark-theme')) {
+                    themeIcon.className = 'fas fa-moon';
+                    themeText.textContent = 'تم تیره';
+                } else {
+                    themeIcon.className = 'fas fa-sun';
+                    themeText.textContent = 'تم روشن';
+                }
+                
+                // ذخیره تم در localStorage
+                const isDarkTheme = document.body.classList.contains('dark-theme');
+                localStorage.setItem('darkTheme', isDarkTheme);
+            });
+            
+            // بارگذاری تم ذخیره شده
+            const savedTheme = localStorage.getItem('darkTheme');
+            if (savedTheme === 'false') {
+                document.body.classList.remove('dark-theme');
+                themeIcon.className = 'fas fa-sun';
+                themeText.textContent = 'تم روشن';
+            }
+        });
+        
+        // جمع‌شونده نوار کناری
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggle-btn');
+            const sidebar = document.getElementById('sidebar');
+            
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                const icon = toggleBtn.querySelector('i');
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-left');
+                } else {
+                    icon.classList.remove('fa-chevron-left');
+                    icon.classList.add('fa-chevron-right');
+                }
+            });
+            
+            // فعال کردن لینک‌های منو
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (!this.classList.contains('active')) {
+                        menuItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+        });
+        
+        // نقشه Leaflet
+        document.addEventListener('DOMContentLoaded', function() {
+            // مختصات مرکز ایران
+            const map = L.map('map').setView([32.4279, 53.6880], 5);
+            
+            // اضافه کردن نقشه پایه
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18,
+            }).addTo(map);
+            
+            // اضافه کردن نشانگرها برای دستگاه‌های GPS
+            const devices = [
+                {name: "ون حمل و نقل", lat: 35.6892, lng: 51.3890, status: "online"},
+                {name: "کامیون سبک", lat: 35.8361, lng: 50.9342, status: "idle"},
+                {name: "خودروی شخصی", lat: 36.2605, lng: 59.6168, status: "online"},
+                {name: "وانت باربری", lat: 32.6546, lng: 51.6680, status: "offline"},
+                {name: "موتور پیک", lat: 29.5918, lng: 52.5837, status: "online"},
+            ];
+            
+            // آیکون‌های مختلف برای وضعیت‌های مختلف
+            const onlineIcon = L.divIcon({
+                html: '<div style="background-color: #10b981; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);"></div>',
+                className: 'custom-icon',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            
+            const idleIcon = L.divIcon({
+                html: '<div style="background-color: #f59e0b; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);"></div>',
+                className: 'custom-icon',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            
+            const offlineIcon = L.divIcon({
+                html: '<div style="background-color: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);"></div>',
+                className: 'custom-icon',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            
+            // اضافه کردن نشانگرها به نقشه
+            devices.forEach(device => {
+                let icon;
+                if (device.status === "online") icon = onlineIcon;
+                else if (device.status === "idle") icon = idleIcon;
+                else icon = offlineIcon;
+                
+                L.marker([device.lat, device.lng], {icon: icon})
+                    .addTo(map)
+                    .bindPopup(`<b>${device.name}</b><br>وضعیت: ${device.status === "online" ? "آنلاین" : device.status === "idle" ? "ثابت" : "آفلاین"}`);
+            });
+        });
+    </script>
+</body>
+</html>
