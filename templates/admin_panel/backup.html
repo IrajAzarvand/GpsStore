@@ -1,16 +1,32 @@
-{% extends 'base.html' %}
+{% extends 'admin/base_site.html' %}
+{% load i18n %}
 
 {% block content %}
-<h1>Database Backup</h1>
-<form method="post">
-    {% csrf_token %}
-    {% for app_label, models in models_by_app.items %}
-    <h2>{{ app_label }}</h2>
-    {% for model in models %}
-    <input type="checkbox" name="models" value="{{ app_label }}.{{ model.__name__ }}" id="{{ app_label }}_{{ model.__name__ }}">
-    <label for="{{ app_label }}_{{ model.__name__ }}">{{ model.__name__ }}</label><br>
-    {% endfor %}
-    {% endfor %}
-    <button type="submit">Download Backup</button>
-</form>
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">{% trans "Database Backup" %}</div>
+    </div>
+
+    <div style="padding: 20px;">
+        <form method="post">
+            {% csrf_token %}
+
+            {% for app_label, models in models_by_app.items %}
+            <div style="margin-bottom: 14px; font-weight: 700;">{{ app_label }}</div>
+            <div style="margin-bottom: 18px;">
+                {% for model in models %}
+                <div style="margin-bottom: 10px;">
+                    <input type="checkbox" name="models" value="{{ app_label }}.{{ model.__name__ }}" id="{{ app_label }}_{{ model.__name__ }}">
+                    <label for="{{ app_label }}_{{ model.__name__ }}" style="margin-right: 8px;">{{ model.__name__ }}</label>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="table-actions">
+                <button type="submit" class="btn btn-primary">{% trans "Download Backup" %}</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

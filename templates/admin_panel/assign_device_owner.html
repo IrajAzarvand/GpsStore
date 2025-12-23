@@ -3,45 +3,35 @@
 
 {% block extrastyle %}
 {{ block.super }}
-<style>
-    .container { padding: 20px; max-width: 900px; }
-    .card { background: #fff; border: 1px solid #eaeaea; border-radius: 4px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .card h1 { margin-top: 0; color: #444; }
-    .form-row { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; color: #444; }
-    select { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; }
-    .actions { display: flex; gap: 10px; margin-top: 15px; }
-    .btn { display: inline-block; padding: 8px 16px; border-radius: 4px; text-decoration: none; cursor: pointer; border: none; font-size: 14px; }
-    .btn-primary { background: #007bff; color: white; }
-    .btn-secondary { background: #6c757d; color: white; }
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="card">
-        <h1>{% trans "Assign Device Owner" %}</h1>
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">{% trans "Assign Device Owner" %}</div>
+    </div>
 
+    <div class="content" style="padding: 20px;">
         <form method="post">
             {% csrf_token %}
 
-            <div class="form-row">
-                <label for="{{ form.device.id_for_label }}">{% trans "Device" %}</label>
+            <div style="margin-bottom: 14px;">
+                <label for="{{ form.device.id_for_label }}" style="display:block; margin-bottom: 6px; font-weight: 600;">{% trans "Device" %}</label>
                 {{ form.device }}
                 {% if form.device.errors %}
                     <div class="errors">{{ form.device.errors }}</div>
                 {% endif %}
             </div>
 
-            <div class="form-row">
-                <label for="{{ form.owner.id_for_label }}">{% trans "New Owner (Root User)" %}</label>
+            <div style="margin-bottom: 14px;">
+                <label for="{{ form.owner.id_for_label }}" style="display:block; margin-bottom: 6px; font-weight: 600;">{% trans "New Owner (Root User)" %}</label>
                 {{ form.owner }}
                 {% if form.owner.errors %}
                     <div class="errors">{{ form.owner.errors }}</div>
                 {% endif %}
             </div>
 
-            <div class="actions">
+            <div class="table-actions">
                 <button type="submit" class="btn btn-primary" onclick="return confirm('{% trans "This will change device owner and clear subuser assignment. Continue?" %}')">
                     {% trans "Save" %}
                 </button>

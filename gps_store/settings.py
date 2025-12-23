@@ -16,12 +16,12 @@ import os
 from dotenv import load_dotenv
 from django.contrib import admin
 
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'development').lower()
-
 # Load .env first, then .env.local can override it if needed
 load_dotenv()
 if Path('.env.local').exists():
     load_dotenv('.env.local')
+
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development').lower()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -1,126 +1,68 @@
 {% extends "admin/base_site.html" %}
-{% block html %}data-bs-theme="dark"{% endblock %}
 {% load static %}
 
 {% block extrahead %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-body {
-    background-color: #212529 !important;
-    color: white !important;
-}
-.card {
-    background-color: #343a40 !important;
-    border-color: #495057 !important;
-    color: white !important;
-}
-.card-header {
-    background-color: #495057 !important;
-    color: white !important;
-}
-.form-control {
-    background-color: #495057 !important;
-    color: white !important;
-    border-color: #6c757d !important;
-}
-.form-control:focus {
-    background-color: #495057 !important;
-    color: white !important;
-    border-color: #007bff !important;
-}
-.btn-primary {
-    background-color: #007bff !important;
-    border-color: #007bff !important;
-}
-.btn-secondary {
-    background-color: #6c757d !important;
-    border-color: #6c757d !important;
-}
-.dl-horizontal dt {
-    color: #adb5bd !important;
-}
-</style>
+{{ block.super }}
 {% endblock %}
 
 {% block title %}Register Device{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Register New GPS Device</h1>
-
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Device Registration Form</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% for field in form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                                <div class="text-danger">
-                                    {% for error in field.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                        <button type="submit" class="btn btn-primary">Register Device</button>
-                        <a href="{% url 'admin:gps_devices_rawgpsdata_changelist' %}" class="btn btn-secondary">Cancel</a>
-                    </form>
-                </div>
-            </div>
+<div class="table-container" style="margin-bottom: 20px;">
+    <div class="table-header">
+        <div class="table-title">Register New GPS Device</div>
+        <div class="table-actions">
+            <a href="{% url 'admin:gps_devices_rawgpsdata_changelist' %}" class="btn btn-secondary">Cancel</a>
         </div>
-
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Parsed Data from Raw GPS</h4>
-                </div>
-                <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-4">Device ID:</dt>
-                        <dd class="col-sm-8">{{ parsed_data.device_id }}</dd>
-
-                        <dt class="col-sm-4">Latitude:</dt>
-                        <dd class="col-sm-8">{{ parsed_data.latitude }}</dd>
-
-                        <dt class="col-sm-4">Longitude:</dt>
-                        <dd class="col-sm-8">{{ parsed_data.longitude }}</dd>
-
-                        <dt class="col-sm-4">Speed:</dt>
-                        <dd class="col-sm-8">{{ parsed_data.speed }} km/h</dd>
-
-                        <dt class="col-sm-4">Timestamp:</dt>
-                        <dd class="col-sm-8">{{ parsed_data.timestamp }}</dd>
-
-                        {% if parsed_data.voltage %}
-                        <dt class="col-sm-4">Voltage:</dt>
-                        <dd class="col-sm-8">{{ parsed_data.voltage }}V</dd>
-                        {% endif %}
-
-                        {% if parsed_data.temperature %}
-                        <dt class="col-sm-4">Temperature:</dt>
-                        <dd class="col-sm-8">{{ parsed_data.temperature }}°C</dd>
-                        {% endif %}
-                    </dl>
-                </div>
+    </div>
+    <div style="padding: 20px;">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div style="margin-bottom: 14px;">
+                <label for="{{ field.id_for_label }}" style="display:block; margin-bottom: 6px; font-weight: 600;">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="errors">{{ field.errors }}</div>
+                {% endif %}
             </div>
-
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h4>Raw Data</h4>
-                </div>
-                <div class="card-body">
-                    <pre style="font-size: 12px; white-space: pre-wrap;">{{ raw_data.raw_data }}</pre>
-                </div>
+            {% endfor %}
+            <div class="table-actions">
+                <button type="submit" class="btn btn-primary">Register Device</button>
             </div>
-        </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-container" style="margin-bottom: 20px;">
+    <div class="table-header">
+        <div class="table-title">Parsed Data from Raw GPS</div>
+    </div>
+    <div style="padding: 20px;">
+        <table>
+            <tbody>
+                <tr><th style="width: 180px;">Device ID</th><td dir="ltr">{{ parsed_data.device_id }}</td></tr>
+                <tr><th>Latitude</th><td dir="ltr">{{ parsed_data.latitude }}</td></tr>
+                <tr><th>Longitude</th><td dir="ltr">{{ parsed_data.longitude }}</td></tr>
+                <tr><th>Speed</th><td dir="ltr">{{ parsed_data.speed }} km/h</td></tr>
+                <tr><th>Timestamp</th><td dir="ltr">{{ parsed_data.timestamp }}</td></tr>
+                {% if parsed_data.voltage %}
+                <tr><th>Voltage</th><td dir="ltr">{{ parsed_data.voltage }}V</td></tr>
+                {% endif %}
+                {% if parsed_data.temperature %}
+                <tr><th>Temperature</th><td dir="ltr">{{ parsed_data.temperature }}°C</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">Raw Data</div>
+    </div>
+    <div style="padding: 20px;">
+        <pre style="font-size: 12px; white-space: pre-wrap; margin: 0;">{{ raw_data.raw_data }}</pre>
     </div>
 </div>
 {% endblock %}
