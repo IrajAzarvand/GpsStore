@@ -86,6 +86,44 @@
     <div id="map"></div>
 </div>
 
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">مدیریت بخش‌ها</div>
+    </div>
+
+    {% if app_list %}
+    <div class="gps-app-grid">
+        {% for app in app_list %}
+        <section class="gps-app-card">
+            <div class="gps-app-card__header">
+                <a class="gps-app-card__title" href="{{ app.app_url }}">{{ app.name }}</a>
+                <span class="gps-app-card__meta">{{ app.app_label }}</span>
+            </div>
+            <div class="gps-app-card__body">
+                {% for model in app.models %}
+                <div class="gps-model-row">
+                    <div class="gps-model-row__name">{{ model.name }}</div>
+                    <div class="gps-model-row__actions">
+                        {% if model.admin_url %}
+                        <a class="btn btn-secondary" href="{{ model.admin_url }}">لیست</a>
+                        {% endif %}
+                        {% if model.add_url %}
+                        <a class="btn btn-primary" href="{{ model.add_url }}">افزودن</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="content" style="padding: 20px; color: var(--text-secondary);">
+        {% trans "You don't have permission to view or edit anything." %}
+    </div>
+    {% endif %}
+</div>
+
 <!-- جدول دستگاه‌ها (نمونه نمایشی) -->
 <div class="table-container">
     <div class="table-header">

@@ -37,31 +37,49 @@
                     <span class="menu-text">داشبورد</span>
                 </a>
 
-                {% if available_apps %}
-                {% for app in available_apps %}
-                <a href="{{ app.app_url }}" class="menu-item">
-                    <i class="fas fa-layer-group"></i>
-                    <span class="menu-text">{{ app.name }}</span>
-                </a>
-                {% endfor %}
+                {% if request.user.is_authenticated %}
+                    {% if available_apps %}
+                        {% for app in available_apps %}
+                        <details class="menu-group">
+                            <summary class="menu-item">
+                                <i class="fas fa-layer-group"></i>
+                                <span class="menu-text">{{ app.name }}</span>
+                            </summary>
+                            <div class="menu-sub">
+                                {% for model in app.models %}
+                                    {% if model.admin_url %}
+                                    <a class="menu-subitem" href="{{ model.admin_url }}">{{ model.name }}</a>
+                                    {% endif %}
+                                    {% if model.add_url %}
+                                    <a class="menu-subitem menu-subitem--add" href="{{ model.add_url }}">+ {{ model.name }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </details>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="menu-divider"></div>
+
+                    <a href="{% url 'backup_restore' %}" class="menu-item">
+                        <i class="fas fa-database"></i>
+                        <span class="menu-text">بکاپ / ریستور</span>
+                    </a>
+
+                    <a href="{% url 'admin_assign_device_owner' %}" class="menu-item">
+                        <i class="fas fa-satellite"></i>
+                        <span class="menu-text">تغییر مالک دستگاه</span>
+                    </a>
                 {% endif %}
-
-                <a href="{% url 'backup_restore' %}" class="menu-item">
-                    <i class="fas fa-database"></i>
-                    <span class="menu-text">بکاپ / ریستور</span>
-                </a>
-
-                <a href="{% url 'admin_assign_device_owner' %}" class="menu-item">
-                    <i class="fas fa-satellite"></i>
-                    <span class="menu-text">تغییر مالک دستگاه</span>
-                </a>
             </div>
 
             <div class="sidebar-footer">
+                {% if request.user.is_authenticated %}
                 <div class="theme-toggle" id="theme-toggle" role="button" tabindex="0">
                     <i class="fas fa-moon"></i>
                     <span class="theme-text">تم تیره</span>
                 </div>
+                {% endif %}
             </div>
         </aside>
 
@@ -77,6 +95,7 @@
                 </div>
 
                 <div class="header-right">
+                    {% if request.user.is_authenticated %}
                     <div class="search-bar">
                         <input type="text" placeholder="جستجو..." disabled>
                         <i class="fas fa-search"></i>
@@ -99,6 +118,7 @@
                         </div>
                         <i class="fas fa-chevron-down"></i>
                     </div>
+                    {% endif %}
                 </div>
             </header>
 

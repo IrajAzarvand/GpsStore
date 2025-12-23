@@ -159,6 +159,50 @@ body.gps-admin {
   margin-left: 10px;
 }
 
+.menu-group {
+  margin: 0;
+}
+
+.menu-group > summary {
+  list-style: none;
+}
+
+.menu-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-sub {
+  padding: 6px 14px 10px 14px;
+}
+
+.menu-subitem {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.menu-subitem:hover {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: var(--primary-color);
+}
+
+.menu-subitem--add {
+  color: var(--secondary-color);
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 18px;
+}
+
+.sidebar.collapsed .menu-sub {
+  display: none;
+}
+
 .menu-text {
   transition: var(--transition);
 }
@@ -440,6 +484,68 @@ body.gps-admin {
   box-shadow: var(--shadow);
   margin-bottom: 30px;
   border: 1px solid var(--border-color);
+}
+
+.gps-app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.gps-app-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.gps-app-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gps-app-card__title {
+  text-decoration: none;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.gps-app-card__meta {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.gps-app-card__body {
+  padding: 12px 18px;
+}
+
+.gps-model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+}
+
+.gps-model-row:last-child {
+  border-bottom: none;
+}
+
+.gps-model-row__name {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.gps-model-row__actions {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .map-header,
