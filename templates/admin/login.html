@@ -1,136 +1,60 @@
 {% load i18n static %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
+<html lang="fa" dir="rtl">
+
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GpsStore Admin</title>
-    <link rel="stylesheet" type="text/css" href="{% static "admin/css/base.css" %}">
-    <style>
-        body {
-            background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'Roboto', sans-serif;
-        }
 
-        .login-container {
-            background: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            text-align: center;
-        }
+    <link rel="stylesheet" href="{% static 'admin/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_theme/admin.css' %}?v=20251223">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script defer src="{% static 'admin_theme/admin.js' %}?v=20251223"></script>
 
-        .login-header {
-            margin-bottom: 30px;
-        }
-
-        .login-header h1 {
-            color: #333;
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .login-header h1 a {
-            text-decoration: none;
-            color: #333;
-        }
-
-        .form-row {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .form-row label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        .form-row input[type="text"],
-        .form-row input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        .submit-row {
-            margin-top: 30px;
-        }
-
-        .submit-row input[type="submit"] {
-            background: #007bff;
-            color: #fff;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            transition: background 0.3s;
-        }
-
-        .submit-row input[type="submit"]:hover {
-            background: #0056b3;
-        }
-
-        .errornote {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-    </style>
     <meta name="robots" content="NONE,NOARCHIVE">
 </head>
-<body class="login">
-<div class="login-container">
-    <div class="login-header">
-        <h1>
-            <a href="{% url 'admin:index' %}">GpsStore Admin</a>
-        </h1>
+
+<body id="django-admin" class="gps-admin login-page">
+    <div class="gps-login-container">
+        <div class="gps-login-card">
+            <div class="gps-login-brand">
+                <img src="{% static 'img/logo.png' %}" alt="GpsStore Logo" class="gps-login-logo">
+                <div class="gps-login-title">GpsStore Admin</div>
+            </div>
+
+            {% if form.errors and not form.non_field_errors %}
+            <div class="gps-login-error">
+                {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+            </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+            <div class="gps-login-error">{{ error }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <form action="{{ app_path }}" method="post" id="login-form" class="gps-login-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    {{ form.username.errors }}
+                    <label for="id_username">{{ form.username.label }}:</label>
+                    {{ form.username }}
+                </div>
+                <div class="form-row">
+                    {{ form.password.errors }}
+                    <label for="id_password">{{ form.password.label }}:</label>
+                    {{ form.password }}
+                </div>
+                <input type="hidden" name="next" value="{{ next }}">
+                <div class="gps-login-actions">
+                    <input type="submit" class="btn btn-primary" value="{% trans 'Log in' %}">
+                </div>
+            </form>
+        </div>
     </div>
-
-    {% if form.errors and not form.non_field_errors %}
-    <p class="errornote">
-    {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
-    </p>
-    {% endif %}
-
-    {% if form.non_field_errors %}
-    {% for error in form.non_field_errors %}
-    <p class="errornote">
-        {{ error }}
-    </p>
-    {% endfor %}
-    {% endif %}
-
-    <form action="{{ app_path }}" method="post" id="login-form">
-        {% csrf_token %}
-        <div class="form-row">
-            {{ form.username.errors }}
-            <label for="id_username">{{ form.username.label }}:</label>
-            {{ form.username }}
-        </div>
-        <div class="form-row">
-            {{ form.password.errors }}
-            <label for="id_password">{{ form.password.label }}:</label>
-            {{ form.password }}
-        </div>
-        <input type="hidden" name="next" value="{{ next }}">
-        <div class="submit-row">
-            <input type="submit" value="{% trans 'Log in' %}">
-        </div>
-    </form>
-</div>
 </body>
+
 </html>

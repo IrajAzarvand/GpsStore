@@ -24,7 +24,7 @@ def superuser_required(user):
 
 @method_decorator(user_passes_test(superuser_required), name='dispatch')
 class BackupRestoreView(View):
-    template_name = 'admin_panel/backup_restore.html'
+    template_name = 'admin/backup_restore.html'
     backup_dir = settings.BASE_DIR / 'backups'
 
     def get(self, request):
@@ -122,7 +122,7 @@ class BackupRestoreView(View):
 
 @method_decorator(user_passes_test(superuser_required), name='dispatch')
 class AssignDeviceOwnerView(View):
-    template_name = 'admin_panel/assign_device_owner.html'
+    template_name = 'admin/assign_device_owner.html'
 
     class Form(forms.Form):
         device = forms.ModelChoiceField(queryset=Device.objects.all(), required=True)

@@ -52,6 +52,81 @@ body.gps-admin {
   font-size: 14px;
 }
 
+body.gps-admin.login-page {
+  overflow: hidden;
+}
+
+.gps-login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.gps-login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.gps-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.gps-login-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.gps-login-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.gps-login-form .form-row {
+  margin-bottom: 14px;
+}
+
+.gps-login-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.gps-login-form input[type='text'],
+.gps-login-form input[type='password'] {
+  width: 100%;
+}
+
+.gps-login-actions {
+  margin-top: 10px;
+}
+
+.gps-login-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.gps-login-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: var(--text-color);
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
 .gps-admin-container {
   display: flex;
   min-height: 100vh;
@@ -639,11 +714,6 @@ body.gps-admin {
   font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.2;
-}
-
-#map {
-  height: 400px;
-  width: 100%;
 }
 
 .table-actions {
