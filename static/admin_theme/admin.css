@@ -105,7 +105,20 @@ body.gps-admin {
   color: transparent;
 }
 
+.logo-user {
+  font-weight: 800;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
 .sidebar.collapsed .logo-text {
+  display: none;
+}
+
+.sidebar.collapsed .logo-user {
   display: none;
 }
 
@@ -381,6 +394,69 @@ body.gps-admin {
 .user-role {
   font-size: 0.8rem;
   color: var(--text-secondary);
+}
+
+.user-menu-wrapper {
+  position: relative;
+}
+
+.user-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: auto;
+  right: 0;
+  min-width: 220px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  text-align: right;
+  direction: rtl;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: var(--transition);
+  z-index: 120;
+}
+
+.user-menu-wrapper.open .user-menu {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-color) !important;
+  transition: var(--transition);
+}
+
+.user-menu-item i {
+  width: 18px;
+  text-align: center;
+  color: var(--text-secondary) !important;
+}
+
+.user-menu-item:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--primary-color) !important;
+}
+
+.user-menu-item:hover i {
+  color: var(--primary-color);
+}
+
+.user-menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 6px;
 }
 
 .content {
@@ -677,8 +753,8 @@ input[type='submit'].default {
 }
 
 /* Links */
-a:not(.button):not(.btn):link,
-a:not(.button):not(.btn):visited {
+a:not(.button):not(.btn):not(.user-menu-item):link,
+a:not(.button):not(.btn):not(.user-menu-item):visited {
   color: var(--secondary-color) !important;
 }
 

@@ -24,6 +24,9 @@
             <div class="sidebar-header">
                 <div class="logo">
                     <img src="{% static 'img/logo.png' %}" alt="GpsStore Logo" class="logo-img" style="height: 40px; margin-left: 10px;">
+                    {% if request.user.is_authenticated %}
+                    <span class="logo-user">{{ request.user.get_full_name|default:request.user.username }}</span>
+                    {% endif %}
                 </div>
                 <button class="toggle-btn" id="toggle-btn" type="button" aria-label="{% trans 'Toggle sidebar' %}">
                     <i class="fas fa-chevron-right"></i>
@@ -108,15 +111,33 @@
                         <span class="theme-text">تم تیره</span>
                     </div>
 
-                    <div class="user-profile">
-                        <div class="avatar">
-                            <span>{{ request.user.username|default:'AD'|slice:':2'|upper }}</span>
+                    <div class="user-menu-wrapper">
+                        <div class="user-profile" id="user-menu-toggle" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
+                            <div class="avatar">
+                                <span>{{ request.user.username|default:'AD'|slice:':2'|upper }}</span>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+                                <span class="user-role">Administrator</span>
+                            </div>
+                            <i class="fas fa-chevron-down"></i>
                         </div>
-                        <div class="user-info">
-                            <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
-                            <span class="user-role">Administrator</span>
+
+                        <div class="user-menu" id="user-menu" role="menu">
+                            <a class="user-menu-item" role="menuitem" href="{% url 'admin:accounts_user_change' request.user.pk %}">
+                                <i class="fas fa-user"></i>
+                                <span>پروفایل</span>
+                            </a>
+                            <a class="user-menu-item" role="menuitem" href="{% url 'admin:password_change' %}">
+                                <i class="fas fa-gear"></i>
+                                <span>تنظیمات</span>
+                            </a>
+                            <div class="user-menu-divider"></div>
+                            <a class="user-menu-item" role="menuitem" href="{% url 'admin:logout' %}">
+                                <i class="fas fa-right-from-bracket"></i>
+                                <span>خروج</span>
+                            </a>
                         </div>
-                        <i class="fas fa-chevron-down"></i>
                     </div>
                     {% endif %}
                 </div>
