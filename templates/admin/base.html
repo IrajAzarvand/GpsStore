@@ -8,17 +8,17 @@
     <title>{% block title %}{{ title }} | {% trans 'Administration' %}{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'admin/css/base.css' %}">
-    <link rel="stylesheet" href="{% static 'admin_theme/admin.css' %}?v=20251223">
+    <link rel="stylesheet" href="{% static 'admin_theme/admin.css' %}?v=20251224_3">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     {% block extrastyle %}{% endblock %}
-    <script defer src="{% static 'admin_theme/admin.js' %}?v=20251223"></script>
+    <script defer src="{% static 'admin_theme/admin.js' %}?v=20251224_3"></script>
     {% block extrahead %}{% endblock %}
 </head>
 
-<body id="django-admin" class="{% block bodyclass %}{% endblock %}">
+<body id="django-admin" class="gps-admin {% block bodyclass %}{% endblock %}">
     <div id="container" class="gps-admin-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -84,6 +84,9 @@
         <main class="main-content" id="content">
             <header class="header">
                 <div class="header-left">
+                    <button class="mobile-sidebar-btn" id="toggle-btn-mobile" type="button" aria-label="{% trans 'Toggle sidebar' %}">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <div class="page-title">
                         <h1>{% block page_title %}{{ title|default:'پنل مدیریت' }}{% endblock %}</h1>
                         <div class="breadcrumb">

@@ -175,8 +175,9 @@
 
   function initSidebarCollapse() {
     var btn = qs('#toggle-btn');
+    var btnMobile = qs('#toggle-btn-mobile');
     var sidebar = qs('#sidebar');
-    if (!btn || !sidebar) return;
+    if ((!btn && !btnMobile) || !sidebar) return;
 
     var backdrop = document.querySelector('.sidebar-backdrop');
     if (!backdrop) {
@@ -186,7 +187,7 @@
     }
 
     function isMobile() {
-      return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+      return window.matchMedia && window.matchMedia('(max-width: 1024px)').matches;
     }
 
     function openMobile() {
@@ -206,24 +207,32 @@
       else openMobile();
     }
 
-    btn.addEventListener('click', function () {
-      if (isMobile()) {
-        toggleMobile();
-        return;
-      }
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (isMobile()) {
+          toggleMobile();
+          return;
+        }
 
-      closeMobile();
-      sidebar.classList.toggle('collapsed');
-      var icon = btn.querySelector('i');
-      if (!icon) return;
-      if (sidebar.classList.contains('collapsed')) {
-        icon.classList.remove('fa-chevron-right');
-        icon.classList.add('fa-chevron-left');
-      } else {
-        icon.classList.remove('fa-chevron-left');
-        icon.classList.add('fa-chevron-right');
-      }
-    });
+        closeMobile();
+        sidebar.classList.toggle('collapsed');
+        var icon = btn.querySelector('i');
+        if (!icon) return;
+        if (sidebar.classList.contains('collapsed')) {
+          icon.classList.remove('fa-chevron-right');
+          icon.classList.add('fa-chevron-left');
+        } else {
+          icon.classList.remove('fa-chevron-left');
+          icon.classList.add('fa-chevron-right');
+        }
+      });
+    }
+
+    if (btnMobile) {
+      btnMobile.addEventListener('click', function () {
+        toggleMobile();
+      });
+    }
 
     backdrop.addEventListener('click', closeMobile);
 

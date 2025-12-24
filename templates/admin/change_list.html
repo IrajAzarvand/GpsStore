@@ -1,0 +1,70 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block content %}
+
+<div id="changelist" class="module{% if cl.has_filters %} filtered{% endif %}">
+  <div id="toolbar">
+    <div class="gps-toolbar-left">
+      {% block search %}{% search_form cl %}{% endblock %}
+    </div>
+    <div class="gps-toolbar-right">
+      {% block object-tools %}
+        {% if has_add_permission %}
+          <ul class="object-tools">
+            {% block object-tools-items %}
+              <li>
+                <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?_popup=1{% endif %}" class="addlink">
+                  {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+                </a>
+              </li>
+            {% endblock %}
+          </ul>
+        {% endif %}
+      {% endblock %}
+    </div>
+  </div>
+
+  {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
+
+  <form id="changelist-form" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>
+    {% csrf_token %}
+
+    {% if action_form and actions_on_top and cl.show_admin_actions %}
+      {% admin_actions %}
+    {% endif %}
+
+    {% block result_list %}
+      {% if cl.result_count %}
+        <div class="results">
+          {% result_list cl %}
+        </div>
+      {% else %}
+        <div class="table-container" style="margin-bottom: 0;">
+          <div class="table-header">
+            <div class="table-title">{% trans 'No results found' %}</div>
+          </div>
+          <div style="padding: 16px; color: var(--text-secondary);">
+            {% trans 'No objects to display.' %}
+          </div>
+        </div>
+      {% endif %}
+    {% endblock %}
+
+    {% if action_form and actions_on_bottom and cl.show_admin_actions %}
+      {% admin_actions %}
+    {% endif %}
+  </form>
+
+  {% block filters %}
+    {% if cl.has_filters %}
+      <div id="changelist-filter">
+        <h2>{% trans 'Filter' %}</h2>
+        {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+      </div>
+    {% endif %}
+  {% endblock %}
+
+  {% block pagination %}{% pagination cl %}{% endblock %}
+</div>
+{% endblock %}
