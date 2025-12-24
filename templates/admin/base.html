@@ -23,8 +23,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <i class="fas fa-satellite-dish logo-icon"></i>
-                    <span class="logo-text">GPS Tracker</span>
+                    <img src="{% static 'img/logo.png' %}" alt="GpsStore Logo" class="logo-img" style="height: 40px; margin-left: 10px;">
                 </div>
                 <button class="toggle-btn" id="toggle-btn" type="button" aria-label="{% trans 'Toggle sidebar' %}">
                     <i class="fas fa-chevron-right"></i>
@@ -75,10 +74,6 @@
 
             <div class="sidebar-footer">
                 {% if request.user.is_authenticated %}
-                <div class="theme-toggle" id="theme-toggle" role="button" tabindex="0">
-                    <i class="fas fa-moon"></i>
-                    <span class="theme-text">تم تیره</span>
-                </div>
                 {% endif %}
             </div>
         </aside>
@@ -106,6 +101,11 @@
                             <i class="fas fa-bell"></i>
                             <span class="notification-badge">!</span>
                         </button>
+                    </div>
+
+                    <div class="theme-toggle" id="theme-toggle" role="button" tabindex="0">
+                        <i class="fas fa-moon"></i>
+                        <span class="theme-text">تم تیره</span>
                     </div>
 
                     <div class="user-profile">
