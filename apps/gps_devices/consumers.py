@@ -20,17 +20,17 @@ class DeviceUpdateConsumer(AsyncWebsocketConsumer):
         if 'token=' in query_string:
             token = query_string.split('token=')[1].split('&')[0]
         
-        # Authenticate using token
+        # Authenticate using token (optional). If token is invalid, fall back to session auth.
         if token:
             try:
                 user = await self.get_user_from_token(token)
                 if user:
                     self.scope['user'] = user
                     logger.info(f"User authenticated via JWT token: {user.username}")
+                else:
+                    logger.info("JWT token provided but invalid/expired; falling back to session auth")
             except Exception as e:
-                logger.warning(f"Token authentication failed: {e}")
-                await self.close()
-                return
+                logger.info(f"Token authentication failed; falling back to session auth: {e}")
         
         user = self.scope.get("user")
         if not user or not user.is_authenticated:
@@ -101,7 +101,7 @@ class DeviceUpdateConsumer(AsyncWebsocketConsumer):
             user_id = access_token.payload.get('user_id')
             return await get_user(user_id)
         except Exception as e:
-            logger.error(f"Error decoding token: {e}")
+            logger.info(f"Error decoding token: {e}")
             return None
 
     async def device_update(self, event):

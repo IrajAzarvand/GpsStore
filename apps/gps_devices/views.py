@@ -231,6 +231,45 @@ def map_v2(request):
     return render(request, 'gps_devices/map_v2.html', context)
 
 
+@never_cache
+@login_required
+def api_markers(request):
+    """Polling endpoint for map markers.
+
+    Returns latest known marker data for active devices visible to the current user.
+    This is a fallback when WebSocket is unavailable.
+    """
+    devices = get_visible_devices_queryset(request.user, only_active=True)
+    payload = []
+    for device in devices:
+        latest_location = device.locations.first()
+        status = determine_device_status(latest_location)
+        payload.append({
+            'id': device.id,
+            'name': device.name,
+            'imei': device.imei,
+            'lat': float(latest_location.latitude) if latest_location else None,
+            'lng': float(latest_location.longitude) if latest_location else None,
+            'last_update': latest_location.created_at.isoformat() if latest_location else None,
+            'status': status,
+            'battery_level': latest_location.battery_level if latest_location else None,
+            'speed': latest_location.speed if latest_location else 0,
+            'heading': latest_location.heading if latest_location else 0,
+            'signal_strength': latest_location.signal_strength if latest_location else None,
+            'satellites': latest_location.satellites if latest_location else None,
+            'driver_name': device.driver_name,
+            'sim_card_number': device.sim_no,
+            'model': device.model.model_name if device.model else None,
+            'matched_geometry': latest_location.matched_geometry if latest_location else None,
+            'mcc': latest_location.mcc if latest_location else None,
+            'mnc': latest_location.mnc if latest_location else None,
+            'lac': latest_location.lac if latest_location else None,
+            'cid': latest_location.cid if latest_location else None,
+            'address': clean_and_format_address(latest_location.address) if latest_location else None,
+        })
+    return JsonResponse({'ok': True, 'devices': payload})
+
+
 @login_required
 @require_POST
 @csrf_protect

@@ -278,6 +278,16 @@ body.gps-admin.login-page {
   color: var(--primary-color);
 }
 
+.menu-subitem.active {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.menu-group[open] > summary.menu-item {
+  background-color: rgba(16, 185, 129, 0.06);
+}
+
 .menu-subitem--add {
   color: var(--secondary-color);
 }
@@ -534,8 +544,150 @@ body.gps-admin.login-page {
   margin: 8px 6px;
 }
 
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--transition);
+  z-index: 95;
+}
+
+.sidebar-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .content {
   padding: 30px;
+}
+
+@media (max-width: 1024px) {
+  .content {
+    padding: 18px;
+  }
+
+  .header {
+    padding: 0 18px;
+  }
+
+  .search-bar input {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: min(var(--sidebar-width), 86vw);
+    max-width: 320px;
+    transform: translateX(100%);
+    right: 0;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-right: 0;
+  }
+
+  .sidebar.collapsed ~ .main-content {
+    margin-right: 0;
+  }
+
+  .header {
+    height: auto;
+    min-height: var(--header-height);
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .header-left {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .page-title h1 {
+    font-size: 1.15rem;
+  }
+
+  .header-right {
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  html[dir='rtl'] .header-right {
+    justify-content: flex-end;
+  }
+
+  .search-bar {
+    width: 100%;
+    order: 10;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .content {
+    padding: 14px;
+  }
+
+  .gps-app-grid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .table-container table {
+    min-width: 720px;
+  }
+
+  #changelist {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #changelist-filter {
+    width: 100% !important;
+    float: none !important;
+    order: 3;
+  }
+
+  #changelist .results {
+    width: 100% !important;
+    overflow-x: auto;
+  }
+
+  #changelist table#result_list {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-container table {
+    min-width: 640px;
+  }
+
+  #changelist table#result_list {
+    min-width: 640px;
+  }
 }
 
 /* Main content surfaces */
@@ -788,6 +940,174 @@ tbody tr:hover {
   background-color: rgba(16, 185, 129, 0.05);
 }
 
+body.gps-admin .object-tools {
+  margin: 0 0 12px 0;
+  padding: 0;
+}
+
+body.gps-admin .object-tools li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.gps-admin .object-tools a,
+body.gps-admin .object-tools a:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border: 1px solid var(--primary-dark) !important;
+}
+
+body.gps-admin .object-tools a:hover {
+  background-color: var(--primary-dark) !important;
+}
+
+body.gps-admin #changelist {
+  background: transparent !important;
+}
+
+body.gps-admin #changelist #toolbar {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px !important;
+  margin: 0 0 14px 0 !important;
+}
+
+body.gps-admin #changelist-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+body.gps-admin #changelist-search label {
+  color: var(--text-secondary) !important;
+  font-weight: 600;
+}
+
+body.gps-admin #changelist-search input[type='text'] {
+  min-width: 260px;
+  background: var(--bg-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 10px !important;
+  color: var(--text-color) !important;
+}
+
+body.gps-admin #changelist-search input[type='submit'] {
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+}
+
+body.gps-admin #changelist .actions {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px !important;
+  margin: 0 0 14px 0 !important;
+}
+
+body.gps-admin #changelist .actions label,
+body.gps-admin #changelist .actions .action-counter {
+  color: var(--text-secondary) !important;
+}
+
+body.gps-admin #changelist .actions select {
+  background: var(--bg-color) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  border-radius: 10px !important;
+}
+
+body.gps-admin #changelist .results {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+body.gps-admin #changelist table#result_list {
+  margin: 0;
+}
+
+body.gps-admin #changelist table#result_list thead {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+body.gps-admin #changelist table#result_list th,
+body.gps-admin #changelist table#result_list td {
+  padding: 14px 16px;
+}
+
+body.gps-admin #changelist table#result_list th {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+body.gps-admin #changelist .paginator {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px !important;
+  margin: 14px 0 0 0 !important;
+}
+
+body.gps-admin #changelist .paginator a,
+body.gps-admin #changelist .paginator a:visited {
+  color: var(--secondary-color) !important;
+  text-decoration: none;
+}
+
+body.gps-admin #changelist-filter {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+body.gps-admin #changelist-filter h2 {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+body.gps-admin #changelist-filter h3 {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+body.gps-admin #changelist-filter ul {
+  margin: 0;
+  padding: 0 14px 12px 14px;
+}
+
+body.gps-admin #changelist-filter li {
+  list-style: none;
+  margin: 6px 0;
+}
+
+body.gps-admin #changelist-filter a,
+body.gps-admin #changelist-filter a:visited {
+  color: var(--secondary-color) !important;
+  text-decoration: none;
+}
+
 /* Forms */
 input,
 select,
@@ -805,6 +1125,134 @@ select {
   color: var(--text-color) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 10px;
+}
+
+body.gps-admin fieldset.module,
+body.gps-admin .module.aligned {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+body.gps-admin .module.aligned h2,
+body.gps-admin fieldset.module h2 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+body.gps-admin .aligned .form-row {
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+}
+
+body.gps-admin .aligned .form-row:last-child {
+  border-bottom: none;
+}
+
+body.gps-admin .aligned label {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+body.gps-admin .aligned .help,
+body.gps-admin .aligned .helptext {
+  color: var(--text-secondary) !important;
+}
+
+body.gps-admin .aligned .readonly {
+  color: var(--text-color);
+}
+
+body.gps-admin .errornote,
+body.gps-admin .errorlist {
+  border-radius: 12px;
+}
+
+body.gps-admin .submit-row {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px;
+  margin: 18px 0 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+html[dir='rtl'] body.gps-admin .submit-row {
+  justify-content: flex-end;
+}
+
+body.gps-admin .submit-row a.deletelink {
+  border-radius: 12px !important;
+}
+
+body.gps-admin .selector {
+  width: 100% !important;
+  border: none !important;
+}
+
+body.gps-admin .selector .selector-available,
+body.gps-admin .selector .selector-chosen {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+body.gps-admin .selector h2 {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 12px !important;
+}
+
+body.gps-admin .selector .selector-filter {
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 10px 12px !important;
+  background: var(--bg-color) !important;
+}
+
+body.gps-admin .selector .selector-filter label {
+  color: var(--text-secondary) !important;
+}
+
+body.gps-admin .selector select {
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--text-color) !important;
+}
+
+body.gps-admin .selector ul.selector-chooser {
+  width: auto;
+  margin: 0 10px !important;
+}
+
+body.gps-admin .selector ul.selector-chooser li {
+  margin: 8px 0 !important;
+}
+
+body.gps-admin .selector ul.selector-chooser a {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 10px;
+  background-color: var(--card-bg) !important;
+  box-shadow: none !important;
+}
+
+body.gps-admin .selector ul.selector-chooser a:hover {
+  background-color: color-mix(in srgb, var(--secondary-color) 10%, var(--card-bg)) !important;
 }
 
 /* Buttons */

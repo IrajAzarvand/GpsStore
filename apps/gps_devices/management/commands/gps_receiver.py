@@ -72,6 +72,7 @@ class GPSReceiver:
         self.mqtt_client = None
         self.mqtt_broker = mqtt_broker
         self.mqtt_port = mqtt_port
+        self.mqtt_enabled = False
         self.rate_limit_cache = {}  # For security: track IP addresses
         self.hq_decoder = HQFullDecoder()
         self.gt06_decoder = GT06Decoder()
@@ -92,18 +93,36 @@ class GPSReceiver:
 
         logger.info(f'GPS receiver listening on {self.host}:{self.port} for TCP and UDP')
 
+        # MQTT is optional; enable only if explicitly configured
+        mqtt_broker = getattr(settings, 'MQTT_BROKER', None) or os.environ.get('MQTT_BROKER')
+        mqtt_port_raw = getattr(settings, 'MQTT_PORT', None) or os.environ.get('MQTT_PORT')
+        if mqtt_broker:
+            self.mqtt_broker = mqtt_broker
+            try:
+                self.mqtt_port = int(mqtt_port_raw) if mqtt_port_raw else self.mqtt_port
+            except Exception:
+                logger.warning(f'Invalid MQTT_PORT value: {mqtt_port_raw}; using default {self.mqtt_port}')
+
+            self.mqtt_enabled = True
+            logger.info(f'MQTT listener enabled (broker={self.mqtt_broker}, port={self.mqtt_port})')
+        else:
+            self.mqtt_enabled = False
+            logger.info('MQTT listener disabled (no MQTT_BROKER configured)')
+
         tcp_thread = threading.Thread(target=self.tcp_listen)
         udp_thread = threading.Thread(target=self.udp_listen)
         mqtt_thread = threading.Thread(target=self.mqtt_listen)
 
         tcp_thread.start()
         udp_thread.start()
-        mqtt_thread.start()
+        if self.mqtt_enabled:
+            mqtt_thread.start()
 
         try:
             tcp_thread.join()
             udp_thread.join()
-            mqtt_thread.join()
+            if self.mqtt_enabled:
+                mqtt_thread.join()
         except KeyboardInterrupt:
             logger.info('Shutting down GPS receiver')
         finally:
@@ -198,6 +217,9 @@ class GPSReceiver:
             logger.error(f'UDP listen error: {e}')
 
     def mqtt_listen(self):
+        if not getattr(self, 'mqtt_enabled', False):
+            return
+
         if not MQTT_AVAILABLE:
             logger.warning('MQTT library not available, skipping MQTT listener')
             return
@@ -227,8 +249,9 @@ class GPSReceiver:
             self.mqtt_client.connect(self.mqtt_broker, self.mqtt_port, 60)
             self.mqtt_client.loop_forever()
         except Exception as e:
-            logger.error(f'MQTT connection error: {e}')
-
+            # Don't crash receiver or spam errors if broker isn't present
+            logger.warning(f'MQTT connection error (listener disabled until restart): {e}')
+            self.mqtt_enabled = False
 
     def increment_consecutive_count(self, device, key, threshold=3):
         """

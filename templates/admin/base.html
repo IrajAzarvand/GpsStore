@@ -50,10 +50,10 @@
                             <div class="menu-sub">
                                 {% for model in app.models %}
                                     {% if model.admin_url %}
-                                    <a class="menu-subitem" href="{{ model.admin_url }}">{{ model.name }}</a>
+                                    <a class="menu-subitem" href="{{ model.admin_url }}">مدیریت {{ model.name }}</a>
                                     {% endif %}
                                     {% if model.add_url %}
-                                    <a class="menu-subitem menu-subitem--add" href="{{ model.add_url }}">+ {{ model.name }}</a>
+                                    <a class="menu-subitem menu-subitem--add" href="{{ model.add_url }}">افزودن {{ model.name }}</a>
                                     {% endif %}
                                 {% endfor %}
                             </div>
