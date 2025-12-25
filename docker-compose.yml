@@ -29,8 +29,6 @@ services:
     restart: always
     ports:
       - "8000:8000"
-      - "5000:5000"
-      - "5000:5000/udp"
     env_file:
       - .env.production
     environment:
@@ -58,6 +56,31 @@ services:
       DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
       DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+      - ./logs:/app/logs
+    depends_on:
+      - db
+      - redis
+    networks:
+      - GpsStore
+
+  gps_receiver:
+    build: .
+    restart: always
+    command: python manage.py gps_receiver
+    ports:
+      - "5000:5000"
+      - "5000:5000/udp"
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      REDIS_URL: redis://redis:6379/1
+      REDIS_HOST: redis
+      ENVIRONMENT: production
     volumes:
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
