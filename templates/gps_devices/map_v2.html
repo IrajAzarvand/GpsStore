@@ -617,9 +617,16 @@
                 }
             };
     
-            ws.onclose = function () {
+            ws.onclose = function (event) {
                 _wsStopHeartbeat();
                 updateConnectionStatus('disconnected');
+                try {
+                    console.warn('WebSocket closed:', {
+                        code: event.code,
+                        reason: event.reason,
+                        wasClean: event.wasClean,
+                    });
+                } catch (e) {}
                 setTimeout(initWebSocket, 5000);
             };
     

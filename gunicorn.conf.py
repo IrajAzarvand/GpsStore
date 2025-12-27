@@ -12,8 +12,8 @@ worker_class = "uvicorn.workers.UvicornWorker"
 worker_connections = 1000
 max_requests = 1000
 max_requests_jitter = 50
-timeout = 30
-keepalive = 2
+timeout = 3600
+keepalive = 75
 
 # Logging
 # Use stdout/stderr instead of files to avoid permission issues

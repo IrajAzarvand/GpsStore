@@ -1,0 +1,1398 @@
+
+:root {
+  --primary-color: #10b981;
+  --primary-dark: #059669;
+  --secondary-color: #3b82f6;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #06b6d4;
+
+  --bg-color: #f8fafc;
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
+  --text-color: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --header-bg: #ffffff;
+
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --radius: 12px;
+  --transition: all 0.3s ease;
+
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 80px;
+  --header-height: 70px;
+}
+
+body.dark-theme {
+  --bg-color: #0f172a;
+  --sidebar-bg: #1e293b;
+  --card-bg: #1e293b;
+  --text-color: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --header-bg: #1e293b;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+html,
+body {
+  font-family: 'Vazirmatn', sans-serif !important;
+}
+
+html[dir='rtl'] body.gps-admin {
+  direction: rtl;
+}
+
+body.gps-admin {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  transition: var(--transition);
+  overflow-x: hidden;
+  font-size: 14px;
+}
+
+body.gps-admin.sidebar-mobile-open {
+  overflow: hidden;
+}
+
+body.gps-admin.login-page {
+  overflow: hidden;
+}
+
+.gps-login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.gps-login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.gps-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.gps-login-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.gps-login-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.gps-login-form .form-row {
+  margin-bottom: 14px;
+}
+
+.gps-login-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.gps-login-form input[type='text'],
+.gps-login-form input[type='password'] {
+  width: 100%;
+}
+
+.gps-login-actions {
+  margin-top: 10px;
+}
+
+.gps-login-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.gps-login-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: var(--text-color);
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.gps-admin-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--sidebar-bg);
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  right: 0;
+  top: 0;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed);
+}
+
+.sidebar-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.logo-icon {
+  font-size: 1.8rem;
+  color: var(--primary-color);
+}
+
+.logo-text {
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.logo-user {
+  font-weight: 800;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+.sidebar.collapsed .logo-text {
+  display: none;
+}
+
+.sidebar.collapsed .logo-user {
+  display: none;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: var(--transition);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-btn:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.sidebar-menu {
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition);
+  position: relative;
+  border-right: 3px solid transparent;
+  white-space: nowrap;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--primary-color);
+  border-right: 3px solid var(--primary-color);
+}
+
+.menu-item i {
+  font-size: 1.2rem;
+  width: 24px;
+  margin-left: 10px;
+}
+
+.menu-group {
+  margin: 0;
+}
+
+.menu-group > summary {
+  list-style: none;
+}
+
+.menu-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-sub {
+  padding: 6px 14px 10px 14px;
+}
+
+.menu-subitem {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.menu-subitem:hover {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: var(--primary-color);
+}
+
+.menu-subitem.active {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.menu-group[open] > summary.menu-item {
+  background-color: rgba(16, 185, 129, 0.06);
+}
+
+.menu-subitem--add {
+  color: var(--secondary-color);
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 18px;
+}
+
+.sidebar.collapsed .menu-sub {
+  display: none;
+}
+
+.menu-text {
+  transition: var(--transition);
+}
+
+.sidebar.collapsed .menu-text {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  transition: var(--transition);
+  color: var(--text-color);
+}
+
+.theme-toggle:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.theme-toggle i {
+  font-size: 1.2rem;
+}
+
+.sidebar.collapsed .theme-text {
+  display: none;
+}
+
+.main-content {
+  flex: 1;
+  margin-right: var(--sidebar-width);
+  transition: var(--transition);
+  min-height: 100vh;
+}
+
+.sidebar.collapsed ~ .main-content {
+  margin-right: var(--sidebar-collapsed);
+}
+
+.header {
+  height: var(--header-height);
+  background-color: var(--header-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.mobile-sidebar-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mobile-sidebar-btn:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--primary-color);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.mobile-sidebar-btn i {
+  font-size: 1.1rem;
+}
+
+.page-title h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.search-bar {
+  position: relative;
+}
+
+.search-bar input {
+  padding: 10px 15px 10px 40px;
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 250px;
+  color: var(--text-color);
+  transition: var(--transition);
+}
+
+.search-bar i {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+}
+
+.notification-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--text-color);
+  cursor: pointer;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.notification-btn:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--primary-color);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background-color: var(--danger-color);
+  color: white;
+  font-size: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.user-profile:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.user-menu-wrapper {
+  position: relative;
+}
+
+.user-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: auto;
+  right: 0;
+  min-width: 220px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  text-align: right;
+  direction: rtl;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: var(--transition);
+  z-index: 120;
+}
+
+.user-menu-wrapper.open .user-menu {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-color) !important;
+  transition: var(--transition);
+}
+
+.user-menu-item i {
+  width: 18px;
+  text-align: center;
+  color: var(--text-secondary) !important;
+}
+
+.user-menu-item:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--primary-color) !important;
+}
+
+.user-menu-item:hover i {
+  color: var(--primary-color);
+}
+
+.user-menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 6px;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--transition);
+  z-index: 95;
+}
+
+.sidebar-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.content {
+  padding: 30px;
+}
+
+@media (max-width: 1024px) {
+  .content {
+    padding: 18px;
+  }
+
+  .header {
+    padding: 0 18px;
+  }
+
+  .search-bar input {
+    width: 200px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .mobile-sidebar-btn {
+    display: inline-flex;
+  }
+
+  .sidebar {
+    width: min(var(--sidebar-width), 86vw);
+    max-width: 320px;
+    transform: translateX(100%);
+    right: 0;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-right: 0;
+  }
+
+  .sidebar.collapsed ~ .main-content {
+    margin-right: 0;
+  }
+
+  .header {
+    height: auto;
+    min-height: var(--header-height);
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .header-left {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .page-title h1 {
+    font-size: 1.15rem;
+  }
+
+  .header-right {
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  html[dir='rtl'] .header-right {
+    justify-content: flex-end;
+  }
+
+  .search-bar {
+    width: 100%;
+    order: 10;
+  }
+
+  .search-bar input {
+    width: 100%;
+  }
+
+  .user-info {
+    display: none;
+  }
+
+  .content {
+    padding: 14px;
+  }
+
+  .gps-app-grid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .table-container table {
+    min-width: 720px;
+  }
+
+  #changelist {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #changelist-filter {
+    width: 100% !important;
+    float: none !important;
+    order: 3;
+  }
+
+  #changelist .results {
+    width: 100% !important;
+    overflow-x: auto;
+  }
+
+  #changelist table#result_list {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-container table {
+    min-width: 640px;
+  }
+
+  #changelist table#result_list {
+    min-width: 640px;
+  }
+}
+
+/* Main content surfaces */
+.module {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Dashboard */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  border: 1px solid var(--border-color);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.stat-title {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.stat-icon.gps {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+}
+
+.stat-icon.users {
+  background: linear-gradient(135deg, var(--secondary-color), #1d4ed8);
+}
+
+.stat-icon.active {
+  background: linear-gradient(135deg, var(--info-color), #0e7490);
+}
+
+.stat-icon.inactive {
+  background: linear-gradient(135deg, var(--warning-color), #b45309);
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.stat-change {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-change.positive {
+  color: var(--primary-color);
+}
+
+.stat-change.negative {
+  color: var(--danger-color);
+}
+
+.map-container,
+.table-container {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+  border: 1px solid var(--border-color);
+}
+
+.gps-app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.gps-app-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.gps-app-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gps-app-card__title {
+  text-decoration: none;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.gps-app-card__meta {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.gps-app-card__body {
+  padding: 12px 18px;
+}
+
+.gps-model-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+}
+
+.gps-model-row:last-child {
+  border-bottom: none;
+}
+
+.gps-model-row__name {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.gps-model-row__actions {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.map-header,
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.map-title,
+.table-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.map-header .btn,
+.table-header .btn,
+.map-header .button,
+.table-header .button {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  line-height: 1.1;
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white !important;
+}
+
+.btn-secondary:hover {
+  background-color: #2563eb;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+th {
+  padding: 16px 20px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+tbody tr:hover {
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+body.gps-admin .object-tools {
+  margin: 0 0 12px 0;
+  padding: 0;
+  float: none !important;
+}
+
+body.gps-admin .object-tools li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  float: none !important;
+}
+
+body.gps-admin .object-tools a,
+body.gps-admin .object-tools a:visited {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  border: 1px solid var(--primary-dark) !important;
+}
+
+body.gps-admin .object-tools a:hover {
+  background-color: var(--primary-dark) !important;
+}
+
+body.gps-admin #changelist {
+  background: transparent !important;
+}
+
+body.gps-admin #changelist #toolbar {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px !important;
+  margin: 0 0 14px 0 !important;
+}
+
+body.gps-admin #changelist #toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+body.gps-admin #changelist #toolbar .gps-toolbar-left {
+  flex: 1 1 520px;
+  min-width: 260px;
+}
+
+body.gps-admin #changelist #toolbar .gps-toolbar-right {
+  flex: 0 0 auto;
+}
+
+body.gps-admin #changelist #toolbar .object-tools {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  justify-content: flex-end;
+}
+
+body.gps-admin #changelist-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+body.gps-admin #changelist-search label {
+  color: var(--text-secondary) !important;
+  font-weight: 600;
+}
+
+body.gps-admin #changelist-search input[type='text'] {
+  min-width: 260px;
+  background: var(--bg-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 10px !important;
+  color: var(--text-color) !important;
+}
+
+body.gps-admin #changelist-search input[type='submit'] {
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+}
+
+body.gps-admin #changelist .actions {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px !important;
+  margin: 0 0 14px 0 !important;
+}
+
+body.gps-admin #changelist .actions label,
+body.gps-admin #changelist .actions .action-counter {
+  color: var(--text-secondary) !important;
+}
+
+body.gps-admin #changelist .actions select {
+  background: var(--bg-color) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  border-radius: 10px !important;
+}
+
+body.gps-admin #changelist .results {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+body.gps-admin #changelist table#result_list {
+  margin: 0;
+}
+
+body.gps-admin #changelist table#result_list thead {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+body.gps-admin #changelist table#result_list th,
+body.gps-admin #changelist table#result_list td {
+  padding: 14px 16px;
+}
+
+body.gps-admin #changelist table#result_list th {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+body.gps-admin #changelist .paginator {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px !important;
+  margin: 14px 0 0 0 !important;
+}
+
+body.gps-admin #changelist .paginator a,
+body.gps-admin #changelist .paginator a:visited {
+  color: var(--secondary-color) !important;
+  text-decoration: none;
+}
+
+body.gps-admin #changelist-filter {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  float: none !important;
+}
+
+body.gps-admin #changelist {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 14px;
+  align-items: start;
+}
+
+body.gps-admin #changelist #toolbar {
+  grid-column: 1 / -1;
+}
+
+body.gps-admin #changelist #changelist-form {
+  grid-column: 1 / 2;
+}
+
+body.gps-admin #changelist #changelist-filter {
+  grid-column: 2 / 3;
+  grid-row: 2;
+}
+
+body.gps-admin #changelist .paginator {
+  grid-column: 1 / -1;
+}
+
+body.gps-admin #changelist:not(.filtered) #changelist-form {
+  grid-column: 1 / -1;
+}
+
+body.gps-admin #changelist-filter h2 {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+body.gps-admin #changelist-filter h3 {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+body.gps-admin #changelist-filter ul {
+  margin: 0;
+  padding: 0 14px 12px 14px;
+}
+
+body.gps-admin #changelist-filter li {
+  list-style: none;
+  margin: 6px 0;
+}
+
+body.gps-admin #changelist-filter a,
+body.gps-admin #changelist-filter a:visited {
+  color: var(--secondary-color) !important;
+  text-decoration: none;
+}
+
+/* Forms */
+input,
+select,
+textarea {
+  font-family: 'Vazirmatn', sans-serif !important;
+}
+
+input[type='text'],
+input[type='password'],
+input[type='email'],
+input[type='number'],
+textarea,
+select {
+  background: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 10px;
+}
+
+body.gps-admin fieldset.module,
+body.gps-admin .module.aligned {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+body.gps-admin .module.aligned h2,
+body.gps-admin fieldset.module h2 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+body.gps-admin .aligned .form-row {
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 75%, transparent);
+}
+
+body.gps-admin .aligned .form-row:last-child {
+  border-bottom: none;
+}
+
+body.gps-admin .aligned label {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+body.gps-admin .aligned .help,
+body.gps-admin .aligned .helptext {
+  color: var(--text-secondary) !important;
+}
+
+body.gps-admin .aligned .readonly {
+  color: var(--text-color);
+}
+
+body.gps-admin .errornote,
+body.gps-admin .errorlist {
+  border-radius: 12px;
+}
+
+body.gps-admin .submit-row {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px;
+  margin: 18px 0 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+html[dir='rtl'] body.gps-admin .submit-row {
+  justify-content: flex-end;
+}
+
+body.gps-admin .submit-row a.deletelink {
+  border-radius: 12px !important;
+}
+
+body.gps-admin .selector {
+  width: 100% !important;
+  border: none !important;
+}
+
+body.gps-admin .selector .selector-available,
+body.gps-admin .selector .selector-chosen {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+body.gps-admin .selector h2 {
+  background: rgba(16, 185, 129, 0.1) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  color: var(--text-color) !important;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 12px !important;
+}
+
+body.gps-admin .selector .selector-filter {
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 10px 12px !important;
+  background: var(--bg-color) !important;
+}
+
+body.gps-admin .selector .selector-filter label {
+  color: var(--text-secondary) !important;
+}
+
+body.gps-admin .selector select {
+  width: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--text-color) !important;
+}
+
+body.gps-admin .selector ul.selector-chooser {
+  width: auto;
+  margin: 0 10px !important;
+}
+
+body.gps-admin .selector ul.selector-chooser li {
+  margin: 8px 0 !important;
+}
+
+body.gps-admin .selector ul.selector-chooser a {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 10px;
+  background-color: var(--card-bg) !important;
+  box-shadow: none !important;
+}
+
+body.gps-admin .selector ul.selector-chooser a:hover {
+  background-color: color-mix(in srgb, var(--secondary-color) 10%, var(--card-bg)) !important;
+}
+
+/* Buttons */
+.button,
+input[type='submit'],
+input[type='button'],
+a.button {
+  border-radius: 12px !important;
+}
+
+.button.default,
+input[type='submit'].default {
+  background: var(--primary-color) !important;
+  border: 1px solid var(--primary-dark) !important;
+  color: white !important;
+}
+
+/* Links */
+a:not(.button):not(.btn):not(.user-menu-item):link,
+a:not(.button):not(.btn):not(.user-menu-item):visited {
+  color: var(--secondary-color) !important;
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Keep text alignment natural; only set RTL direction for main areas */
+html[dir='rtl'] #content,
+html[dir='rtl'] #content-main,
+html[dir='rtl'] .module,
+html[dir='rtl'] fieldset {
+  direction: rtl;
+}
+
+/* Changelist layout is direction-aware without forcing text-align */
+html[dir='rtl'] #changelist,
+html[dir='rtl'] #changelist .actions {
+  direction: rtl;
+}
+
+/* Keep code-ish content LTR when needed */
+code,
+pre,
+.vTextField {
+  direction: ltr;
+}

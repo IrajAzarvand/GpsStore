@@ -49,21 +49,68 @@ class DeviceUpdateConsumer(AsyncWebsocketConsumer):
         if getattr(self.user, "is_staff", False) or getattr(self.user, "is_superuser", False):
             self.groups_to_join.append("admins_group")
 
-        # join groups
-        for g in self.groups_to_join:
-            await self.channel_layer.group_add(g, self.channel_name)
-            logger.debug(f"WS {self.channel_name} joined {g}")
+        try:
+            # join groups
+            for g in self.groups_to_join:
+                try:
+                    await self.channel_layer.group_add(g, self.channel_name)
+                except Exception:
+                    logger.exception(
+                        "WS group_add failed: channel=%s group=%s user=%s",
+                        self.channel_name,
+                        g,
+                        getattr(self.user, "username", None),
+                    )
+                    try:
+                        await self.close(code=1011)
+                    except Exception:
+                        pass
+                    return
 
-        await self.accept()
-        # initial welcome
-        await self.send(text_data=json.dumps({
-            "type": "connection",
-            "status": "connected",
-            "user_id": self.user.id,
-            "groups": self.groups_to_join
-        }))
+            await self.accept()
+
+            # initial welcome
+            try:
+                await self.send(text_data=json.dumps({
+                    "type": "connection",
+                    "status": "connected",
+                    "user_id": self.user.id,
+                    "groups": self.groups_to_join
+                }))
+            except Exception:
+                logger.exception(
+                    "WS initial send failed: channel=%s user=%s",
+                    self.channel_name,
+                    getattr(self.user, "username", None),
+                )
+                try:
+                    await self.close(code=1011)
+                except Exception:
+                    pass
+                return
+        except Exception:
+            logger.exception(
+                "WS connect failed (unhandled): client=%s path=%s",
+                self.scope.get("client"),
+                self.scope.get("path"),
+            )
+            try:
+                await self.close(code=1011)
+            except Exception:
+                pass
+            return
 
     async def disconnect(self, close_code):
+        try:
+            logger.info(
+                "WS disconnect: user=%s close_code=%s client=%s path=%s",
+                getattr(getattr(self, "user", None), "username", None),
+                close_code,
+                self.scope.get("client"),
+                self.scope.get("path"),
+            )
+        except Exception:
+            logger.exception("Failed to log WS disconnect")
         for g in getattr(self, "groups_to_join", []):
             try:
                 await self.channel_layer.group_discard(g, self.channel_name)

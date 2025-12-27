@@ -29,8 +29,8 @@ COPY gps_store/ ./gps_store/
 COPY apps/ ./apps/
 COPY templates/ ./templates/
 COPY static/ ./static/
-COPY *.py .
-COPY *.sh .
+COPY *.py ./
+COPY *.sh ./
 COPY apps/gps_devices/decoders/HQ_Decoder.py apps/gps_devices/decoders/GT06_Decoder.py apps/gps_devices/decoders/JT808_Decoder.py ./
 
 # Create directories for static files and media

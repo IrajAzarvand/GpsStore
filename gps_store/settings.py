@@ -39,6 +39,8 @@ if ENVIRONMENT == 'production' and os.getenv('DEBUG') is None:
     DEBUG = False
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver,bruna.ir').split(',')
+if 'web' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('web')
 
 
 # Application definition
@@ -414,7 +416,10 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-CSRF_TRUSTED_ORIGINS = [origin for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'https://bruna.ir,https://www.bruna.ir').split(',') if origin.strip()]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'https://bruna.ir,https://www.bruna.ir').split(',') if origin.strip()]
+for _origin in ('https://127.0.0.1', 'https://127.0.0.1:8444', 'https://localhost', 'https://localhost:8444'):
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
 
 # Production security settings
 # Only enable SSL redirect if explicitly set in environment

@@ -1,18 +1,104 @@
-upstream django_app {
-    server web:8000;
-}
-
 server {
-    listen 80;
-    server_name 91.107.135.136 bruna.ir;
+    listen 80 default_server;
+    server_name 91.107.135.136 bruna.ir localhost 127.0.0.1;
 
-    return 301 https://$server_name$request_uri;
+    set $django_upstream http://web:8000;
+
+    location /health/ {
+        access_log off;
+        default_type text/plain;
+        return 200 "healthy\n";
+    }
+
+    # Admin theme static (no aggressive cache)
+    location /static/admin_theme/ {
+        alias /app/staticfiles/admin_theme/;
+        expires -1;
+        add_header Cache-Control "no-cache";
+    }
+
+    # Static files
+    location /static/ {
+        alias /app/staticfiles/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Media files
+    location /media/ {
+        alias /app/media/;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # API endpoints with rate limiting
+    location /api/ {
+        limit_req zone=api burst=20 nodelay;
+        proxy_pass $django_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+    }
+
+    # Auth endpoints with stricter rate limiting
+    location /api/auth/ {
+        limit_req zone=auth burst=5 nodelay;
+        proxy_pass $django_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+    }
+
+    # Admin interface
+    location /admin/ {
+        limit_req zone=auth burst=10 nodelay;
+        proxy_pass $django_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+    }
+
+    # WebSocket connections
+    location /ws/ {
+        proxy_pass $django_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+
+    # Main application
+    location / {
+        proxy_pass $django_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 }
 
 server {
     listen 443 ssl;
     http2 on;
     server_name 91.107.135.136 bruna.ir;
+
+    set $django_upstream http://web:8000;
 
     ssl_certificate /etc/nginx/ssl/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/privkey.pem;
@@ -44,54 +130,54 @@ server {
     # API endpoints with rate limiting
     location /api/ {
         limit_req zone=api burst=20 nodelay;
-        proxy_pass http://django_app;
+        proxy_pass $django_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
     }
 
     # Auth endpoints with stricter rate limiting
     location /api/auth/ {
         limit_req zone=auth burst=5 nodelay;
-        proxy_pass http://django_app;
+        proxy_pass $django_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
     }
 
     # Admin interface
     location /admin/ {
         limit_req zone=auth burst=10 nodelay;
-        proxy_pass http://django_app;
+        proxy_pass $django_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
     }
 
     # WebSocket connections
     location /ws/ {
-        proxy_pass http://django_app;
+        proxy_pass $django_upstream;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
         proxy_buffering off;
         proxy_read_timeout 86400;
     }
 
     # Main application
     location / {
-        proxy_pass http://django_app;
+        proxy_pass $django_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $proxy_x_forwarded_proto;
         proxy_read_timeout 300s;
         proxy_connect_timeout 75s;
     }
